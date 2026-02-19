@@ -1,0 +1,4 @@
+# HRMS Application Configuration
+spring:
+  application:
+    name: hrms
