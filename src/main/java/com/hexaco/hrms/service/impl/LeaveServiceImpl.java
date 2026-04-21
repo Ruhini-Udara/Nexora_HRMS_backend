@@ -21,8 +21,8 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public OverseasLeave submitOverseasLeave(OverseasLeave requestedLeave) {
-        // Set default status to PENDING for new applications
-        requestedLeave.setStatus("PENDING");
+        // Set default status to PENDING_HR_APPROVAL for new applications
+        requestedLeave.setStatus("PENDING_HR_APPROVAL");
         return overseasLeaveRepository.save(requestedLeave);
     }
 
@@ -38,8 +38,8 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public MaternityLeave submitMaternityLeave(MaternityLeave requestedLeave) {
-        // Set default status to PENDING for new applications
-        requestedLeave.setStatus("PENDING");
+        // Set default status to PENDING_HR_APPROVAL for new applications
+        requestedLeave.setStatus("PENDING_HR_APPROVAL");
         return maternityLeaveRepository.save(requestedLeave);
     }
 
