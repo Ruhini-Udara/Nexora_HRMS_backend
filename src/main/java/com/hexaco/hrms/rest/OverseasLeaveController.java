@@ -2,11 +2,17 @@ package com.hexaco.hrms.rest;
 
 import com.hexaco.hrms.models.OverseasLeave;
 import com.hexaco.hrms.service.LeaveService;
+import com.hexaco.hrms.service.ReportService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -15,6 +21,7 @@ import java.util.List;
 public class OverseasLeaveController {
 
     private final LeaveService leaveService;
+    private final ReportService reportService;
 
     @PostMapping
     public ResponseEntity<OverseasLeave> submitOverseasLeave(@RequestBody OverseasLeave requestedLeave) {
@@ -39,5 +46,18 @@ public class OverseasLeaveController {
         return leaveService.getOverseasLeaveById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/board-meeting-report")
+    public void generateBoardReport(HttpServletResponse response) throws IOException {
+        response.setContentType("application/pdf");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=board_meeting_leaves_" + currentDateTime + ".pdf";
+        response.setHeader(headerKey, headerValue);
+
+        reportService.exportBoardMeetingPdf(response);
     }
 }
