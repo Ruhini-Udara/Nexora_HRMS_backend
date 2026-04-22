@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "overseas_leave")
-@PrimaryKeyJoinColumn(name = "id") // <--- This links the ID of this table to the ID of LeaveRequest
+@PrimaryKeyJoinColumn(name = "id")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,4 +29,20 @@ public class OverseasLeave extends LeaveRequest {
 
     @Column(name = "special_remark", columnDefinition = "TEXT")
     private String specialRemark;
+
+    // Document paths in Supabase Storage — signed URLs are generated on demand
+    @Column(name = "leave_letter_path")
+    private String leaveLetterPath;
+
+    @Column(name = "passport_copy_path")
+    private String passportCopyPath;
+
+    @Column(name = "visa_copy_path")
+    private String visaCopyPath;
+
+    @Column(name = "confirmation_letter_path")
+    private String confirmationLetterPath;
+
+    @Column(name = "flight_tickets_path")
+    private String flightTicketsPath;
 }
