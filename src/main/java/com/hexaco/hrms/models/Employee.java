@@ -24,7 +24,7 @@ public class Employee {
     @Column(name = "first_name")
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "sur_name")
     private String lastName;
 
     @Column(unique = true)
@@ -42,6 +42,19 @@ public class Employee {
 
     @Column(name = "joined_date")
     private LocalDate joinedDate;
+
+    private String designation;
+
+    @Column(name = "employee_type")
+    private String employeeType;
+
+    private String department;
+
+    @Column(name = "epf_number")
+    private String epfNumber;
+
+    @Column(name = "etf_number")
+    private String etfNumber;
 
     private String status;
 
