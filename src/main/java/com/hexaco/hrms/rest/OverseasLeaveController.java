@@ -28,6 +28,12 @@ public class OverseasLeaveController {
         return ResponseEntity.ok(leaves);
     }
 
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<OverseasLeave>> getOverseasLeavesByStatus(@PathVariable String status) {
+        List<OverseasLeave> leaves = leaveService.getOverseasLeavesByStatus(status);
+        return ResponseEntity.ok(leaves);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OverseasLeave> getOverseasLeaveById(@PathVariable Long id) {
         return leaveService.getOverseasLeaveById(id)
