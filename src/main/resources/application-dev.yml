@@ -1,4 +1,0 @@
-# HRMS Development Profile Configuration
-spring:
-  application:
-    name: hrms
