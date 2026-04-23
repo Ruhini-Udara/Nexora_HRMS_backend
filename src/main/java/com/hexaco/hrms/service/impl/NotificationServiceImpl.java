@@ -11,15 +11,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendLeaveStatusUpdate(Employee employee, String leaveType, String status, String remark) {
-        String employeeName = employee.getFirstName() + " " + (employee.getLastName() != null ? employee.getLastName() : "");
+        String employeeName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " + (employee.getLastName() != null ? employee.getLastName() : "");
         String email = employee.getEmail();
-        String phone = employee.getPhoneNo();
+        String phoneNo = employee.getPhoneNo();
 
         // Simulate Email Sending
         log.info("\n" +
-                "╔══════════════════════════════════════════════════════════════════════════════╗\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
                 "║ 📧 AUTOMATED EMAIL NOTIFICATION                                             ║\n" +
-                "╠══════════════════════════════════════════════════════════════════════════════╣\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
                 "║ To: {} <{}> \n" +
                 "║ Subject: Leave Application Update: {}\n" +
                 "║ \n" +
@@ -30,14 +30,14 @@ public class NotificationServiceImpl implements NotificationService {
                 "║ \n" +
                 "║ Best Regards,\n" +
                 "║ Nexora HRMS System\n" +
-                "╚══════════════════════════════════════════════════════════════════════════════╝",
+                "╚══════════════════════════════════════════════════════════╝\n",
                 employeeName, email, status, employee.getFirstName(), leaveType, status, (remark != null ? remark : "N/A"));
 
         // Simulate SMS Sending
-        if (phone != null && !phone.isEmpty()) {
+        if (phoneNo != null && !phoneNo.isEmpty()) {
             log.info("\n" +
                     "📱 [SMS SENT to {}]: Hi {}, your {} request is {}. - Nexora HR",
-                    phone, employee.getFirstName(), leaveType, status);
+                    phoneNo, employee.getFirstName(), leaveType, status);
         }
     }
 }
