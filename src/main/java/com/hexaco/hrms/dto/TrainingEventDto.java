@@ -17,6 +17,7 @@ public class TrainingEventDto {
     private Integer expectedParticipants;
     private String description;
     private LocalDate proposedStartDate;
+    private String time;
     private LocalDate applyBefore;
     private String location;
     private Double budget;
