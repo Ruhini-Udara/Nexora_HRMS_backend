@@ -65,21 +65,4 @@ public class Employee {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
-
-    // Explicit getters to resolve CI compilation issues
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getPhoneNo() {
-        return phoneNo;
-    }
-
-    public String getEmail() {
-        return email;
-    }
 }
