@@ -1,0 +1,24 @@
+package com.hexaco.hrms.dto;
+
+import lombok.Data;
+
+@Data
+public class EmployeeDTO {
+    // Step 1: Personal Info
+    private String nicNumber;
+    private String sex;
+    private String fullName;
+    private String surname;
+    private String dateOfBirth;
+    private String dateJoined;
+    private String email;
+    private String homeAddress;
+    private String maritalStatus;
+
+    // Step 2: Employment Info
+    private String designation;
+    private String employeeType;
+    private String department;
+    private String epfNumber;
+    private String etfNumber;
+}
