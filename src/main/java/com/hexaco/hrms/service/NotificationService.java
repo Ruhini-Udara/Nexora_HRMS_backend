@@ -1,7 +1,5 @@
 package com.hexaco.hrms.service;
 
-import com.hexaco.hrms.models.Employee;
-
 public interface NotificationService {
-    void sendLeaveStatusUpdate(Employee employee, String leaveType, String status, String remark);
+    void sendLeaveStatusUpdate(String recipientName, String email, String phoneNo, String leaveType, String status, String remark);
 }

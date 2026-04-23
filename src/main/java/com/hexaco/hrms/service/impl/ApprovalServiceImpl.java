@@ -45,7 +45,9 @@ public class ApprovalServiceImpl implements ApprovalService {
                 // Trigger Notification if status reached a final state or was rejected
                 if ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus)) {
                     notificationService.sendLeaveStatusUpdate(
-                        leave.getEmployee(), 
+                        leave.getEmployee().getFullName(), 
+                        leave.getEmail(),
+                        leave.getContactNumber(),
                         "Overseas Leave", 
                         newStatus, 
                         approval.getRemark()
@@ -64,7 +66,9 @@ public class ApprovalServiceImpl implements ApprovalService {
                 // Trigger Notification if status reached a final state or was rejected
                 if ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus)) {
                     notificationService.sendLeaveStatusUpdate(
-                        leave.getEmployee(), 
+                        leave.getEmployee().getFullName(), 
+                        leave.getEmail(),
+                        leave.getContactNumber(),
                         "Maternity Leave", 
                         newStatus, 
                         approval.getRemark()
