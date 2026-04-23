@@ -21,6 +21,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final com.hexaco.hrms.service.NotificationService notificationService;
 
     @Override
     public Approval saveApproval(Approval approval) {
@@ -36,15 +37,43 @@ public class ApprovalServiceImpl implements ApprovalService {
             Optional<OverseasLeave> leaveOpt = overseasLeaveRepository.findById(approval.getRefId());
             if (leaveOpt.isPresent()) {
                 OverseasLeave leave = leaveOpt.get();
-                leave.setStatus(calculateNextStatus(leave.getStatus(), approval.getDecision()));
+                String oldStatus = leave.getStatus();
+                String newStatus = calculateNextStatus(oldStatus, approval.getDecision());
+                leave.setStatus(newStatus);
                 overseasLeaveRepository.save(leave);
+
+                // Trigger Notification if status reached a final state or was rejected
+                if ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus)) {
+                    notificationService.sendLeaveStatusUpdate(
+                        leave.getEmployee().getFullName(), 
+                        leave.getEmail(),
+                        leave.getContactNumber(),
+                        "Overseas Leave", 
+                        newStatus, 
+                        approval.getRemark()
+                    );
+                }
             }
         } else if ("MATERNITY_LEAVE".equals(approval.getRefType())) {
             Optional<MaternityLeave> leaveOpt = maternityLeaveRepository.findById(approval.getRefId());
             if (leaveOpt.isPresent()) {
                 MaternityLeave leave = leaveOpt.get();
-                leave.setStatus(calculateNextStatus(leave.getStatus(), approval.getDecision()));
+                String oldStatus = leave.getStatus();
+                String newStatus = calculateNextStatus(oldStatus, approval.getDecision());
+                leave.setStatus(newStatus);
                 maternityLeaveRepository.save(leave);
+
+                // Trigger Notification if status reached a final state or was rejected
+                if ("APPROVED".equals(newStatus) || "REJECTED".equals(newStatus)) {
+                    notificationService.sendLeaveStatusUpdate(
+                        leave.getEmployee().getFullName(), 
+                        leave.getEmail(),
+                        leave.getContactNumber(),
+                        "Maternity Leave", 
+                        newStatus, 
+                        approval.getRemark()
+                    );
+                }
             }
         }
 
