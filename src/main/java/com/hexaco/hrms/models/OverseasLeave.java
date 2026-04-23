@@ -29,20 +29,4 @@ public class OverseasLeave extends LeaveRequest {
 
     @Column(name = "special_remark", columnDefinition = "TEXT")
     private String specialRemark;
-
-    // Document paths in Supabase Storage — signed URLs are generated on demand
-    @Column(name = "leave_letter_path")
-    private String leaveLetterPath;
-
-    @Column(name = "passport_copy_path")
-    private String passportCopyPath;
-
-    @Column(name = "visa_copy_path")
-    private String visaCopyPath;
-
-    @Column(name = "confirmation_letter_path")
-    private String confirmationLetterPath;
-
-    @Column(name = "flight_tickets_path")
-    private String flightTicketsPath;
 }
