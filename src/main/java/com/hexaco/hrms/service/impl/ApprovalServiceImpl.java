@@ -55,18 +55,22 @@ public class ApprovalServiceImpl implements ApprovalService {
         if ("REJECTED".equalsIgnoreCase(decision)) {
             return "REJECTED";
         }
-        
+
         if ("APPROVED".equalsIgnoreCase(decision)) {
             if ("PENDING_HR_APPROVAL".equals(currentStatus)) {
                 return "PENDING_ADMIN_APPROVAL";
             } else if ("PENDING_ADMIN_APPROVAL".equals(currentStatus)) {
+                // Admin approves → goes to Board Meeting Agenda, NOT directly to Director
+                return "ADMIN_APPROVED";
+            } else if ("ADMIN_APPROVED".equals(currentStatus)) {
+                // Admin selects from Board Agenda and sends to Director for review
                 return "PENDING_DIRECTOR_REVIEW";
             } else if ("PENDING_DIRECTOR_REVIEW".equals(currentStatus)) {
                 return "APPROVED"; // Final state
             }
         }
-        
-        return currentStatus; // Return current if no rules matched
+
+        return currentStatus;
     }
 
     @Override
