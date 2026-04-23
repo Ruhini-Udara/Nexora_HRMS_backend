@@ -2,6 +2,7 @@ package com.hexaco.hrms.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -20,10 +21,12 @@ public abstract class LeaveRequest {
 
     @ManyToOne
     @JoinColumn(name = "employee_id", nullable = false)
+    @JsonIgnoreProperties({"leaveRequests", "hibernateLazyInitializer", "handler"})
     private Employee employee;
 
     @ManyToOne
     @JoinColumn(name = "leave_type_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private LeaveType leaveType;
 
     @Column(name = "from_date", nullable = false)
