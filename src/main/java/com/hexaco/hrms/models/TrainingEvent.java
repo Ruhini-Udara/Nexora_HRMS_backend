@@ -33,6 +33,8 @@ public class TrainingEvent {
     @Column(name = "proposed_start_date")
     private LocalDate proposedStartDate;
 
+    private String time;
+
     @Column(name = "apply_before")
     private LocalDate applyBefore;
 

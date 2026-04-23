@@ -41,6 +41,7 @@ public class TrainingService {
                 .expectedParticipants(dto.getExpectedParticipants())
                 .description(dto.getDescription())
                 .proposedStartDate(dto.getProposedStartDate())
+                .time(dto.getTime())
                 .applyBefore(dto.getApplyBefore())
                 .location(dto.getLocation())
                 .budget(dto.getBudget())
@@ -61,6 +62,28 @@ public class TrainingService {
     public TrainingEventDto getTrainingEventById(Long id) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
+        return mapToDto(event);
+    }
+
+    public TrainingEventDto updateTrainingEvent(Long id, TrainingEventDto dto) {
+        TrainingEvent event = trainingEventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Training Event not found"));
+
+        event.setTitle(dto.getTitle());
+        event.setCategory(dto.getCategory());
+        event.setExpectedParticipants(dto.getExpectedParticipants());
+        event.setDescription(dto.getDescription());
+        event.setProposedStartDate(dto.getProposedStartDate());
+        event.setTime(dto.getTime());
+        event.setApplyBefore(dto.getApplyBefore());
+        event.setLocation(dto.getLocation());
+        event.setBudget(dto.getBudget());
+        event.setInstructor(dto.getInstructor());
+        if (dto.getStatus() != null) {
+            event.setStatus(dto.getStatus());
+        }
+
+        event = trainingEventRepository.save(event);
         return mapToDto(event);
     }
 
@@ -147,6 +170,7 @@ public class TrainingService {
                 .expectedParticipants(event.getExpectedParticipants())
                 .description(event.getDescription())
                 .proposedStartDate(event.getProposedStartDate())
+                .time(event.getTime())
                 .applyBefore(event.getApplyBefore())
                 .location(event.getLocation())
                 .budget(event.getBudget())

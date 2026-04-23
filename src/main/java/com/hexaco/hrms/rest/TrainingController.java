@@ -38,6 +38,13 @@ public class TrainingController {
         return ResponseEntity.ok(trainingService.getTrainingEventById(id));
     }
 
+    @PutMapping("/events/{id}")
+    public ResponseEntity<TrainingEventDto> updateTrainingEvent(
+            @PathVariable Long id,
+            @RequestBody TrainingEventDto dto) {
+        return ResponseEntity.ok(trainingService.updateTrainingEvent(id, dto));
+    }
+
     // --- Training Requests ---
 
     @PostMapping("/requests")
