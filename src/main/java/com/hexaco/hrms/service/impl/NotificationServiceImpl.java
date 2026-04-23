@@ -11,7 +11,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendLeaveStatusUpdate(Employee employee, String leaveType, String status, String remark) {
-        String employeeName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " " + (employee.getLastName() != null ? employee.getLastName() : "");
+        String employeeName = (employee.getFirstName() != null ? employee.getFirstName() : "") + " "
+                + (employee.getLastName() != null ? employee.getLastName() : "");
         String email = employee.getEmail();
         String phoneNo = employee.getPhoneNo();
 
@@ -31,7 +32,8 @@ public class NotificationServiceImpl implements NotificationService {
                 "║ Best Regards,\n" +
                 "║ Nexora HRMS System\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
-                employeeName, email, status, employee.getFirstName(), leaveType, status, (remark != null ? remark : "N/A"));
+                employeeName, email, status, employee.getFirstName(), leaveType, status,
+                (remark != null ? remark : "N/A"));
 
         // Simulate SMS Sending
         if (phoneNo != null && !phoneNo.isEmpty()) {
