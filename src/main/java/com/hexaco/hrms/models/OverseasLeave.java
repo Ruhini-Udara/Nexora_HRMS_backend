@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "overseas_leave")
-@PrimaryKeyJoinColumn(name = "id") // <--- This links the ID of this table to the ID of LeaveRequest
+@PrimaryKeyJoinColumn(name = "id")
 @Getter
 @Setter
 @NoArgsConstructor
