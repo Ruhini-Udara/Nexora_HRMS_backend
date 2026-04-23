@@ -18,45 +18,50 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "employee_code", unique = true)
-    private String employeeCode;
+    // Step 1: Personal Info
+    @Column(nullable = false, unique = true)
+    private String nicNumber;
 
-    @Column(name = "first_name")
-    private String firstName;
+    @Column(nullable = false)
+    private String sex;
 
-    @Column(name = "sur_name")
-    private String lastName;
+    @Column(nullable = false)
+    private String fullName;
 
-    @Column(unique = true)
-    private String email;
+    @Column(nullable = false)
+    private String surname;
 
-    @Column(unique = true)
-    private String nic;
-
-    private LocalDate dob;
-    private String gender;
-    private String address;
-
-    @Column(name = "phone_no")
-    private String phoneNo;
+    private LocalDate dateOfBirth;
 
     @Column(name = "joined_date")
-    private LocalDate joinedDate;
+    private LocalDate dateJoined;
 
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    private String homeAddress;
+    private String maritalStatus;
+
+    // Step 2: Employment Info
+    @Column(nullable = false)
     private String designation;
 
-    @Column(name = "employee_type")
+    @Column(nullable = false)
     private String employeeType;
 
+    @Column(nullable = false)
     private String department;
 
+
+    
+    
     @Column(name = "epf_number")
     private String epfNumber;
 
     @Column(name = "etf_number")
     private String etfNumber;
 
-    private String status;
+    
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

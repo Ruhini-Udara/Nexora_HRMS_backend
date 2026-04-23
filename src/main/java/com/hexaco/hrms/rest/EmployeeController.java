@@ -1,0 +1,26 @@
+package com.hexaco.hrms.rest;
+
+import com.hexaco.hrms.dto.EmployeeDTO;
+import com.hexaco.hrms.models.Employee;
+import com.hexaco.hrms.service.EmployeeService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/employees")
+@CrossOrigin(origins = "http://localhost:3000")
+public class EmployeeController {
+
+    private final EmployeeService employeeService;
+
+    public EmployeeController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    @PostMapping
+    public ResponseEntity<Employee> registerEmployee(@RequestBody EmployeeDTO employeeDTO) {
+        Employee saved = employeeService.registerEmployee(employeeDTO);
+        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    }
+}
