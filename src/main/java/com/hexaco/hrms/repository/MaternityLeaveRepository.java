@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface MaternityLeaveRepository extends JpaRepository<MaternityLeave, Long> {
     List<MaternityLeave> findByStatus(String status);
+    List<MaternityLeave> findByEmployeeId(Long employeeId);
 }

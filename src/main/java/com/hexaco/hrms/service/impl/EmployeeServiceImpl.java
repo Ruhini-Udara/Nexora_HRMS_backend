@@ -47,6 +47,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.save(savedEmployee);
     }
 
+    @Override
+    public Employee getEmployeeById(Long id) {
+        return employeeRepository.findById(id).orElse(null);
+    }
+
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) {
             return null;

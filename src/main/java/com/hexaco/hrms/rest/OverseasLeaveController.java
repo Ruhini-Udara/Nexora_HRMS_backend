@@ -41,6 +41,12 @@ public class OverseasLeaveController {
         return ResponseEntity.ok(leaves);
     }
 
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<OverseasLeave>> getOverseasLeavesByEmployeeId(@PathVariable Long employeeId) {
+        List<OverseasLeave> leaves = leaveService.getOverseasLeavesByEmployeeId(employeeId);
+        return ResponseEntity.ok(leaves);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<OverseasLeave> getOverseasLeaveById(@PathVariable Long id) {
         return leaveService.getOverseasLeaveById(id)
