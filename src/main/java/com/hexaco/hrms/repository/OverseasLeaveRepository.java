@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface OverseasLeaveRepository extends JpaRepository<OverseasLeave, Long> {
     List<OverseasLeave> findByStatus(String status);
+    List<OverseasLeave> findByEmployeeId(Long employeeId);
 }

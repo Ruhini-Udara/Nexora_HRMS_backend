@@ -42,6 +42,11 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    public List<OverseasLeave> getOverseasLeavesByEmployeeId(Long employeeId) {
+        return overseasLeaveRepository.findByEmployeeId(employeeId);
+    }
+
+    @Override
     public MaternityLeave submitMaternityLeave(MaternityLeave requestedLeave) {
         // Set default status to PENDING_HR_APPROVAL for new applications
         requestedLeave.setStatus("PENDING_HR_APPROVAL");
@@ -61,5 +66,10 @@ public class LeaveServiceImpl implements LeaveService {
     @Override
     public List<MaternityLeave> getMaternityLeavesByStatus(String status) {
         return maternityLeaveRepository.findByStatus(status);
+    }
+
+    @Override
+    public List<MaternityLeave> getMaternityLeavesByEmployeeId(Long employeeId) {
+        return maternityLeaveRepository.findByEmployeeId(employeeId);
     }
 }
