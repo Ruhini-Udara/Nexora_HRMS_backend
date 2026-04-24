@@ -38,7 +38,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .etfNumber(dto.getEtfNumber())
                 .build();
 
-        return employeeRepository.save(employee);
+        Employee savedEmployee = employeeRepository.save(employee);
+
+        // Generate employee code from ID (e.g. EMP001, EMP002, ...)
+        String code = "EMP" + String.format("%03d", savedEmployee.getId());
+        savedEmployee.setEmployeeCode(code);
+
+        return employeeRepository.save(savedEmployee);
     }
 
     @Override

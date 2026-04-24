@@ -18,6 +18,9 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "employee_code", unique = true)
+    private String employeeCode;
+
     // Step 1: Personal Info
     @Column(nullable = false, unique = true)
     private String nicNumber;
