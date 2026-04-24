@@ -13,10 +13,12 @@ public interface LeaveService {
     Optional<OverseasLeave> getOverseasLeaveById(Long id);
     List<OverseasLeave> getAllOverseasLeaves();
     List<OverseasLeave> getOverseasLeavesByStatus(String status);
+    List<OverseasLeave> getOverseasLeavesByEmployeeId(Long employeeId);
     
     // Maternity Leave Methods
     MaternityLeave submitMaternityLeave(MaternityLeave requestedLeave);
     Optional<MaternityLeave> getMaternityLeaveById(Long id);
     List<MaternityLeave> getAllMaternityLeaves();
     List<MaternityLeave> getMaternityLeavesByStatus(String status);
+    List<MaternityLeave> getMaternityLeavesByEmployeeId(Long employeeId);
 }

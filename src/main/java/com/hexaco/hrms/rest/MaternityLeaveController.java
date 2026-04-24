@@ -34,6 +34,12 @@ public class MaternityLeaveController {
         return ResponseEntity.ok(leaves);
     }
 
+    @GetMapping("/employee/{employeeId}")
+    public ResponseEntity<List<MaternityLeave>> getMaternityLeavesByEmployeeId(@PathVariable Long employeeId) {
+        List<MaternityLeave> leaves = leaveService.getMaternityLeavesByEmployeeId(employeeId);
+        return ResponseEntity.ok(leaves);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MaternityLeave> getMaternityLeaveById(@PathVariable Long id) {
         return leaveService.getMaternityLeaveById(id)

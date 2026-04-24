@@ -38,7 +38,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             if (leaveOpt.isPresent()) {
                 OverseasLeave leave = leaveOpt.get();
                 String oldStatus = leave.getStatus();
-                String newStatus = calculateNextStatus(oldStatus, approval.getDecision());
+                String newStatus = calculateNextStatus(oldStatus, approval.getDecision(), "OVERSEAS_LEAVE");
                 leave.setStatus(newStatus);
                 overseasLeaveRepository.save(leave);
 
@@ -59,7 +59,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             if (leaveOpt.isPresent()) {
                 MaternityLeave leave = leaveOpt.get();
                 String oldStatus = leave.getStatus();
-                String newStatus = calculateNextStatus(oldStatus, approval.getDecision());
+                String newStatus = calculateNextStatus(oldStatus, approval.getDecision(), "MATERNITY_LEAVE");
                 leave.setStatus(newStatus);
                 maternityLeaveRepository.save(leave);
 
@@ -80,26 +80,40 @@ public class ApprovalServiceImpl implements ApprovalService {
         return savedApproval;
     }
 
-    private String calculateNextStatus(String currentStatus, String decision) {
+    private String calculateNextStatus(String currentStatus, String decision, String refType) {
         if ("REJECTED".equalsIgnoreCase(decision)) {
             return "REJECTED";
         }
 
         if ("APPROVED".equalsIgnoreCase(decision)) {
-            if ("PENDING_HR_APPROVAL".equals(currentStatus)) {
-                return "PENDING_ADMIN_APPROVAL";
-            } else if ("PENDING_ADMIN_APPROVAL".equals(currentStatus)) {
-                // Admin approves → goes to Board Meeting Agenda, NOT directly to Director
-                return "ADMIN_APPROVED";
-            } else if ("ADMIN_APPROVED".equals(currentStatus)) {
-                // Admin selects from Board Agenda and sends to Director for review
-                return "PENDING_DIRECTOR_REVIEW";
-            } else if ("PENDING_DIRECTOR_REVIEW".equals(currentStatus)) {
-                return "APPROVED"; // Final state
+            if ("OVERSEAS_LEAVE".equals(refType)) {
+                if ("PENDING_HR_APPROVAL".equals(currentStatus)) {
+                    return "PENDING_ADMIN_APPROVAL";
+                } else if ("PENDING_ADMIN_APPROVAL".equals(currentStatus)) {
+                    return "ADMIN_APPROVED";
+                } else if ("ADMIN_APPROVED".equals(currentStatus)) {
+                    return "PENDING_DIRECTOR_REVIEW";
+                } else if ("PENDING_DIRECTOR_REVIEW".equals(currentStatus)) {
+                    return "APPROVED";
+                }
+            } else if ("MATERNITY_LEAVE".equals(refType)) {
+                if ("PENDING_HR_APPROVAL".equals(currentStatus)) {
+                    return "PENDING_ADMIN_APPROVAL";
+                } else if ("PENDING_ADMIN_APPROVAL".equals(currentStatus)) {
+                    // Maternity Leave ends at Admin Approval
+                    triggerFinanceIntegrationPlaceholder();
+                    return "APPROVED";
+                }
             }
         }
 
         return currentStatus;
+    }
+
+    private void triggerFinanceIntegrationPlaceholder() {
+        System.out.println("\n" +
+                "💰 [FINANCE MODULE INTEGRATION]: Requesting salary calculation for approved Maternity Leave...\n" +
+                "📍 Placeholder API call to: /api/v1/finance/salary-calculation\n");
     }
 
     @Override
