@@ -21,4 +21,8 @@ public class EmployeeDTO {
     private String department;
     private String epfNumber;
     private String etfNumber;
+
+    // Step 3: System Access
+    private String password;
+    private Long roleId;
 }
