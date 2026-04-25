@@ -16,7 +16,7 @@ public class EmployeeDTO {
     private String maritalStatus;
 
     // Step 2: Employment Info
-    private String designation;
+    private Long designationId;
     private String employeeType;
     private String department;
     private String epfNumber;

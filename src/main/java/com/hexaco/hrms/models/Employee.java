@@ -18,6 +18,9 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "employee_code", unique = true)
+    private String employeeCode;
+
     // Step 1: Personal Info
     @Column(nullable = false, unique = true)
     private String nicNumber;
@@ -43,8 +46,9 @@ public class Employee {
     private String maritalStatus;
 
     // Step 2: Employment Info
-    @Column(name = "designation_id", nullable = false)
-    private String designation;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "designation_id" , nullable = false)
+    private Designation designation;
 
     @Column(nullable = false)
     private String employeeType;
