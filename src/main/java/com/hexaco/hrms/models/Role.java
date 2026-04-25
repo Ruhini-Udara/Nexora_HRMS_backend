@@ -24,6 +24,9 @@ public class Role {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "permission")
+    private String permission;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

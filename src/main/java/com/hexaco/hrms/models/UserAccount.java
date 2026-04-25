@@ -28,6 +28,7 @@ public class UserAccount {
     private String email;
 
     @Column(name = "is_active")
+    @Builder.Default
     private boolean isActive = true;
 
     @Column(name = "last_login_at")
