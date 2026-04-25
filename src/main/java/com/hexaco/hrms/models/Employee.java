@@ -65,6 +65,13 @@ public class Employee {
     @Column(name = "etf_number")
     private String etfNumber;
 
+    @Column(nullable = true)
+    private String password;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id", nullable = true)
+    private Role role;
+
     
 
     @Column(name = "created_at", updatable = false)
