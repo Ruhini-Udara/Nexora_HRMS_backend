@@ -5,6 +5,7 @@ import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.service.EmployeeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,6 +20,7 @@ public class EmployeeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Employee> registerEmployee(@RequestBody EmployeeDTO employeeDTO) {
         Employee saved = employeeService.registerEmployee(employeeDTO);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);

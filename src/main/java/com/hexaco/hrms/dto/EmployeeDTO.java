@@ -21,4 +21,10 @@ public class EmployeeDTO {
     private String department;
     private String epfNumber;
     private String etfNumber;
+
+    // Step 3: System Access
+    private String accountEmail; // The role-based email (e.g. director@nexora.com)
+    private String password;
+    private String roleName;
+    private boolean enableSystemAccess;
 }
