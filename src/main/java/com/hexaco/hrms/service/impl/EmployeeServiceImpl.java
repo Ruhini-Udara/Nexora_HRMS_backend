@@ -5,6 +5,8 @@ import com.hexaco.hrms.models.Designation;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.repository.DesignationRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
+import com.hexaco.hrms.repository.RoleRepository;
+import com.hexaco.hrms.models.Role;
 import com.hexaco.hrms.service.EmployeeService;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +18,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final DesignationRepository designationRepository;
+    private final RoleRepository roleRepository;
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
     public EmployeeServiceImpl(EmployeeRepository employeeRepository,
-                               DesignationRepository designationRepository) {
+                               DesignationRepository designationRepository,
+                               RoleRepository roleRepository) {
         this.employeeRepository = employeeRepository;
         this.designationRepository = designationRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -31,6 +36,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (dto.getDesignationId() != null) {
             designation = designationRepository.findById(dto.getDesignationId())
                     .orElseThrow(() -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
+        }
+
+        Role role = null;
+        if (dto.getRoleId() != null) {
+            role = roleRepository.findById(dto.getRoleId())
+                    .orElseThrow(() -> new RuntimeException("Role not found with id: " + dto.getRoleId()));
         }
 
         Employee employee = Employee.builder()
@@ -48,6 +59,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .department(dto.getDepartment())
                 .epfNumber(dto.getEpfNumber())
                 .etfNumber(dto.getEtfNumber())
+                .password(dto.getPassword())
+                .role(role)
                 .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
