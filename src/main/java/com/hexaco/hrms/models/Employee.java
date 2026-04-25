@@ -43,7 +43,7 @@ public class Employee {
     private String maritalStatus;
 
     // Step 2: Employment Info
-    @Column(nullable = false)
+    @Column(name = "designation_id", nullable = false)
     private String designation;
 
     @Column(nullable = false)
