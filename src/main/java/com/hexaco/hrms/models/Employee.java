@@ -46,8 +46,9 @@ public class Employee {
     private String maritalStatus;
 
     // Step 2: Employment Info
-    @Column(nullable = false)
-    private String designation;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "designation_id" , nullable = false)
+    private Designation designation;
 
     @Column(nullable = false)
     private String employeeType;

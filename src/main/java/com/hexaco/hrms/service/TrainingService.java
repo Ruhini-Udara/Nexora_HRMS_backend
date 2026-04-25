@@ -187,7 +187,7 @@ public class TrainingService {
                 .employeeName(request.getEmployee().getFullName() + " " + request.getEmployee().getSurname())
                 .epfNumber(request.getEmployee().getEpfNumber())
                 .department(request.getEmployee().getDepartment())
-                .designation(request.getEmployee().getDesignation())
+                .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
                 .workEmail(request.getEmployee().getEmail())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
