@@ -37,4 +37,15 @@ public class EmployeeController {
     public ResponseEntity<java.util.List<Employee>> getAllEmployees() {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
+
+    @DeleteMapping("/{code}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable String code) {
+        try {
+            employeeService.deleteEmployeeByCode(code);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

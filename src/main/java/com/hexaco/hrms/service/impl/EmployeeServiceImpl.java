@@ -117,6 +117,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findAll();
     }
 
+    @Override
+    @Transactional
+    public void deleteEmployeeByCode(String code) {
+        Employee employee = employeeRepository.findByEmployeeCode(code)
+                .orElseThrow(() -> new RuntimeException("Employee not found with code: " + code));
+        
+        userAccountRepository.deleteByEmployee(employee);
+        employeeRepository.delete(employee);
+    }
+
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) {
             return null;
