@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/training")
-@CrossOrigin(origins = "http://localhost:3000") // security configuration
 public class TrainingController {
 
     @Autowired
@@ -95,10 +94,12 @@ public class TrainingController {
     @PutMapping("/requests/{id}/status")
     public ResponseEntity<TrainingRequestDto> updateRequestStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> payload) {
-        String status = payload.get("status");
-        String rejectionReason = payload.get("rejectionReason");
-        return ResponseEntity.ok(trainingService.updateRequestStatus(id, status, rejectionReason));
+            @RequestBody Map<String, Object> payload) {
+        System.out.println("[DEBUG] Received status update for training request: " + id + " | Payload: " + payload);
+        String status = (String) payload.get("status");
+        String rejectionReason = (String) payload.get("rejectionReason");
+        Long approverId = payload.get("approverId") != null ? Long.valueOf(payload.get("approverId").toString()) : null;
+        return ResponseEntity.ok(trainingService.updateRequestStatus(id, status, rejectionReason, approverId));
     }
 
     // --- Training Feedback ---

@@ -64,4 +64,40 @@ public class NotificationServiceImpl implements NotificationService {
                     phoneNo, recipientName, leaveType, status);
         }
     }
+
+    @Override
+    public void sendTrainingStatusUpdate(String recipientName, String email, String trainingTitle, String status, String remark) {
+        String subject = "Training Application Update: " + status;
+        String content = String.format(
+            "Dear %s,\n\nYour application for the training \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+            recipientName, trainingTitle, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
+        );
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 TRAINING NOTIFICATION LOG                                                ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Training: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, trainingTitle, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Training Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real training email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Training Email content: \n{}", content);
+        }
+    }
 }

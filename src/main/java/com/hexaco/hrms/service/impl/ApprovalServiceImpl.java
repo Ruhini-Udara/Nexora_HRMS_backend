@@ -3,9 +3,11 @@ package com.hexaco.hrms.service.impl;
 import com.hexaco.hrms.models.Approval;
 import com.hexaco.hrms.models.MaternityLeave;
 import com.hexaco.hrms.models.OverseasLeave;
+import com.hexaco.hrms.models.TrainingRequest;
 import com.hexaco.hrms.repository.ApprovalRepository;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
+import com.hexaco.hrms.repository.TrainingRequestRepository;
 import com.hexaco.hrms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final TrainingRequestRepository trainingRequestRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
 
     @Override
@@ -74,6 +77,19 @@ public class ApprovalServiceImpl implements ApprovalService {
                         approval.getRemark()
                     );
                 }
+            }
+        } else if ("TRAINING_REQUEST".equals(approval.getRefType())) {
+            Optional<TrainingRequest> requestOpt = trainingRequestRepository.findById(approval.getRefId());
+            if (requestOpt.isPresent()) {
+                TrainingRequest request = requestOpt.get();
+                // Send notification for Training Request
+                notificationService.sendTrainingStatusUpdate(
+                    request.getEmployee().getFullName(),
+                    request.getEmployee().getEmail(),
+                    request.getTrainingEvent().getTitle(),
+                    approval.getDecision(),
+                    approval.getRemark()
+                );
             }
         }
 
