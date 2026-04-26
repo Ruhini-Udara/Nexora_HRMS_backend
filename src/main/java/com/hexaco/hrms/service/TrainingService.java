@@ -3,6 +3,7 @@ package com.hexaco.hrms.service;
 import com.hexaco.hrms.dto.TrainingEventDto;
 import com.hexaco.hrms.dto.TrainingFeedbackDto;
 import com.hexaco.hrms.dto.TrainingRequestDto;
+import com.hexaco.hrms.models.Approval;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.models.TrainingEvent;
 import com.hexaco.hrms.models.TrainingFeedback;
@@ -11,6 +12,7 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TrainingEventRepository;
 import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
+import com.hexaco.hrms.service.ApprovalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +37,9 @@ public class TrainingService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private ApprovalService approvalService;
 
     // --- Training Events ---
 
@@ -127,7 +132,7 @@ public class TrainingService {
                 .collect(Collectors.toList());
     }
 
-    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason) {
+    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason, Long approverId) {
         TrainingRequest request = trainingRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Training Request not found"));
 
@@ -137,6 +142,23 @@ public class TrainingService {
         }
 
         request = trainingRequestRepository.save(request);
+
+        // Create an audit record in the approval table
+        if (approverId != null) {
+            Employee approver = employeeRepository.findById(approverId)
+                    .orElseThrow(() -> new RuntimeException("Approver not found"));
+
+            Approval approval = Approval.builder()
+                    .refId(requestId)
+                    .refType("TRAINING_REQUEST")
+                    .approvedBy(approver)
+                    .decision(status.toUpperCase())
+                    .remark("Rejected".equalsIgnoreCase(status) ? rejectionReason : "Approved by HR")
+                    .build();
+
+            approvalService.saveApproval(approval);
+        }
+
         return mapToDto(request);
     }
 
