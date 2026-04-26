@@ -23,4 +23,7 @@ public class TrainingEventDto {
     private Double budget;
     private String instructor;
     private String status;
+    private String approvedBy;
+    private String approvedAt;
+    private String reason;
 }

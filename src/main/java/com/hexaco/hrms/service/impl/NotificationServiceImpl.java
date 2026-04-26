@@ -100,4 +100,46 @@ public class NotificationServiceImpl implements NotificationService {
             log.info("ℹ️ [SIMULATION MODE] Training Email content: \n{}", content);
         }
     }
+
+    @Override
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor) {
+        String subject = "Training Confirmed: " + trainingTitle;
+        String content = String.format(
+            "Dear %s,\n\nWe are pleased to inform you that the training \"%s\" has been confirmed.\n\n" +
+            "Details:\n" +
+            "Date: %s\n" +
+            "Time: %s\n" +
+            "Location: %s\n" +
+            "Instructor: %s\n\n" +
+            "Please ensure your availability. If you have any conflicts, please contact HR.\n\n" +
+            "Best Regards,\nNexora HRMS System",
+            recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD")
+        );
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 TRAINING FINALIZED LOG                                                   ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Finalized Training Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send finalized training email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Finalized Training Email content: \n{}", content);
+        }
+    }
 }
