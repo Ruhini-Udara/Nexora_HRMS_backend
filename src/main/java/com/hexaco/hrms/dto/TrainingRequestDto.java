@@ -18,7 +18,7 @@ public class TrainingRequestDto {
     private String epfNumber;
     private String department;
     private String designation;
-    private String workEmail;
+    private String personalEmail;
     
     private String trainingTitle;
     private String trainingCategory;
@@ -28,6 +28,7 @@ public class TrainingRequestDto {
     private LocalDate dateSubmitted;
     private String status;
     private String eventStatus;
+    private String eventRejectionReason;
     private Integer age;
     private String justification;
     private String rejectionReason;
