@@ -13,11 +13,15 @@ import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@SuppressWarnings("null")
 public class TrainingService {
 
     @Autowired
@@ -35,6 +39,11 @@ public class TrainingService {
     // --- Training Events ---
 
     public TrainingEventDto createTrainingEvent(TrainingEventDto dto) {
+        // Check for duplicates (same title only - case insensitive)
+        if (trainingEventRepository.existsByTitleIgnoreCase(dto.getTitle())) {
+            throw new RuntimeException("A training event with this title already exists.");
+        }
+        
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
                 .category(dto.getCategory())
@@ -160,6 +169,13 @@ public class TrainingService {
                 .collect(Collectors.toList());
     }
 
+    public boolean existsByTitle(String title) {
+        System.out.println("Service: Checking existence for title: [" + title + "]");
+        boolean exists = trainingEventRepository.existsByTitleIgnoreCase(title.trim());
+        System.out.println("Service: Database match found? " + exists);
+        return exists;
+    }
+
     // --- Mappers ---
 
     private TrainingEventDto mapToDto(TrainingEvent event) {
@@ -189,8 +205,15 @@ public class TrainingService {
                 .department(request.getEmployee().getDepartment())
                 .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
                 .workEmail(request.getEmployee().getEmail())
+                .trainingTitle(request.getTrainingEvent().getTitle())
+                .trainingCategory(request.getTrainingEvent().getCategory())
+                .trainingDate(request.getTrainingEvent().getProposedStartDate())
+                .trainingTime(request.getTrainingEvent().getTime())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
+                .eventStatus(request.getTrainingEvent().getStatus())
+                .age(request.getEmployee().getDateOfBirth() != null ? 
+                    java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)
                 .justification(request.getJustification())
                 .rejectionReason(request.getRejectionReason())
                 .attachmentPath(request.getAttachmentPath())

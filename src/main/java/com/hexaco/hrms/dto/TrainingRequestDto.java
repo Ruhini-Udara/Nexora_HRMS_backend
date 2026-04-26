@@ -20,8 +20,15 @@ public class TrainingRequestDto {
     private String designation;
     private String workEmail;
     
+    private String trainingTitle;
+    private String trainingCategory;
+    private LocalDate trainingDate;
+    private String trainingTime;
+    
     private LocalDate dateSubmitted;
     private String status;
+    private String eventStatus;
+    private Integer age;
     private String justification;
     private String rejectionReason;
     private String attachmentPath;

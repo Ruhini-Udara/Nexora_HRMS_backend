@@ -50,6 +50,8 @@ public class AuthController {
                 .name(userAccount.getEmployee().getFullName())
                 .designation(userAccount.getEmployee().getDesignation() != null ? 
                         userAccount.getEmployee().getDesignation().getDesignationName() : "N/A")
+                .epfNumber(userAccount.getEmployee().getEpfNumber())
+                .department(userAccount.getEmployee().getDepartment())
                 .build());
     }
 }
