@@ -12,7 +12,6 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TrainingEventRepository;
 import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
-import com.hexaco.hrms.service.ApprovalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
