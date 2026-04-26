@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,9 @@ public class TrainingService {
 
     @Autowired
     private ApprovalService approvalService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // --- Training Events ---
 
@@ -83,6 +87,8 @@ public class TrainingService {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
+        String oldStatus = event.getStatus();
+
         event.setTitle(dto.getTitle());
         event.setCategory(dto.getCategory());
         event.setExpectedParticipants(dto.getExpectedParticipants());
@@ -96,8 +102,44 @@ public class TrainingService {
         if (dto.getStatus() != null) {
             event.setStatus(dto.getStatus());
         }
+        event.setRejectionReason(dto.getReason());
 
         event = trainingEventRepository.save(event);
+
+        // If status changed to 'Approved' (Confirmed and Send in frontend)
+        if ("Approved".equalsIgnoreCase(event.getStatus()) && !"Approved".equalsIgnoreCase(oldStatus)) {
+            event.setApprovedBy(dto.getApprovedBy());
+            event.setApprovedAt(LocalDateTime.now());
+            event = trainingEventRepository.save(event);
+            
+            final TrainingEvent finalizedEvent = event;
+            List<TrainingRequest> requests = trainingRequestRepository.findByTrainingEventId(event.getId());
+
+            for (TrainingRequest req : requests) {
+                // Skip rejected requests
+                if ("Rejected".equalsIgnoreCase(req.getStatus())) {
+                    continue;
+                }
+
+                // Auto-approve pending requests when the final list is confirmed by Admin
+                if ("Pending".equalsIgnoreCase(req.getStatus())) {
+                    req.setStatus("Approved");
+                    trainingRequestRepository.save(req);
+                }
+
+                // Send email to all candidates (now all are 'Approved')
+                notificationService.sendTrainingFinalizedNotification(
+                        req.getEmployee().getFullName(),
+                        req.getEmployee().getEmail(),
+                        finalizedEvent.getTitle(),
+                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString() : "TBD",
+                        formatTime(finalizedEvent.getTime()),
+                        finalizedEvent.getLocation(),
+                        finalizedEvent.getInstructor()
+                );
+            }
+        }
+
         return mapToDto(event);
     }
 
@@ -214,6 +256,9 @@ public class TrainingService {
                 .budget(event.getBudget())
                 .instructor(event.getInstructor())
                 .status(event.getStatus())
+                .approvedBy(event.getApprovedBy())
+                .approvedAt(event.getApprovedAt() != null ? event.getApprovedAt().toString() : null)
+                .reason(event.getRejectionReason())
                 .build();
     }
 
@@ -226,7 +271,7 @@ public class TrainingService {
                 .epfNumber(request.getEmployee().getEpfNumber())
                 .department(request.getEmployee().getDepartment())
                 .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
-                .workEmail(request.getEmployee().getEmail())
+                .personalEmail(request.getEmployee().getEmail())
                 .trainingTitle(request.getTrainingEvent().getTitle())
                 .trainingCategory(request.getTrainingEvent().getCategory())
                 .trainingDate(request.getTrainingEvent().getProposedStartDate())
@@ -234,6 +279,7 @@ public class TrainingService {
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
                 .eventStatus(request.getTrainingEvent().getStatus())
+                .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
                 .age(request.getEmployee().getDateOfBirth() != null ? 
                     java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)
                 .justification(request.getJustification())
@@ -256,5 +302,25 @@ public class TrainingService {
                 .overallExperienceRating(feedback.getOverallExperienceRating())
                 .suggestions(feedback.getSuggestions())
                 .build();
+    }
+
+    private String formatTime(String time) {
+        if (time == null || time.isEmpty() || "TBD".equalsIgnoreCase(time)) {
+            return "TBD";
+        }
+        if (time.contains("AM") || time.contains("PM") || time.contains("am") || time.contains("pm")) {
+            return time;
+        }
+        try {
+            String[] parts = time.split(":");
+            int hours = Integer.parseInt(parts[0]);
+            int minutes = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
+            String ampm = hours >= 12 ? "PM" : "AM";
+            int hours12 = hours % 12;
+            if (hours12 == 0) hours12 = 12;
+            return String.format("%d:%02d %s", hours12, minutes, ampm);
+        } catch (Exception e) {
+            return time;
+        }
     }
 }
