@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
     Optional<UserAccount> findByEmail(String email);
     Optional<UserAccount> findByUserName(String userName);
+    void deleteByEmployee(com.hexaco.hrms.models.Employee employee);
 }
