@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/training/events/exists").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
                 .requestMatchers("/api/training/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()

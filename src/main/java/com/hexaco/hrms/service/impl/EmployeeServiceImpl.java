@@ -112,6 +112,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.findById(id).orElse(null);
     }
 
+    @Override
+    public java.util.List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
+
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.isBlank()) {
             return null;
