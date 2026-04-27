@@ -94,19 +94,6 @@ public class ApprovalServiceImpl implements ApprovalService {
                     "Maternity Leave", newStatus, approval.getRemark()
                 );
             }
-        } else if ("TRAINING_REQUEST".equals(approval.getRefType())) {
-            Optional<TrainingRequest> requestOpt = trainingRequestRepository.findById(approval.getRefId());
-            if (requestOpt.isPresent()) {
-                TrainingRequest request = requestOpt.get();
-                // Send notification for Training Request
-                notificationService.sendTrainingStatusUpdate(
-                    request.getEmployee().getFullName(),
-                    request.getEmployee().getEmail(),
-                    request.getTrainingEvent().getTitle(),
-                    approval.getDecision(),
-                    approval.getRemark()
-                );
-            }
         }
 
         return approvalRepository.save(approval);
