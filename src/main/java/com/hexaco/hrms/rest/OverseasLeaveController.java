@@ -32,13 +32,14 @@ public class OverseasLeaveController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
     public ResponseEntity<List<OverseasLeave>> getAllOverseasLeaves() {
         List<OverseasLeave> leaves = leaveService.getAllOverseasLeaves();
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/status/{status}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
     public ResponseEntity<List<OverseasLeave>> getOverseasLeavesByStatus(@PathVariable String status) {
         List<OverseasLeave> leaves = leaveService.getOverseasLeavesByStatus(status);
         return ResponseEntity.ok(leaves);
