@@ -19,6 +19,7 @@ public class TrainingRequestDto {
     private String department;
     private String designation;
     private String personalEmail;
+    private String workEmail;
     
     private String trainingTitle;
     private String trainingCategory;
@@ -33,4 +34,5 @@ public class TrainingRequestDto {
     private String justification;
     private String rejectionReason;
     private String attachmentPath;
+    private boolean attendanceConfirmed;
 }

@@ -52,7 +52,8 @@ public class TrainingService {
         if (trainingEventRepository.existsByTitleIgnoreCase(dto.getTitle())) {
             throw new RuntimeException("A training event with this title already exists.");
         }
-        
+
+        //Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
                 .category(dto.getCategory())
@@ -71,24 +72,29 @@ public class TrainingService {
         return mapToDto(event);
     }
 
+    //Fetch all training events
     public List<TrainingEventDto> getAllTrainingEvents() {
         return trainingEventRepository.findAll().stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    //Fetch training event by ID
     public TrainingEventDto getTrainingEventById(Long id) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
         return mapToDto(event);
     }
 
+    //Update TrainingEvent
     public TrainingEventDto updateTrainingEvent(Long id, TrainingEventDto dto) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
+        // Update event details
         String oldStatus = event.getStatus();
 
+        //Update event details
         event.setTitle(dto.getTitle());
         event.setCategory(dto.getCategory());
         event.setExpectedParticipants(dto.getExpectedParticipants());
@@ -162,18 +168,21 @@ public class TrainingService {
         return mapToDto(request);
     }
 
+    //Fetch training requests by event
     public List<TrainingRequestDto> getRequestsByEvent(Long eventId) {
         return trainingRequestRepository.findByTrainingEventId(eventId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    //Fetch training requests by employee
     public List<TrainingRequestDto> getRequestsByEmployee(Long employeeId) {
         return trainingRequestRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    //Update training request status
     public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason, Long approverId) {
         TrainingRequest request = trainingRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Training Request not found"));
@@ -206,33 +215,51 @@ public class TrainingService {
 
     // --- Training Feedback ---
 
+    // Submit feedback
     public TrainingFeedbackDto submitFeedback(TrainingFeedbackDto dto) {
         TrainingEvent event = trainingEventRepository.findById(dto.getEventId())
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
 
-        TrainingFeedback feedback = TrainingFeedback.builder()
-                .trainingEvent(event)
-                .employee(employee)
-                .attendanceStatus(dto.getAttendanceStatus())
-                .feedback(dto.getFeedback())
-                .courseContentRating(dto.getCourseContentRating())
-                .instructorRating(dto.getInstructorRating())
-                .overallExperienceRating(dto.getOverallExperienceRating())
-                .suggestions(dto.getSuggestions())
-                .build();
+        TrainingFeedback feedback = trainingFeedbackRepository
+                .findByTrainingEventIdAndEmployeeId(dto.getEventId(), dto.getEmployeeId())
+                .orElse(new TrainingFeedback());
+
+        feedback.setTrainingEvent(event);
+        feedback.setEmployee(employee);
+        
+        if (dto.getAttendanceStatus() != null) {
+            feedback.setAttendanceStatus(dto.getAttendanceStatus());
+        }
+        if (dto.getFeedback() != null) {
+            feedback.setFeedback(dto.getFeedback());
+        }
+        if (dto.getCourseContentRating() != null) {
+            feedback.setCourseContentRating(dto.getCourseContentRating());
+        }
+        if (dto.getInstructorRating() != null) {
+            feedback.setInstructorRating(dto.getInstructorRating());
+        }
+        if (dto.getOverallExperienceRating() != null) {
+            feedback.setOverallExperienceRating(dto.getOverallExperienceRating());
+        }
+        if (dto.getSuggestions() != null) {
+            feedback.setSuggestions(dto.getSuggestions());
+        }
 
         feedback = trainingFeedbackRepository.save(feedback);
         return mapToDto(feedback);
     }
 
+    // Fetch feedback by event
     public List<TrainingFeedbackDto> getFeedbackByEvent(Long eventId) {
         return trainingFeedbackRepository.findByTrainingEventId(eventId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
+    // Check if training event title already exists
     public boolean existsByTitle(String title) {
         System.out.println("Service: Checking existence for title: [" + title + "]");
         boolean exists = trainingEventRepository.existsByTitleIgnoreCase(title.trim());
@@ -242,6 +269,7 @@ public class TrainingService {
 
     // --- Mappers ---
 
+    // Map TrainingEvent to TrainingEventDto
     private TrainingEventDto mapToDto(TrainingEvent event) {
         return TrainingEventDto.builder()
                 .id(event.getId())
@@ -262,6 +290,7 @@ public class TrainingService {
                 .build();
     }
 
+    // Map TrainingRequest to TrainingRequestDto
     private TrainingRequestDto mapToDto(TrainingRequest request) {
         return TrainingRequestDto.builder()
                 .id(request.getId())
@@ -272,6 +301,7 @@ public class TrainingService {
                 .department(request.getEmployee().getDepartment())
                 .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
                 .personalEmail(request.getEmployee().getEmail())
+                .workEmail(request.getEmployee().getEmail())
                 .trainingTitle(request.getTrainingEvent().getTitle())
                 .trainingCategory(request.getTrainingEvent().getCategory())
                 .trainingDate(request.getTrainingEvent().getProposedStartDate())
@@ -285,9 +315,12 @@ public class TrainingService {
                 .justification(request.getJustification())
                 .rejectionReason(request.getRejectionReason())
                 .attachmentPath(request.getAttachmentPath())
+                .attendanceConfirmed(trainingFeedbackRepository.existsByTrainingEventIdAndEmployeeId(
+                        request.getTrainingEvent().getId(), request.getEmployee().getId()))
                 .build();
     }
 
+    // Map TrainingFeedback to TrainingFeedbackDto
     private TrainingFeedbackDto mapToDto(TrainingFeedback feedback) {
         return TrainingFeedbackDto.builder()
                 .id(feedback.getId())
@@ -304,6 +337,7 @@ public class TrainingService {
                 .build();
     }
 
+    // Format time to 12-hour format
     private String formatTime(String time) {
         if (time == null || time.isEmpty() || "TBD".equalsIgnoreCase(time)) {
             return "TBD";
