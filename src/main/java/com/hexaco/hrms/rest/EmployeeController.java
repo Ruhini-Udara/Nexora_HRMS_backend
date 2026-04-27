@@ -32,4 +32,9 @@ public class EmployeeController {
         if (employee != null) return ResponseEntity.ok(employee);
         return ResponseEntity.notFound().build();
     }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<Employee>> getAllEmployees() {
+        return ResponseEntity.ok(employeeService.getAllEmployees());
+    }
 }
