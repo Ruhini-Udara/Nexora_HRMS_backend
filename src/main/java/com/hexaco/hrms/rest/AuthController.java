@@ -22,36 +22,38 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final UserAccountRepository userAccountRepository;
-    private final JwtUtils jwtUtils;
+        private final AuthenticationManager authenticationManager;
+        private final UserAccountRepository userAccountRepository;
+        private final JwtUtils jwtUtils;
 
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        @PostMapping("/login")
+        public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+                Authentication authentication = authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
+                                                loginRequest.getPassword()));
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        UserAccount userAccount = userAccountRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
-        
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("role", userAccount.getRole().getRoleName());
-        claims.put("employeeId", userAccount.getEmployee().getId());
+                UserAccount userAccount = userAccountRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
 
-        String jwt = jwtUtils.generateToken(userAccount.getEmail(), claims);
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("role", userAccount.getRole().getRoleName());
+                claims.put("employeeId", userAccount.getEmployee().getId());
 
-        return ResponseEntity.ok(JwtResponse.builder()
-                .token(jwt)
-                .email(userAccount.getEmail())
-                .id(userAccount.getEmployee().getId())
-                .role(userAccount.getRole().getRoleName())
-                .name(userAccount.getEmployee().getFullName())
-                .designation(userAccount.getEmployee().getDesignation() != null ? 
-                        userAccount.getEmployee().getDesignation().getDesignationName() : "N/A")
-                .epfNumber(userAccount.getEmployee().getEpfNumber())
-                .department(userAccount.getEmployee().getDepartment())
-                .build());
-    }
+                String jwt = jwtUtils.generateToken(userAccount.getEmail(), claims);
+
+                return ResponseEntity.ok(JwtResponse.builder()
+                                .token(jwt)
+                                .email(userAccount.getEmail())
+                                .id(userAccount.getEmployee().getId())
+                                .role(userAccount.getRole().getRoleName())
+                                .name(userAccount.getEmployee().getFullName())
+                                .designation(userAccount.getEmployee().getDesignation() != null
+                                                ? userAccount.getEmployee().getDesignation().getDesignationName()
+                                                : "N/A")
+                                .epfNumber(userAccount.getEmployee().getEpfNumber())
+                                .department(userAccount.getEmployee().getDepartment())
+                                .build());
+        }
 }
