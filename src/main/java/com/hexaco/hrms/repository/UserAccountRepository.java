@@ -10,6 +10,6 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, Long> 
     Optional<UserAccount> findByEmail(String email);
 
     Optional<UserAccount> findByUserName(String userName);
-
     void deleteByEmployee(com.hexaco.hrms.models.Employee employee);
+    java.util.List<UserAccount> findByEmployeeId(Long employeeId);
 }

@@ -26,20 +26,24 @@ public class AuthController {
         private final UserAccountRepository userAccountRepository;
         private final JwtUtils jwtUtils;
 
-        @PostMapping("/login")
-        public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        // Rationale: We use Spring Security's AuthenticationManager to handle the multi-step 
+        // authentication process (checking password hashes, account status, etc.)
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),
-                                                loginRequest.getPassword()));
+        // Rationale: Setting the authentication in the SecurityContext allows the application 
+        // to recognize the user for the duration of this request.
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                UserAccount userAccount = userAccountRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
-
-                Map<String, Object> claims = new HashMap<>();
-                claims.put("role", userAccount.getRole().getRoleName());
-                claims.put("employeeId", userAccount.getEmployee().getId());
+        UserAccount userAccount = userAccountRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
+        
+        // Rationale: We inject role and employeeId into JWT claims so the frontend 
+        // can make authorization decisions without querying the database every time.
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", userAccount.getRole().getRoleName());
+        claims.put("employeeId", userAccount.getEmployee().getId());
 
                 String jwt = jwtUtils.generateToken(userAccount.getEmail(), claims);
 
