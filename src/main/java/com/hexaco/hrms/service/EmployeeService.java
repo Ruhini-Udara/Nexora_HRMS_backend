@@ -8,4 +8,5 @@ public interface EmployeeService {
     Employee getEmployeeById(Long id);
     java.util.List<Employee> getAllEmployees();
     void deleteEmployeeByCode(String code);
+    Employee updateEmployee(String code, com.hexaco.hrms.dto.EmployeeUpdateDTO dto);
 }

@@ -48,4 +48,15 @@ public class EmployeeController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PutMapping("/{code}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody com.hexaco.hrms.dto.EmployeeUpdateDTO dto) {
+        try {
+            Employee updated = employeeService.updateEmployee(code, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

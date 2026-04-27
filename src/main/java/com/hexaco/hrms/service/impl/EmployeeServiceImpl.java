@@ -133,4 +133,31 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return LocalDate.parse(dateStr, DATE_FORMAT);
     }
+
+    @Override
+    @Transactional
+    public Employee updateEmployee(String code, com.hexaco.hrms.dto.EmployeeUpdateDTO dto) {
+        Employee employee = employeeRepository.findByEmployeeCode(code)
+                .orElseThrow(() -> new RuntimeException("Employee not found with code: " + code));
+
+        if (dto.getFullName() != null) {
+            employee.setFullName(dto.getFullName());
+        }
+        if (dto.getEmail() != null) {
+            employee.setEmail(dto.getEmail().trim());
+        }
+        if (dto.getDepartment() != null) {
+            employee.setDepartment(dto.getDepartment());
+        }
+        if (dto.getEmployeeType() != null) {
+            employee.setEmployeeType(dto.getEmployeeType());
+        }
+        if (dto.getDesignationId() != null) {
+            Designation designation = designationRepository.findById(dto.getDesignationId())
+                    .orElseThrow(() -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
+            employee.setDesignation(designation);
+        }
+
+        return employeeRepository.save(employee);
+    }
 }
