@@ -18,6 +18,8 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+// Rationale: We extend OncePerRequestFilter to ensure that the JWT validation 
+// logic is executed exactly once for every incoming request.
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;

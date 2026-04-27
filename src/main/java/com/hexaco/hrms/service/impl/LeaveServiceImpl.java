@@ -4,6 +4,8 @@ import com.hexaco.hrms.models.MaternityLeave;
 import com.hexaco.hrms.models.OverseasLeave;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.LeaveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,11 +20,39 @@ public class LeaveServiceImpl implements LeaveService {
 
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final com.hexaco.hrms.repository.EmployeeRepository employeeRepository;
+    private final UserAccountRepository userAccountRepository;
+    
+    // Status Constants to avoid hard-coding
+    private static final String STATUS_PENDING_HR = "PENDING_HR_APPROVAL";
+    private static final String STATUS_PENDING_ADMIN = "PENDING_ADMIN_APPROVAL";
 
     @Override
     public OverseasLeave submitOverseasLeave(OverseasLeave requestedLeave) {
-        // Set default status to PENDING_HR_APPROVAL for new applications
-        requestedLeave.setStatus("PENDING_HR_APPROVAL");
+        // Smart Routing Logic:
+        // Rationale: If the employee submitting the request already has an HR role,
+        // we skip the 'PENDING_HR_APPROVAL' step and move directly to Admin approval.
+        if (requestedLeave.getEmployee() != null && requestedLeave.getEmployee().getId() != null) {
+            boolean isHr = false;
+            java.util.List<UserAccount> accounts = userAccountRepository.findByEmployeeId(requestedLeave.getEmployee().getId());
+            for (UserAccount acc : accounts) {
+                if (acc.getRole() != null) {
+                    String role = acc.getRole().getRoleName();
+                    if ("ROLE_HR".equalsIgnoreCase(role) || "HR".equalsIgnoreCase(role)) {
+                        isHr = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (isHr) {
+                requestedLeave.setStatus(STATUS_PENDING_ADMIN);
+            } else {
+                requestedLeave.setStatus(STATUS_PENDING_HR);
+            }
+        } else {
+            requestedLeave.setStatus(STATUS_PENDING_HR);
+        }
         return overseasLeaveRepository.save(requestedLeave);
     }
 
@@ -48,8 +78,29 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public MaternityLeave submitMaternityLeave(MaternityLeave requestedLeave) {
-        // Set default status to PENDING_HR_APPROVAL for new applications
-        requestedLeave.setStatus("PENDING_HR_APPROVAL");
+        // Smart Routing Logic:
+        // Rationale: Similar to Overseas, HR employees skip their own verification layer.
+        if (requestedLeave.getEmployee() != null && requestedLeave.getEmployee().getId() != null) {
+            boolean isHr = false;
+            java.util.List<UserAccount> accounts = userAccountRepository.findByEmployeeId(requestedLeave.getEmployee().getId());
+            for (UserAccount acc : accounts) {
+                if (acc.getRole() != null) {
+                    String role = acc.getRole().getRoleName();
+                    if ("ROLE_HR".equalsIgnoreCase(role) || "HR".equalsIgnoreCase(role)) {
+                        isHr = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (isHr) {
+                requestedLeave.setStatus(STATUS_PENDING_ADMIN);
+            } else {
+                requestedLeave.setStatus(STATUS_PENDING_HR);
+            }
+        } else {
+            requestedLeave.setStatus(STATUS_PENDING_HR);
+        }
         return maternityLeaveRepository.save(requestedLeave);
     }
 

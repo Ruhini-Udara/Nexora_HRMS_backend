@@ -43,8 +43,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Rationale: CSRF is disabled because we use JWTs, which are stored by the client 
+            // and sent in headers, making the application inherently immune to CSRF attacks.
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
+            // Rationale: We use STATELESS session management because JWT is a self-contained 
+            // token; the server does not need to store user sessions in memory.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
@@ -53,6 +57,8 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             );
 
+        // Rationale: We add our custom JWT filter before the standard UsernamePassword filter 
+        // to catch and validate the token in the request header first.
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
