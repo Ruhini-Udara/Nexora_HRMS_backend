@@ -91,7 +91,7 @@ public class TrainingService {
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
         String oldStatus = event.getStatus();
-        // Update event details
+
 
         //Update event details
         event.setTitle(dto.getTitle());
