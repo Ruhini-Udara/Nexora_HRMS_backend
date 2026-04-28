@@ -13,7 +13,9 @@ public class OverseasLeaveDto {
     private Long id;
     private Long employeeId;
     private String employeeName;
+    private String employeeCode;
     private String epfNumber;
+    private String department;
     private Long leaveTypeId;
     private String leaveTypeName;
     private LocalDate fromDate;
