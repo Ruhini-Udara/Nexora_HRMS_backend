@@ -53,6 +53,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .designation(designation)
                 .employeeType(dto.getEmployeeType())
                 .department(dto.getDepartment())
+                .branch(dto.getBranch())
                 .epfNumber(dto.getEpfNumber())
                 .etfNumber(dto.getEtfNumber())
                 .build();
@@ -148,6 +149,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         if (dto.getDepartment() != null) {
             employee.setDepartment(dto.getDepartment());
+        }
+        if (dto.getBranch() != null) {
+            employee.setBranch(dto.getBranch());
         }
         if (dto.getEmployeeType() != null) {
             employee.setEmployeeType(dto.getEmployeeType());
