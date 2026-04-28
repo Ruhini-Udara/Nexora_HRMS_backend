@@ -9,23 +9,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WelfareRequestDto {
+public class ResignationDto {
     private Long id;
     private Long employeeId;
     private String employeeName;
-    private String email;
-    private String role;
-    private String initials;
-    private LocalDate requestDate;
-    private String welfareType;
-    private Double amount;
     private String epfNumber;
     private String designation;
     private String branch;
+    private LocalDate resignationDate;
+    private LocalDate lastWorkingDate;
+    private String obligationDetails;
+    private String reason;
+    private String specialRemark;
     private String status;
-    private String employeeRemarks;
-    private String hrRemarks;
-    private String supportingDocument;
+    private String resignationLetterDoc;
+    private String clearanceLetterDoc;
+    private String handoverChecklistDoc;
+    private String hrRemark;
+    private String directorRemark;
+    private String boardMeetingDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

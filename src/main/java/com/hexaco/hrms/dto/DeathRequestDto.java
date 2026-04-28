@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class DeathRequestDto {
     private Long id;
     private Long employeeId;
+    private String employeeIdString;
     private String employeeName;
     private String epfNumber;
     private LocalDate dateOfDeath;
@@ -25,6 +26,10 @@ public class DeathRequestDto {
     private String specialRemark;
     private String status;
     private String nomineeName;
+    private String nomineeRelationship;
+    private String nomineeNic;
+    private String nomineePhone;
+    private String nomineeAddress;
     private String nomineeBank;
     private String nomineeBranch;
     private String nomineeAccount;
@@ -32,6 +37,7 @@ public class DeathRequestDto {
     private String nomineeIdDoc;
     private String requestLetterDoc;
     private String hrRemark;
+    private String boardMeetingDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

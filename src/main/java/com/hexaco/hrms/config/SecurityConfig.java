@@ -53,6 +53,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/training/events/exists").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
+                .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()

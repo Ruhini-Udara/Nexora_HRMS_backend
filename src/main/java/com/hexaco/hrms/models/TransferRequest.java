@@ -43,7 +43,19 @@ public class TransferRequest {
     @Column(nullable = false)
     private String status; // SUBMITTED, VERIFIED_BY_HR, PENDING_ADMIN, REJECTED
 
+    @Column(name = "board_meeting_date")
+    private String boardMeetingDate;
 
+    @Column(name = "hr_remark", columnDefinition = "TEXT")
+    private String hrRemark;
+
+    public void setHrRemark(String hrRemark) {
+        this.hrRemark = hrRemark;
+    }
+
+    public String getHrRemark() {
+        return this.hrRemark;
+    }
 
     @Column(name = "justification_document_path")
     private String justificationDocumentPath;

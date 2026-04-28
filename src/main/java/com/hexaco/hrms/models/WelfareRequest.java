@@ -34,11 +34,23 @@ public class WelfareRequest {
     @Column(nullable = false)
     private String status; // PENDING, APPROVED, REJECTED
 
-    @Column(columnDefinition = "TEXT")
-    private String remarks;
-
     @Column(name = "supporting_document")
     private String supportingDocument;
+
+    @Column(name = "designation")
+    private String designation;
+
+    @Column(name = "branch")
+    private String branch;
+
+    @Column(name = "epf_number")
+    private String epfNumber;
+
+    @Column(name = "employee_remarks", columnDefinition = "TEXT")
+    private String employeeRemarks;
+
+    @Column(name = "hr_remarks", columnDefinition = "TEXT")
+    private String hrRemarks;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

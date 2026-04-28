@@ -16,7 +16,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TransferRequestService {
 
+    // Service for handling transfer requests
     private final TransferRequestRepository transferRequestRepository;
+
     private final EmployeeRepository employeeRepository;
 
     @Transactional
@@ -54,10 +56,12 @@ public class TransferRequestService {
     }
 
     @Transactional
-    public TransferRequestDto updateStatus(Long id, String status) {
+    public TransferRequestDto updateStatus(Long id, String status, String remarks, String boardMeetingDate) {
         TransferRequest request = transferRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer request not found"));
         request.setStatus(status);
+        if (remarks != null) request.setHrRemark(remarks);
+        if (boardMeetingDate != null) request.setBoardMeetingDate(boardMeetingDate);
         return mapToDto(transferRequestRepository.save(request));
     }
 
@@ -93,6 +97,8 @@ public class TransferRequestService {
                 .requestDate(request.getRequestDate())
                 .expectedDate(request.getExpectedDate())
                 .status(request.getStatus())
+                .hrRemark(request.getHrRemark())
+                .boardMeetingDate(request.getBoardMeetingDate())
                 .justificationDocumentPath(request.getJustificationDocumentPath())
                 .proofDocumentPath(request.getProofDocumentPath())
                 .createdAt(request.getCreatedAt())
