@@ -141,15 +141,8 @@ public class NotificationServiceImpl implements NotificationService {
     public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor) {
         String subject = "Training Finalized: " + trainingTitle;
         String content = String.format(
-            "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
-            "Details:\n" +
-            "Date: %s\n" +
-            "Time: %s\n" +
-            "Location: %s\n" +
-            "Instructor: %s\n\n" +
-            "Please mark your calendar. We look forward to your participation.\n\n" +
-            "Best Regards,\nNexora HRMS System",
-            recipientName, trainingTitle, date, time, location, instructor
+            "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\nDetails:\nDate: %s\nTime: %s\nLocation: %s\nInstructor: %s\n\nPlease mark your calendar. We look forward to your participation.\n\nBest Regards,\nNexora HRMS System",
+            recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD")
         );
 
         log.info("\n" +
