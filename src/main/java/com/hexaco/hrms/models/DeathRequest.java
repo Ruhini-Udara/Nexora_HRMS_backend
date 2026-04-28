@@ -25,6 +25,9 @@ public class DeathRequest {
     @Column(name = "employee_name", nullable = false)
     private String employeeName;
 
+    @Column(name = "employee_id_string")
+    private String employeeIdString;
+
     @Column(name = "date_of_death")
     private LocalDate dateOfDeath;
 
@@ -78,6 +81,9 @@ public class DeathRequest {
 
     @Column(name = "hr_remark", columnDefinition = "TEXT")
     private String hrRemark;
+
+    @Column(name = "board_meeting_date")
+    private String boardMeetingDate;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

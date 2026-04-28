@@ -100,4 +100,83 @@ public class NotificationServiceImpl implements NotificationService {
             log.info("ℹ️ [SIMULATION MODE] Training Email content: \n{}", content);
         }
     }
+
+    @Override
+    public void sendWelfareStatusUpdate(String recipientName, String email, String welfareType, String status, String remark) {
+        String subject = "Welfare Request Update: " + status;
+        String content = String.format(
+            "Dear %s,\n\nYour welfare request for \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+            recipientName, welfareType, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
+        );
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 WELFARE NOTIFICATION LOG                                                 ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Welfare Type: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, welfareType, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Welfare Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real welfare email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Welfare Email content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor) {
+        String subject = "Training Finalized: " + trainingTitle;
+        String content = String.format(
+            "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
+            "Details:\n" +
+            "Date: %s\n" +
+            "Time: %s\n" +
+            "Location: %s\n" +
+            "Instructor: %s\n\n" +
+            "Please mark your calendar. We look forward to your participation.\n\n" +
+            "Best Regards,\nNexora HRMS System",
+            recipientName, trainingTitle, date, time, location, instructor
+        );
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 FINALIZED TRAINING NOTIFICATION LOG                                      ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Training: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, trainingTitle, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Finalized Training Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send finalized training email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Finalized Training Email content: \n{}", content);
+        }
+    }
 }

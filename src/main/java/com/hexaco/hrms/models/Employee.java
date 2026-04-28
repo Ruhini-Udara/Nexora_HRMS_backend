@@ -72,6 +72,9 @@ public class Employee {
     @JoinColumn(name = "role_id", nullable = true)
     private Role role;
 
+    @OneToOne(mappedBy = "employee")
+    private Nominee nominee;
+
     
 
     @Column(name = "created_at", updatable = false)

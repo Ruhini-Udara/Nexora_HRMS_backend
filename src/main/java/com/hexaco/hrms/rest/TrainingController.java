@@ -56,10 +56,16 @@ public class TrainingController {
     @PutMapping("/events/{id}/status")
     public ResponseEntity<TrainingEventDto> updateEventStatus(
             @PathVariable Long id,
-            @RequestBody Map<String, String> payload) {
-        String status = payload.get("status");
+            @RequestBody Map<String, Object> payload) {
+        String status = (String) payload.get("status");
+        String reason = (String) payload.get("reason");
+        String approvedBy = (String) payload.get("approvedBy");
+        
         TrainingEventDto event = trainingService.getTrainingEventById(id);
         event.setStatus(status);
+        event.setReason(reason);
+        event.setApprovedBy(approvedBy);
+        
         return ResponseEntity.ok(trainingService.updateTrainingEvent(id, event));
     }
 
