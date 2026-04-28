@@ -1,7 +1,7 @@
 package com.hexaco.hrms.service;
 
-import com.hexaco.hrms.models.MaternityLeave;
-import com.hexaco.hrms.models.OverseasLeave;
+import com.hexaco.hrms.dto.MaternityLeaveDto;
+import com.hexaco.hrms.dto.OverseasLeaveDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,16 +9,16 @@ import java.util.Optional;
 public interface LeaveService {
     
     // Overseas Leave Methods
-    OverseasLeave submitOverseasLeave(OverseasLeave requestedLeave);
-    Optional<OverseasLeave> getOverseasLeaveById(Long id);
-    List<OverseasLeave> getAllOverseasLeaves();
-    List<OverseasLeave> getOverseasLeavesByStatus(String status);
-    List<OverseasLeave> getOverseasLeavesByEmployeeId(Long employeeId);
+    OverseasLeaveDto submitOverseasLeave(OverseasLeaveDto requestedLeave);
+    Optional<OverseasLeaveDto> getOverseasLeaveById(Long id);
+    List<OverseasLeaveDto> getAllOverseasLeaves();
+    List<OverseasLeaveDto> getOverseasLeavesByStatus(String status);
+    List<OverseasLeaveDto> getOverseasLeavesByEmployeeId(Long employeeId);
     
     // Maternity Leave Methods
-    MaternityLeave submitMaternityLeave(MaternityLeave requestedLeave);
-    Optional<MaternityLeave> getMaternityLeaveById(Long id);
-    List<MaternityLeave> getAllMaternityLeaves();
-    List<MaternityLeave> getMaternityLeavesByStatus(String status);
-    List<MaternityLeave> getMaternityLeavesByEmployeeId(Long employeeId);
+    MaternityLeaveDto submitMaternityLeave(MaternityLeaveDto requestedLeave);
+    Optional<MaternityLeaveDto> getMaternityLeaveById(Long id);
+    List<MaternityLeaveDto> getAllMaternityLeaves();
+    List<MaternityLeaveDto> getMaternityLeavesByStatus(String status);
+    List<MaternityLeaveDto> getMaternityLeavesByEmployeeId(Long employeeId);
 }

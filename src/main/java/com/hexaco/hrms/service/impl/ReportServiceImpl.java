@@ -8,7 +8,7 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.hexaco.hrms.models.OverseasLeave;
+import com.hexaco.hrms.dto.OverseasLeaveDto;
 import com.hexaco.hrms.service.LeaveService;
 import com.hexaco.hrms.service.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +26,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public void exportBoardMeetingPdf(HttpServletResponse response) throws IOException {
-        List<OverseasLeave> pendingLeaves = leaveService.getOverseasLeavesByStatus("PENDING_DIRECTOR_REVIEW");
+        List<OverseasLeaveDto> pendingLeaves = leaveService.getOverseasLeavesByStatus("PENDING_DIRECTOR_REVIEW");
 
         Document document = new Document();
         PdfWriter.getInstance(document, response.getOutputStream());
@@ -69,8 +69,8 @@ public class ReportServiceImpl implements ReportService {
         table.addCell(cell);
     }
 
-    private void writeTableData(PdfPTable table, List<OverseasLeave> leaves) {
-        for (OverseasLeave leave : leaves) {
+    private void writeTableData(PdfPTable table, List<OverseasLeaveDto> leaves) {
+        for (OverseasLeaveDto leave : leaves) {
             table.addCell(leave.getId() != null ? String.valueOf(leave.getId()) : "N/A");
             table.addCell(leave.getReason() != null ? leave.getReason() : "N/A");
             table.addCell(leave.getBranch() != null ? leave.getBranch() : "N/A");
