@@ -142,6 +142,10 @@ public class NotificationServiceImpl implements NotificationService {
         String subject = "Training Finalized: " + trainingTitle;
         String content = String.format(
             "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor) {
+        String subject = "Training Confirmed: " + trainingTitle;
+        String content = String.format(
+            "Dear %s,\n\nWe are pleased to inform you that the training \"%s\" has been confirmed.\n\n" +
             "Details:\n" +
             "Date: %s\n" +
             "Time: %s\n" +
@@ -150,6 +154,9 @@ public class NotificationServiceImpl implements NotificationService {
             "Please mark your calendar. We look forward to your participation.\n\n" +
             "Best Regards,\nNexora HRMS System",
             recipientName, trainingTitle, date, time, location, instructor
+            "Please ensure your availability. If you have any conflicts, please contact HR.\n\n" +
+            "Best Regards,\nNexora HRMS System",
+            recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD")
         );
 
         log.info("\n" +
@@ -162,6 +169,13 @@ public class NotificationServiceImpl implements NotificationService {
                 "║ Mode: {}\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
                 recipientName, email, subject, trainingTitle, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+                "║ 📧 TRAINING FINALIZED LOG                                                   ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
 
         if (!simulationMode) {
             try {

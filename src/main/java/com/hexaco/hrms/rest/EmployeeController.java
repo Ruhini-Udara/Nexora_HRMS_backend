@@ -32,4 +32,31 @@ public class EmployeeController {
         if (employee != null) return ResponseEntity.ok(employee);
         return ResponseEntity.notFound().build();
     }
+
+    @GetMapping
+    public ResponseEntity<java.util.List<Employee>> getAllEmployees() {
+        return ResponseEntity.ok(employeeService.getAllEmployees());
+    }
+
+    @DeleteMapping("/{code}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable String code) {
+        try {
+            employeeService.deleteEmployeeByCode(code);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{code}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody com.hexaco.hrms.dto.EmployeeUpdateDTO dto) {
+        try {
+            Employee updated = employeeService.updateEmployee(code, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

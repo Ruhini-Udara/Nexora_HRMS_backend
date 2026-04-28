@@ -1,6 +1,6 @@
 package com.hexaco.hrms.rest;
 
-import com.hexaco.hrms.models.OverseasLeave;
+import com.hexaco.hrms.dto.OverseasLeaveDto;
 import com.hexaco.hrms.service.LeaveService;
 import com.hexaco.hrms.service.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,32 +26,33 @@ public class OverseasLeaveController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR', 'DIRECTOR')")
-    public ResponseEntity<OverseasLeave> submitOverseasLeave(@RequestBody OverseasLeave requestedLeave) {
-        OverseasLeave savedLeave = leaveService.submitOverseasLeave(requestedLeave);
+    public ResponseEntity<OverseasLeaveDto> submitOverseasLeave(@RequestBody OverseasLeaveDto dto) {
+        OverseasLeaveDto savedLeave = leaveService.submitOverseasLeave(dto);
         return new ResponseEntity<>(savedLeave, HttpStatus.CREATED);
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'HR')")
-    public ResponseEntity<List<OverseasLeave>> getAllOverseasLeaves() {
-        List<OverseasLeave> leaves = leaveService.getAllOverseasLeaves();
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    public ResponseEntity<List<OverseasLeaveDto>> getAllOverseasLeaves() {
+        List<OverseasLeaveDto> leaves = leaveService.getAllOverseasLeaves();
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<OverseasLeave>> getOverseasLeavesByStatus(@PathVariable String status) {
-        List<OverseasLeave> leaves = leaveService.getOverseasLeavesByStatus(status);
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    public ResponseEntity<List<OverseasLeaveDto>> getOverseasLeavesByStatus(@PathVariable String status) {
+        List<OverseasLeaveDto> leaves = leaveService.getOverseasLeavesByStatus(status);
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<OverseasLeave>> getOverseasLeavesByEmployeeId(@PathVariable Long employeeId) {
-        List<OverseasLeave> leaves = leaveService.getOverseasLeavesByEmployeeId(employeeId);
+    public ResponseEntity<List<OverseasLeaveDto>> getOverseasLeavesByEmployeeId(@PathVariable Long employeeId) {
+        List<OverseasLeaveDto> leaves = leaveService.getOverseasLeavesByEmployeeId(employeeId);
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OverseasLeave> getOverseasLeaveById(@PathVariable Long id) {
+    public ResponseEntity<OverseasLeaveDto> getOverseasLeaveById(@PathVariable Long id) {
         return leaveService.getOverseasLeaveById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());

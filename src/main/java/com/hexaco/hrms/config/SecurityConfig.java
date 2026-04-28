@@ -43,20 +43,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // Rationale: CSRF is disabled because we use JWTs, which are stored by the client 
+            // and sent in headers, making the application inherently immune to CSRF attacks.
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
+            // Rationale: We use STATELESS session management because JWT is a self-contained 
+            // token; the server does not need to store user sessions in memory.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/training/events/exists").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
                 .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
                 .requestMatchers("/api/training/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()
             );
 
+        // Rationale: We add our custom JWT filter before the standard UsernamePassword filter 
+        // to catch and validate the token in the request header first.
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -66,13 +74,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Allow all origins for dev, or specify localhost:3000
-        configuration.setAllowedOriginPatterns(Collections.singletonList("*")); 
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept",
+                "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

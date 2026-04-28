@@ -36,16 +36,19 @@ public class TrainingController {
         }
     }
 
+    // API endpoint to get all training events
     @GetMapping("/events")
     public ResponseEntity<List<TrainingEventDto>> getAllTrainingEvents() {
         return ResponseEntity.ok(trainingService.getAllTrainingEvents());
     }
 
+    // API endpoint to get a specific training event by ID
     @GetMapping("/events/{id}")
     public ResponseEntity<TrainingEventDto> getTrainingEventById(@PathVariable Long id) {
         return ResponseEntity.ok(trainingService.getTrainingEventById(id));
     }
 
+    // API endpoint to update a training event
     @PutMapping("/events/{id}")
     public ResponseEntity<TrainingEventDto> updateTrainingEvent(
             @PathVariable Long id,
@@ -53,6 +56,7 @@ public class TrainingController {
         return ResponseEntity.ok(trainingService.updateTrainingEvent(id, dto));
     }
 
+    // API endpoint to update event status
     @PutMapping("/events/{id}/status")
     public ResponseEntity<TrainingEventDto> updateEventStatus(
             @PathVariable Long id,
@@ -71,12 +75,14 @@ public class TrainingController {
 
     // --- Training Requests ---
 
+    // API endpoint to apply for training
     @PostMapping("/requests")
     public ResponseEntity<TrainingRequestDto> applyForTraining(@RequestBody TrainingRequestDto dto) {
         TrainingRequestDto created = trainingService.applyForTraining(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    // API endpoint to get training requests by event
     @GetMapping("/events/{eventId}/requests")
     public ResponseEntity<?> getRequestsByEvent(@PathVariable Long eventId) {
         try {
@@ -92,11 +98,13 @@ public class TrainingController {
         }
     }
 
+    // API endpoint to get training requests by employee
     @GetMapping("/employees/{employeeId}/requests")
     public ResponseEntity<List<TrainingRequestDto>> getRequestsByEmployee(@PathVariable Long employeeId) {
         return ResponseEntity.ok(trainingService.getRequestsByEmployee(employeeId));
     }
 
+    // API endpoint to update training request status
     @PutMapping("/requests/{id}/status")
     public ResponseEntity<TrainingRequestDto> updateRequestStatus(
             @PathVariable Long id,
@@ -110,12 +118,14 @@ public class TrainingController {
 
     // --- Training Feedback ---
 
+    // API endpoint to submit feedback
     @PostMapping("/feedback")
     public ResponseEntity<TrainingFeedbackDto> submitFeedback(@RequestBody TrainingFeedbackDto dto) {
         TrainingFeedbackDto created = trainingService.submitFeedback(dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    // API endpoint to check event existence
     @GetMapping("/events/exists")
     public ResponseEntity<Boolean> checkEventExistence(
             @RequestParam String title) {
@@ -126,6 +136,7 @@ public class TrainingController {
         }
     }
 
+    // API endpoint to get feedback by event
     @GetMapping("/events/{eventId}/feedback")
     public ResponseEntity<List<TrainingFeedbackDto>> getFeedbackByEvent(@PathVariable Long eventId) {
         return ResponseEntity.ok(trainingService.getFeedbackByEvent(eventId));
