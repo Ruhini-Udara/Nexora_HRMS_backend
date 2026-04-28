@@ -56,9 +56,9 @@ public class Employee {
     @Column(nullable = false)
     private String department;
 
+    @Column(nullable = true)
+    private String branch;
 
-    
-    
     @Column(name = "epf_number")
     private String epfNumber;
 

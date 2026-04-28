@@ -19,6 +19,7 @@ public class EmployeeDTO {
     private Long designationId;
     private String employeeType;
     private String department;
+    private String branch;
     private String epfNumber;
     private String etfNumber;
 

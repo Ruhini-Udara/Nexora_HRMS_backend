@@ -64,7 +64,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDesignations() {
-        List<String> names = Arrays.asList("System Administrator", "Director", "HR Manager", "Software Engineer", "Operations Manager");
+        List<String> names = Arrays.asList("System Administrator", "Director", "HR Manager", "Software Engineer",
+                "Operations Manager");
         for (String name : names) {
             boolean exists = designationRepository.findAll().stream()
                     .anyMatch(d -> d.getDesignationName().equalsIgnoreCase(name));
@@ -94,6 +95,7 @@ public class DataInitializer implements CommandLineRunner {
                         .designation(designation)
                         .employeeType("Permanent")
                         .department("IT")
+                        .branch("Head Office")
                         .build()));
     }
 
@@ -103,34 +105,32 @@ public class DataInitializer implements CommandLineRunner {
 
         // Admin Account
         userAccountRepository.findByEmail("admin@nexora.com").ifPresentOrElse(
-            user -> {
-                user.setPasswordHash(passwordEncoder.encode("admin123"));
-                userAccountRepository.save(user);
-            },
-            () -> userAccountRepository.save(UserAccount.builder()
-                    .userName("admin")
-                    .email("admin@nexora.com")
-                    .passwordHash(passwordEncoder.encode("admin123"))
-                    .isActive(true)
-                    .role(adminRole)
-                    .employee(employee)
-                    .build())
-        );
+                user -> {
+                    user.setPasswordHash(passwordEncoder.encode("admin123"));
+                    userAccountRepository.save(user);
+                },
+                () -> userAccountRepository.save(UserAccount.builder()
+                        .userName("admin")
+                        .email("admin@nexora.com")
+                        .passwordHash(passwordEncoder.encode("admin123"))
+                        .isActive(true)
+                        .role(adminRole)
+                        .employee(employee)
+                        .build()));
 
         // Normal Employee Account
         userAccountRepository.findByEmail("pasan.emp@nexora.com").ifPresentOrElse(
-            user -> {
-                user.setPasswordHash(passwordEncoder.encode("pasan123"));
-                userAccountRepository.save(user);
-            },
-            () -> userAccountRepository.save(UserAccount.builder()
-                    .userName("pasan_emp")
-                    .email("pasan.emp@nexora.com")
-                    .passwordHash(passwordEncoder.encode("pasan123"))
-                    .isActive(true)
-                    .role(employeeRole)
-                    .employee(employee)
-                    .build())
-        );
+                user -> {
+                    user.setPasswordHash(passwordEncoder.encode("pasan123"));
+                    userAccountRepository.save(user);
+                },
+                () -> userAccountRepository.save(UserAccount.builder()
+                        .userName("pasan_emp")
+                        .email("pasan.emp@nexora.com")
+                        .passwordHash(passwordEncoder.encode("pasan123"))
+                        .isActive(true)
+                        .role(employeeRole)
+                        .employee(employee)
+                        .build()));
     }
 }
