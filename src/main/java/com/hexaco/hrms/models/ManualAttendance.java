@@ -54,11 +54,29 @@ public class ManualAttendance {
     @Column(columnDefinition = "TEXT")
     private String remarks;
 
-    // The supervisor who submitted this record
+    // ── Workflow & Tracking ──
+    @Column(name = "is_custom_entry")
+    private Boolean isCustomEntry;
+
+    @Column(name = "approval_status", length = 20)
+    private String approvalStatus; // APPROVED, PENDING, REJECTED
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    // ── Audit ──
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "submitted_by")
+    @JoinColumn(name = "submitted_by_user_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private Employee submittedBy;
+    private UserAccount submittedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by_user_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private UserAccount approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
     @Column(name = "submitted_at", updatable = false)
     private LocalDateTime submittedAt;
@@ -70,6 +88,8 @@ public class ManualAttendance {
     protected void onCreate() {
         submittedAt = LocalDateTime.now();
         updatedAt   = LocalDateTime.now();
+        if (approvalStatus == null) approvalStatus = "APPROVED";
+        if (isCustomEntry == null) isCustomEntry = false;
     }
 
     @PreUpdate

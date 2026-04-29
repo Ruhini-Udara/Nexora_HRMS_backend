@@ -5,16 +5,19 @@ import com.hexaco.hrms.dto.ManualAttendanceDto;
 import com.hexaco.hrms.models.AttendanceShift;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.models.ManualAttendance;
+import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.repository.AttendanceShiftRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.ManualAttendanceRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,127 +26,152 @@ import java.util.stream.Collectors;
 public class ManualAttendanceService {
 
     private final ManualAttendanceRepository attendanceRepository;
-    private final AttendanceShiftRepository  shiftRepository;
-    private final EmployeeRepository         employeeRepository;
+    private final AttendanceShiftRepository shiftRepository;
+    private final EmployeeRepository employeeRepository;
+    private final UserAccountRepository userRepository;
 
-    // ── Get all shifts (for the dropdown in the UI) ──────────────────────────
+    // ── Get all available shifts ─────────────────────────────────────────────
     public List<AttendanceShift> getAllShifts() {
         return shiftRepository.findAll();
     }
 
-    // ── Get attendance records for a specific date (optionally filter by dept) ─
+    // ── Get attendance records for a specific date (returns ALL employees in dept) ──
     public List<ManualAttendanceDto> getAttendanceByDate(LocalDate date, String department) {
-        List<ManualAttendance> records;
-        if (department != null && !department.isBlank()) {
-            records = attendanceRepository.findByAttendanceDateAndEmployee_Department(date, department);
+        List<Employee> employees;
+        if (department != null && !department.isBlank() && !department.equalsIgnoreCase("All Departments")) {
+            employees = employeeRepository.findByDepartmentIgnoreCase(department);
         } else {
-            records = attendanceRepository.findByAttendanceDate(date);
+            employees = employeeRepository.findAll();
         }
-        return records.stream().map(this::mapToDto).collect(Collectors.toList());
+
+        return employees.stream().map(emp -> {
+            ManualAttendance attendance = attendanceRepository
+                    .findByEmployeeIdAndAttendanceDate(emp.getId(), date)
+                    .orElse(null);
+            
+            if (attendance != null) {
+                return mapToDto(attendance);
+            } else {
+                // Return a "blank" DTO for employees with no record yet
+                return ManualAttendanceDto.builder()
+                        .employeeId(emp.getId())
+                        .employeeCode(emp.getEmployeeCode())
+                        .employeeName(emp.getFullName())
+                        .designation(emp.getDesignation() != null ? emp.getDesignation().getDesignationName() : "")
+                        .department(emp.getDepartment())
+                        .attendanceDate(date)
+                        .status(null)
+                        .build();
+            }
+        }).collect(Collectors.toList());
     }
 
     // ── Get attendance history for one employee ───────────────────────────────
-    public List<ManualAttendanceDto> getAttendanceByEmployee(Long employeeId) {
-        return attendanceRepository.findByEmployeeId(employeeId)
-                .stream().map(this::mapToDto).collect(Collectors.toList());
+    public List<ManualAttendanceDto> getEmployeeAttendance(Long employeeId) {
+        return attendanceRepository.findByEmployeeId(employeeId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
-    // ── Batch submit attendance (supervisor clicks "Submit Updates") ──────────
+    // ── Batch Submit/Update Attendance (Upsert) ───────────────────────────────
     @Transactional
-    public List<ManualAttendanceDto> submitAttendance(AttendanceSubmitDto dto) {
-        AttendanceShift shift = shiftRepository.findById(dto.getShiftId())
-                .orElseThrow(() -> new RuntimeException("Shift not found with id: " + dto.getShiftId()));
+    public List<ManualAttendanceDto> batchSubmitAttendance(AttendanceSubmitDto submitDto) {
+        AttendanceShift shift = shiftRepository.findById(submitDto.getShiftId())
+                .orElseThrow(() -> new RuntimeException("Shift not found with ID: " + submitDto.getShiftId()));
 
-        Employee supervisor = employeeRepository.findById(dto.getSubmittedBy())
-                .orElseThrow(() -> new RuntimeException("Supervisor not found with id: " + dto.getSubmittedBy()));
+        UserAccount submitter = userRepository.findById(submitDto.getSubmittedBy())
+                .orElseGet(() -> {
+                    List<UserAccount> users = userRepository.findByEmployeeId(submitDto.getSubmittedBy());
+                    if (!users.isEmpty()) return users.get(0);
+                    throw new RuntimeException("Submitter (User or Employee) not found with ID: " + submitDto.getSubmittedBy());
+                });
 
-        List<ManualAttendance> saved = dto.getRecords().stream().map(record -> {
-            Employee employee = employeeRepository.findById(record.getEmployeeId())
-                    .orElseThrow(() -> new RuntimeException("Employee not found: " + record.getEmployeeId()));
+        return submitDto.getRecords().stream().map(record -> {
+            try {
+                Employee emp = employeeRepository.findById(record.getEmployeeId())
+                        .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + record.getEmployeeId()));
 
-            // Upsert: update existing record if one exists for this employee + date
-            ManualAttendance attendance = attendanceRepository
-                    .findByEmployeeIdAndAttendanceDate(record.getEmployeeId(), dto.getAttendanceDate())
-                    .orElse(ManualAttendance.builder()
-                            .employee(employee)
-                            .attendanceDate(dto.getAttendanceDate())
-                            .build());
+                // Find existing or create new
+                ManualAttendance attendance = attendanceRepository
+                        .findByEmployeeIdAndAttendanceDate(emp.getId(), submitDto.getAttendanceDate())
+                        .orElse(new ManualAttendance());
 
-            attendance.setShift(shift);
-            attendance.setStatus(record.getStatus());
-            attendance.setInTime(record.getInTime());
-            attendance.setOutTime(record.getOutTime());
-            attendance.setRemarks(record.getRemarks());
-            attendance.setSubmittedBy(supervisor);
-
-            // Calculate work hours automatically
-            if (record.getInTime() != null && record.getOutTime() != null) {
-                long minutes = java.time.Duration.between(record.getInTime(), record.getOutTime()).toMinutes();
-                if (minutes > 0) {
-                    BigDecimal hours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
-                    attendance.setWorkHours(hours);
-                    BigDecimal standard = BigDecimal.valueOf(shift.getStandardHours());
-                    BigDecimal overtime = hours.subtract(standard);
-                    attendance.setOvertimeHours(overtime.compareTo(BigDecimal.ZERO) > 0 ? overtime : BigDecimal.ZERO);
+                attendance.setEmployee(emp);
+                attendance.setShift(shift);
+                attendance.setAttendanceDate(submitDto.getAttendanceDate());
+                attendance.setStatus(record.getStatus());
+                attendance.setInTime(record.getInTime());
+                attendance.setOutTime(record.getOutTime());
+                attendance.setRemarks(record.getRemarks());
+                attendance.setSubmittedBy(submitter);
+                
+                // Workflow flags
+                attendance.setIsCustomEntry(record.getInTime() != null || record.getOutTime() != null);
+                if (attendance.getApprovalStatus() == null) {
+                    attendance.setApprovalStatus("APPROVED");
                 }
+
+                // Auto-calculate hours if Present
+                if ("PRESENT".equalsIgnoreCase(record.getStatus()) && record.getInTime() != null && record.getOutTime() != null) {
+                    calculateHours(attendance, shift);
+                } else {
+                    attendance.setWorkHours(BigDecimal.ZERO);
+                    attendance.setOvertimeHours(BigDecimal.ZERO);
+                }
+
+                return mapToDto(attendanceRepository.save(attendance));
+            } catch (Exception e) {
+                throw new RuntimeException("Attendance submission failed for employee " + record.getEmployeeId() + ": " + e.getMessage());
             }
-
-            return attendanceRepository.save(attendance);
         }).collect(Collectors.toList());
-
-        return saved.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
-    // ── Update a single attendance record ─────────────────────────────────────
-    @Transactional
-    public ManualAttendanceDto updateRecord(Long id, ManualAttendanceDto dto) {
-        ManualAttendance attendance = attendanceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Attendance record not found with id: " + id));
-
-        if (dto.getStatus() != null)  attendance.setStatus(dto.getStatus());
-        if (dto.getInTime() != null)  attendance.setInTime(dto.getInTime());
-        if (dto.getOutTime() != null) attendance.setOutTime(dto.getOutTime());
-        if (dto.getRemarks() != null) attendance.setRemarks(dto.getRemarks());
-
-        // Recalculate hours on update
-        LocalTime inT  = attendance.getInTime();
-        LocalTime outT = attendance.getOutTime();
-        if (inT != null && outT != null) {
-            long minutes = java.time.Duration.between(inT, outT).toMinutes();
-            if (minutes > 0) {
-                BigDecimal hours = BigDecimal.valueOf(minutes).divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
-                attendance.setWorkHours(hours);
-                BigDecimal standard = BigDecimal.valueOf(attendance.getShift().getStandardHours());
-                BigDecimal overtime = hours.subtract(standard);
-                attendance.setOvertimeHours(overtime.compareTo(BigDecimal.ZERO) > 0 ? overtime : BigDecimal.ZERO);
-            }
+    // ── Calculate Work Hours & Overtime ───────────────────────────────────────
+    private void calculateHours(ManualAttendance attendance, AttendanceShift shift) {
+        Duration duration = Duration.between(attendance.getInTime(), attendance.getOutTime());
+        if (duration.isNegative()) {
+            // Handle night shifts crossing midnight (basic logic)
+            duration = duration.plusDays(1);
         }
 
-        return mapToDto(attendanceRepository.save(attendance));
+        BigDecimal hours = new BigDecimal(duration.toMinutes()).divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
+        attendance.setWorkHours(hours);
+
+        BigDecimal stdHours = BigDecimal.valueOf(shift.getStandardHours());
+        if (hours.compareTo(stdHours) > 0) {
+            attendance.setOvertimeHours(hours.subtract(stdHours));
+        } else {
+            attendance.setOvertimeHours(BigDecimal.ZERO);
+        }
     }
 
-    // ── Map entity → DTO ─────────────────────────────────────────────────────
-    private ManualAttendanceDto mapToDto(ManualAttendance a) {
+    // ── Mapper ───────────────────────────────────────────────────────────────
+    private ManualAttendanceDto mapToDto(ManualAttendance entity) {
         return ManualAttendanceDto.builder()
-                .id(a.getId())
-                .employeeId(a.getEmployee().getId())
-                .employeeCode(a.getEmployee().getEmployeeCode())
-                .employeeName(a.getEmployee().getFullName())
-                .designation(a.getEmployee().getDesignation() != null
-                        ? a.getEmployee().getDesignation().getDesignationName() : "")
-                .department(a.getEmployee().getDepartment())
-                .shiftId(a.getShift() != null ? a.getShift().getId() : null)
-                .shiftName(a.getShift() != null ? a.getShift().getShiftName() : null)
-                .attendanceDate(a.getAttendanceDate())
-                .status(a.getStatus())
-                .inTime(a.getInTime())
-                .outTime(a.getOutTime())
-                .workHours(a.getWorkHours())
-                .overtimeHours(a.getOvertimeHours())
-                .remarks(a.getRemarks())
-                .submittedBy(a.getSubmittedBy() != null ? a.getSubmittedBy().getId() : null)
-                .submittedAt(a.getSubmittedAt())
-                .updatedAt(a.getUpdatedAt())
+                .id(entity.getId())
+                .employeeId(entity.getEmployee().getId())
+                .employeeCode(entity.getEmployee().getEmployeeCode())
+                .employeeName(entity.getEmployee().getFullName())
+                .designation(entity.getEmployee().getDesignation() != null ? entity.getEmployee().getDesignation().getDesignationName() : "")
+                .department(entity.getEmployee().getDepartment())
+                .shiftId(entity.getShift().getId())
+                .shiftName(entity.getShift().getShiftName())
+                .attendanceDate(entity.getAttendanceDate())
+                .status(entity.getStatus())
+                .inTime(entity.getInTime())
+                .outTime(entity.getOutTime())
+                .workHours(entity.getWorkHours())
+                .overtimeHours(entity.getOvertimeHours())
+                .remarks(entity.getRemarks())
+                .isCustomEntry(entity.getIsCustomEntry())
+                .approvalStatus(entity.getApprovalStatus())
+                .rejectionReason(entity.getRejectionReason())
+                .submittedBy(entity.getSubmittedBy() != null ? entity.getSubmittedBy().getUserId() : null)
+                .submittedByName(entity.getSubmittedBy() != null ? entity.getSubmittedBy().getUserName() : "System")
+                .submittedAt(entity.getSubmittedAt())
+                .approvedBy(entity.getApprovedBy() != null ? entity.getApprovedBy().getUserId() : null)
+                .approvedAt(entity.getApprovedAt())
+                .updatedAt(entity.getUpdatedAt())
                 .build();
     }
 }

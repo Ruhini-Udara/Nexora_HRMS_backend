@@ -30,6 +30,12 @@ public class AttendanceShift {
     @Column(name = "standard_hours", nullable = false)
     private Double standardHours;
 
+    @Column(name = "grace_minutes")
+    private Integer graceMinutes;
+
+    @Column(name = "is_night_shift")
+    private Boolean isNightShift;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

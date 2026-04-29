@@ -36,8 +36,18 @@ public class ManualAttendanceDto {
     private BigDecimal overtimeHours;
     private String remarks;
 
+    // Workflow
+    private Boolean isCustomEntry;
+    private String approvalStatus;
+    private String rejectionReason;
+
     // Audit
     private Long submittedBy;
+    private String submittedByName;
     private LocalDateTime submittedAt;
+    
+    private Long approvedBy;
+    private LocalDateTime approvedAt;
+    
     private LocalDateTime updatedAt;
 }
