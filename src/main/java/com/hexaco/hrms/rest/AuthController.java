@@ -16,10 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = "*", maxAge = 3600) // maxAge = 3600 means browser can cache CORS permission for 1 hour.
-@RestController // Marks this class as a REST API controller.
-@RequestMapping("/api/auth") // All APIs inside this controller start with /api/auth.
-@RequiredArgsConstructor // Creates constructor injection for these fields:
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
         // These are dependencies:
         private final AuthenticationManager authenticationManager; // verifies login credentials
