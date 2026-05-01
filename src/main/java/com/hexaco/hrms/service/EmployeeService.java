@@ -9,4 +9,5 @@ public interface EmployeeService {
     java.util.List<Employee> getAllEmployees();
     void deleteEmployeeByCode(String code);
     Employee updateEmployee(String code, com.hexaco.hrms.dto.EmployeeUpdateDTO dto);
+    Employee updateFingerprintStatus(String code, Boolean fingerprintEnrolled);
 }

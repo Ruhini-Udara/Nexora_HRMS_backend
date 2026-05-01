@@ -1,6 +1,7 @@
 package com.hexaco.hrms.rest;
 
 import com.hexaco.hrms.dto.EmployeeDTO;
+import com.hexaco.hrms.dto.EmployeeUpdateDTO;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.service.EmployeeService;
 import org.springframework.http.HttpStatus;
@@ -51,9 +52,24 @@ public class EmployeeController {
 
     @PutMapping("/{code}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody com.hexaco.hrms.dto.EmployeeUpdateDTO dto) {
+    public ResponseEntity<Employee> updateEmployee(@PathVariable String code, @RequestBody EmployeeUpdateDTO dto) {
         try {
             Employee updated = employeeService.updateEmployee(code, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{code}/fingerprint-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Employee> updateFingerprintStatus(@PathVariable String code, @RequestBody EmployeeUpdateDTO dto) {
+        if (dto.getFingerprintEnrolled() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        try {
+            Employee updated = employeeService.updateFingerprintStatus(code, dto.getFingerprintEnrolled());
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
