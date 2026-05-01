@@ -2,7 +2,9 @@ package com.hexaco.hrms.rest;
 
 import com.hexaco.hrms.dto.AttendancePunchBatchRequest;
 import com.hexaco.hrms.dto.AttendancePunchBatchResponse;
+import com.hexaco.hrms.dto.AttendancePunchProcessResponse;
 import com.hexaco.hrms.service.AttendancePunchIngestionService;
+import com.hexaco.hrms.service.AttendancePunchProcessingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,9 +18,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttendancePunchController {
 
     private final AttendancePunchIngestionService attendancePunchIngestionService;
+    private final AttendancePunchProcessingService attendancePunchProcessingService;
 
     @PostMapping("/batch")
     public ResponseEntity<AttendancePunchBatchResponse> ingestBatch(@RequestBody AttendancePunchBatchRequest request) {
         return ResponseEntity.ok(attendancePunchIngestionService.ingestBatch(request));
+    }
+
+    @PostMapping("/process")
+    public ResponseEntity<AttendancePunchProcessResponse> processPunches() {
+        return ResponseEntity.ok(attendancePunchProcessingService.processUnprocessedPunches());
     }
 }
