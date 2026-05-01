@@ -13,8 +13,7 @@ import lombok.*;
 public class Nominee {
 
     @Id
-    @Column(name = "employee_id")
-    private Long employeeId;
+    private Long id;
 
     @OneToOne
     @MapsId

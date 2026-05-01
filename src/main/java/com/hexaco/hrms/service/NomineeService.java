@@ -43,7 +43,7 @@ public class NomineeService {
 
     private NomineeDto mapToDto(Nominee nominee) {
         return NomineeDto.builder()
-                .employeeId(nominee.getEmployeeId())
+                .employeeId(nominee.getEmployee() != null ? nominee.getEmployee().getId() : null)
                 .nomineeName(nominee.getNomineeName())
                 .relationship(nominee.getRelationship())
                 .nic(nominee.getNic())

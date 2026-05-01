@@ -53,6 +53,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/training/events/exists").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
+                .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
@@ -71,8 +73,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow all origins for dev, or specify localhost:3000
-        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
+        // Explicit origin required when allowCredentials=true; wildcard is not allowed by browsers
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept",
                 "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
