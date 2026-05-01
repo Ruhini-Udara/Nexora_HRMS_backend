@@ -28,4 +28,10 @@ public class EmployeeDTO {
     private String password;
     private String roleName;
     private boolean enableSystemAccess;
+
+    // Fingerprint Identity
+    private Long fingerprintUserId;
+    private Boolean fingerprintEnrolled;
+    private String fingerprintEnrolledAt;
+    private String lastFingerprintSyncAt;
 }

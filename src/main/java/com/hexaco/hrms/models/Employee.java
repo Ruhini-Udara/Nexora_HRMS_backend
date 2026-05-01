@@ -21,6 +21,19 @@ public class Employee {
     @Column(name = "employee_code", unique = true)
     private String employeeCode;
 
+    @Column(name = "fingerprint_user_id", unique = true)
+    private Long fingerprintUserId;
+
+    @Column(name = "fingerprint_enrolled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
+    private Boolean fingerprintEnrolled = false;
+
+    @Column(name = "fingerprint_enrolled_at")
+    private LocalDateTime fingerprintEnrolledAt;
+
+    @Column(name = "last_fingerprint_sync_at")
+    private LocalDateTime lastFingerprintSyncAt;
+
     // Step 1: Personal Info
     @Column(nullable = false, unique = true)
     private String nicNumber;

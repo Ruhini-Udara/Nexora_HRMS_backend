@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Service
@@ -63,6 +64,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         // Generate employee code
         String code = "EMP" + String.format("%03d", savedEmployee.getId());
         savedEmployee.setEmployeeCode(code);
+        savedEmployee.setFingerprintUserId(savedEmployee.getId());
+        savedEmployee.setFingerprintEnrolled(false);
         savedEmployee = employeeRepository.save(savedEmployee);
 
         // Handle System Access / User Accounts
@@ -109,13 +112,19 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public Employee getEmployeeById(Long id) {
-        return employeeRepository.findById(id).orElse(null);
+        return employeeRepository.findById(id)
+                .map(this::ensureFingerprintIdentity)
+                .orElse(null);
     }
 
     @Override
+    @Transactional
     public java.util.List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+        java.util.List<Employee> employees = employeeRepository.findAll();
+        employees.forEach(this::ensureFingerprintIdentity);
+        return employees;
     }
 
     @Override
@@ -161,7 +170,41 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .orElseThrow(() -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
             employee.setDesignation(designation);
         }
+        if (dto.getFingerprintEnrolled() != null) {
+            applyFingerprintStatus(employee, dto.getFingerprintEnrolled());
+        }
 
         return employeeRepository.save(employee);
+    }
+
+    @Override
+    @Transactional
+    public Employee updateFingerprintStatus(String code, Boolean fingerprintEnrolled) {
+        if (fingerprintEnrolled == null) {
+            throw new RuntimeException("fingerprintEnrolled is required");
+        }
+
+        Employee employee = employeeRepository.findByEmployeeCode(code)
+                .orElseThrow(() -> new RuntimeException("Employee not found with code: " + code));
+
+        applyFingerprintStatus(employee, fingerprintEnrolled);
+        return employeeRepository.save(employee);
+    }
+
+    private void applyFingerprintStatus(Employee employee, boolean fingerprintEnrolled) {
+        ensureFingerprintIdentity(employee);
+        employee.setFingerprintEnrolled(fingerprintEnrolled);
+        employee.setFingerprintEnrolledAt(fingerprintEnrolled ? LocalDateTime.now() : null);
+        employee.setLastFingerprintSyncAt(LocalDateTime.now());
+    }
+
+    private Employee ensureFingerprintIdentity(Employee employee) {
+        if (employee.getFingerprintUserId() == null && employee.getId() != null) {
+            employee.setFingerprintUserId(employee.getId());
+        }
+        if (employee.getFingerprintEnrolled() == null) {
+            employee.setFingerprintEnrolled(false);
+        }
+        return employee;
     }
 }

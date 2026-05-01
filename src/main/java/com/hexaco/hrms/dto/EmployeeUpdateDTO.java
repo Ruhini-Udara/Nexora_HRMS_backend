@@ -10,4 +10,5 @@ public class EmployeeUpdateDTO {
     private String branch;
     private Long designationId;
     private String employeeType;
+    private Boolean fingerprintEnrolled;
 }
