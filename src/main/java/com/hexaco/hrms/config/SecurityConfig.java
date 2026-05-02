@@ -51,17 +51,28 @@ public class SecurityConfig {
             // token; the server does not need to store user sessions in memory.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/training/events/exists").permitAll()
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
-                .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
-                .requestMatchers("/error").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
-                .requestMatchers("/api/training/**").permitAll()
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                .anyRequest().authenticated()
-            );
+            .requestMatchers("/api/training/events/exists").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
+            .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
+            .requestMatchers("/error").permitAll()
+
+            // Public GET APIs
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
+
+            // Training
+            .requestMatchers("/api/training/**").permitAll()
+
+            // Swagger
+            .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+            // ✅ ADD THIS (Fingerprint attendance endpoints)
+            .requestMatchers("/api/attendance/punches/**").permitAll()
+            .requestMatchers("/api/attendance/sync-runs/**").permitAll()
+
+            .anyRequest().authenticated()
+        );
 
         // Rationale: We add our custom JWT filter before the standard UsernamePassword filter 
         // to catch and validate the token in the request header first.
