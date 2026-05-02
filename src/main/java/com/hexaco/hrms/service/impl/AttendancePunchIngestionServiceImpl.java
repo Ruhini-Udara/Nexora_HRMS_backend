@@ -4,8 +4,10 @@ import com.hexaco.hrms.dto.AttendancePunchBatchRequest;
 import com.hexaco.hrms.dto.AttendancePunchBatchResponse;
 import com.hexaco.hrms.models.AttendanceDevice;
 import com.hexaco.hrms.models.AttendanceDevicePunch;
+import com.hexaco.hrms.models.AttendanceSyncRun;
 import com.hexaco.hrms.repository.AttendanceDevicePunchRepository;
 import com.hexaco.hrms.repository.AttendanceDeviceRepository;
+import com.hexaco.hrms.repository.AttendanceSyncRunRepository;
 import com.hexaco.hrms.service.AttendancePunchIngestionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,6 +16,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,43 +26,69 @@ public class AttendancePunchIngestionServiceImpl implements AttendancePunchInges
 
     private final AttendanceDeviceRepository attendanceDeviceRepository;
     private final AttendanceDevicePunchRepository attendanceDevicePunchRepository;
+    private final AttendanceSyncRunRepository attendanceSyncRunRepository;
     private final PlatformTransactionManager transactionManager;
 
     @Override
     public AttendancePunchBatchResponse ingestBatch(AttendancePunchBatchRequest request) {
-        validateRequest(request);
+        AttendanceSyncRun syncRun = startSyncRun(request);
+        attendanceSyncRunRepository.save(syncRun);
 
-        String deviceCode = request.getDeviceCode().trim();
-        AttendanceDevice device = attendanceDeviceRepository.findByDeviceCodeIgnoreCase(deviceCode)
-                .orElseThrow(() -> new RuntimeException("Attendance device not found with code: " + deviceCode));
+        try {
+            validateRequest(request);
 
-        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
-        int insertedCount = 0;
-        int duplicateCount = 0;
-        int failedCount = 0;
-        List<String> errors = new ArrayList<>();
+            String deviceCode = request.getDeviceCode().trim();
+            AttendanceDevice device = attendanceDeviceRepository.findByDeviceCodeIgnoreCase(deviceCode)
+                    .orElseThrow(() -> new RuntimeException("Attendance device not found with code: " + deviceCode));
 
-        for (int i = 0; i < request.getPunches().size(); i++) {
-            AttendancePunchBatchRequest.Punch punch = request.getPunches().get(i);
-            try {
-                validatePunch(punch);
-                PunchResult result = transactionTemplate.execute(status -> savePunch(device, punch, status));
-                if (PunchResult.DUPLICATE.equals(result)) {
-                    duplicateCount++;
-                } else {
-                    insertedCount++;
+            syncRun.setAttendanceDevice(device);
+            attendanceSyncRunRepository.save(syncRun);
+
+            TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+            int insertedCount = 0;
+            int duplicateCount = 0;
+            int failedCount = 0;
+            List<String> errors = new ArrayList<>();
+
+            for (int i = 0; i < request.getPunches().size(); i++) {
+                AttendancePunchBatchRequest.Punch punch = request.getPunches().get(i);
+                try {
+                    validatePunch(punch);
+                    PunchResult result = transactionTemplate.execute(status -> savePunch(device, punch, status));
+                    if (PunchResult.DUPLICATE.equals(result)) {
+                        duplicateCount++;
+                    } else {
+                        insertedCount++;
+                    }
+                } catch (Exception e) {
+                    failedCount++;
+                    errors.add("punches[" + i + "]: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                failedCount++;
-                errors.add("punches[" + i + "]: " + e.getMessage());
             }
-        }
 
-        return AttendancePunchBatchResponse.builder()
-                .insertedCount(insertedCount)
-                .duplicateCount(duplicateCount)
-                .failedCount(failedCount)
-                .errors(errors)
+            completeSyncRun(syncRun, insertedCount, duplicateCount, failedCount, errors);
+
+            return AttendancePunchBatchResponse.builder()
+                    .insertedCount(insertedCount)
+                    .duplicateCount(duplicateCount)
+                    .failedCount(failedCount)
+                    .errors(errors)
+                    .build();
+        } catch (Exception e) {
+            failSyncRun(syncRun, e);
+            throw e;
+        }
+    }
+
+    private AttendanceSyncRun startSyncRun(AttendancePunchBatchRequest request) {
+        return AttendanceSyncRun.builder()
+                .startedAt(LocalDateTime.now())
+                .receivedCount(request != null && request.getPunches() != null ? request.getPunches().size() : 0)
+                .insertedCount(0)
+                .duplicateCount(0)
+                .failedCount(0)
+                .status(AttendanceSyncRun.Status.IN_PROGRESS)
+                .message("Sync started")
                 .build();
     }
 
@@ -119,6 +148,58 @@ public class AttendancePunchIngestionServiceImpl implements AttendancePunchInges
         if (punch.getSourceRecordKey() == null || punch.getSourceRecordKey().trim().isBlank()) {
             throw new RuntimeException("sourceRecordKey is required");
         }
+    }
+
+    private void completeSyncRun(
+            AttendanceSyncRun syncRun,
+            int insertedCount,
+            int duplicateCount,
+            int failedCount,
+            List<String> errors) {
+        syncRun.setCompletedAt(LocalDateTime.now());
+        syncRun.setInsertedCount(insertedCount);
+        syncRun.setDuplicateCount(duplicateCount);
+        syncRun.setFailedCount(failedCount);
+        syncRun.setStatus(determineStatus(insertedCount, duplicateCount, failedCount));
+        syncRun.setMessage(buildMessage(syncRun.getReceivedCount(), insertedCount, duplicateCount, failedCount, errors));
+        attendanceSyncRunRepository.save(syncRun);
+    }
+
+    private void failSyncRun(AttendanceSyncRun syncRun, Exception e) {
+        syncRun.setCompletedAt(LocalDateTime.now());
+        syncRun.setStatus(AttendanceSyncRun.Status.FAILED);
+        syncRun.setMessage(e.getMessage());
+        attendanceSyncRunRepository.save(syncRun);
+    }
+
+    private AttendanceSyncRun.Status determineStatus(int insertedCount, int duplicateCount, int failedCount) {
+        if (failedCount == 0) {
+            return AttendanceSyncRun.Status.SUCCESS;
+        }
+        if (insertedCount > 0 || duplicateCount > 0) {
+            return AttendanceSyncRun.Status.PARTIAL_SUCCESS;
+        }
+        return AttendanceSyncRun.Status.FAILED;
+    }
+
+    private String buildMessage(
+            int receivedCount,
+            int insertedCount,
+            int duplicateCount,
+            int failedCount,
+            List<String> errors) {
+        String message = "Received " + receivedCount + " punches. Inserted " + insertedCount
+                + ", duplicates " + duplicateCount + ", failed " + failedCount + ".";
+        if (errors.isEmpty()) {
+            return message;
+        }
+
+        int displayedErrorCount = Math.min(errors.size(), 10);
+        String errorMessage = String.join("; ", errors.subList(0, displayedErrorCount));
+        if (errors.size() > displayedErrorCount) {
+            errorMessage += "; ... and " + (errors.size() - displayedErrorCount) + " more errors";
+        }
+        return message + " " + errorMessage;
     }
 
     private String trimToNull(String value) {
