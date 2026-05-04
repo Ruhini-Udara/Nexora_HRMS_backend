@@ -67,7 +67,7 @@ public class SecurityConfig {
             // Swagger
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-            // ✅ ADD THIS (Fingerprint attendance endpoints)
+            // Fingerprint attendance endpoints
             .requestMatchers("/api/attendance/punches/**").permitAll()
             .requestMatchers("/api/attendance/sync-runs/**").permitAll()
 
