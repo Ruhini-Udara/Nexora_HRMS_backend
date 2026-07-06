@@ -52,9 +52,17 @@ public class TrainingService {
             throw new RuntimeException("A training event with this title already exists.");
         }
 
+        // Check for duplicate training code (case insensitive)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCase(dto.getTrainingCode().trim())) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
         //Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
+                .trainingCode(dto.getTrainingCode())
                 .category(dto.getCategory())
                 .expectedParticipants(dto.getExpectedParticipants())
                 .description(dto.getDescription())
@@ -90,11 +98,19 @@ public class TrainingService {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
+        // Check for duplicate training code (case insensitive, excluding current event ID)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(dto.getTrainingCode().trim(), id)) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
         String oldStatus = event.getStatus();
 
 
         //Update event details
         event.setTitle(dto.getTitle());
+        event.setTrainingCode(dto.getTrainingCode());
         event.setCategory(dto.getCategory());
         event.setExpectedParticipants(dto.getExpectedParticipants());
         event.setDescription(dto.getDescription());
@@ -161,6 +177,7 @@ public class TrainingService {
                 .employee(employee)
                 .justification(dto.getJustification())
                 .attachmentPath(dto.getAttachmentPath())
+                .status(dto.getStatus() != null ? dto.getStatus() : "Pending")
                 .build();
 
         request = trainingRequestRepository.save(request);
@@ -266,6 +283,15 @@ public class TrainingService {
         return exists;
     }
 
+    // Check if training event code already exists
+    public boolean existsByTrainingCode(String code, Long excludeId) {
+        if (excludeId != null) {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(code.trim(), excludeId);
+        } else {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCase(code.trim());
+        }
+    }
+
     // --- Mappers ---
 
     // Map TrainingEvent to TrainingEventDto
@@ -273,6 +299,7 @@ public class TrainingService {
         return TrainingEventDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
+                .trainingCode(event.getTrainingCode())
                 .category(event.getCategory())
                 .expectedParticipants(event.getExpectedParticipants())
                 .description(event.getDescription())
@@ -307,7 +334,7 @@ public class TrainingService {
                 .trainingTime(request.getTrainingEvent().getTime())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
-                .eventStatus(request.getTrainingEvent().getStatus())
+                .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved" : request.getTrainingEvent().getStatus())
                 .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
                 .age(request.getEmployee().getDateOfBirth() != null ? 
                     java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)
