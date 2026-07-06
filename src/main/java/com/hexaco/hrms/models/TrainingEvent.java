@@ -17,6 +17,8 @@ public class TrainingEvent {
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public String getTrainingCode() { return trainingCode; }
+    public void setTrainingCode(String trainingCode) { this.trainingCode = trainingCode; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getCategory() { return category; }
@@ -51,8 +53,11 @@ public class TrainingEvent {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "training_code")
+    private String trainingCode;
+
     @Column(nullable = false)
-    private String category; // e.g., Soft Skills, Technical Training
+    private String category; 
 
     @Column(name = "expected_participants")
     private Integer expectedParticipants;
@@ -75,7 +80,7 @@ public class TrainingEvent {
     private String instructor;
 
     @Column(nullable = false)
-    private String status; // e.g., Published, Draft
+    private String status; 
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

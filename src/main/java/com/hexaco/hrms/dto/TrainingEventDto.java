@@ -15,6 +15,8 @@ public class TrainingEventDto {
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public String getTrainingCode() { return trainingCode; }
+    public void setTrainingCode(String trainingCode) { this.trainingCode = trainingCode; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
     public Integer getExpectedParticipants() { return expectedParticipants; }
@@ -41,6 +43,7 @@ public class TrainingEventDto {
     public void setReason(String reason) { this.reason = reason; }
     private Long id;
     private String title;
+    private String trainingCode;
     private String category;
     private Integer expectedParticipants;
     private String description;
