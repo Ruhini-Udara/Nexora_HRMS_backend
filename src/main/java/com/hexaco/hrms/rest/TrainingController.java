@@ -4,7 +4,6 @@ import com.hexaco.hrms.dto.TrainingEventDto;
 import com.hexaco.hrms.dto.TrainingFeedbackDto;
 import com.hexaco.hrms.dto.TrainingRequestDto;
 import com.hexaco.hrms.service.TrainingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import java.util.Map;
 @RequestMapping("/api/training")
 public class TrainingController {
 
-    @Autowired
-    private TrainingService trainingService;
+    private final TrainingService trainingService;
+
+    public TrainingController(TrainingService trainingService) {
+        this.trainingService = trainingService;
+    }
 
     @GetMapping("/debug")
     public ResponseEntity<String> debug() {
