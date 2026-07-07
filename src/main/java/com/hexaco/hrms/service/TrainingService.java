@@ -12,7 +12,6 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TrainingEventRepository;
 import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,23 +25,27 @@ import java.util.stream.Collectors;
 @SuppressWarnings("null")
 public class TrainingService {
 
-    @Autowired
-    private TrainingEventRepository trainingEventRepository;
+    private final TrainingEventRepository trainingEventRepository;
+    private final TrainingRequestRepository trainingRequestRepository;
+    private final TrainingFeedbackRepository trainingFeedbackRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ApprovalService approvalService;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private TrainingRequestRepository trainingRequestRepository;
-
-    @Autowired
-    private TrainingFeedbackRepository trainingFeedbackRepository;
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private ApprovalService approvalService;
-
-    @Autowired
-    private NotificationService notificationService;
+    public TrainingService(
+            TrainingEventRepository trainingEventRepository,
+            TrainingRequestRepository trainingRequestRepository,
+            TrainingFeedbackRepository trainingFeedbackRepository,
+            EmployeeRepository employeeRepository,
+            ApprovalService approvalService,
+            NotificationService notificationService) {
+        this.trainingEventRepository = trainingEventRepository;
+        this.trainingRequestRepository = trainingRequestRepository;
+        this.trainingFeedbackRepository = trainingFeedbackRepository;
+        this.employeeRepository = employeeRepository;
+        this.approvalService = approvalService;
+        this.notificationService = notificationService;
+    }
 
     // --- Training Events ---
 
