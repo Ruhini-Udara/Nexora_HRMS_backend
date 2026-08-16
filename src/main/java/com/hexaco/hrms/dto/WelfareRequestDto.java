@@ -19,8 +19,12 @@ public class WelfareRequestDto {
     private LocalDate requestDate;
     private String welfareType;
     private Double amount;
+    private String epfNumber;
+    private String designation;
+    private String branch;
     private String status;
-    private String remarks;
+    private String employeeRemarks;
+    private String hrRemarks;
     private String supportingDocument;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

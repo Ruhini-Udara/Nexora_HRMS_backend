@@ -19,6 +19,7 @@ public class EmployeeDTO {
     private Long designationId;
     private String employeeType;
     private String department;
+    private String branch;
     private String epfNumber;
     private String etfNumber;
 
@@ -27,4 +28,10 @@ public class EmployeeDTO {
     private String password;
     private String roleName;
     private boolean enableSystemAccess;
+
+    // Fingerprint Identity
+    private Long fingerprintUserId;
+    private Boolean fingerprintEnrolled;
+    private String fingerprintEnrolledAt;
+    private String lastFingerprintSyncAt;
 }

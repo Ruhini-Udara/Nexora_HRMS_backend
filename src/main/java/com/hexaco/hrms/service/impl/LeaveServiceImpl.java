@@ -151,8 +151,10 @@ public class LeaveServiceImpl implements LeaveService {
         return OverseasLeaveDto.builder()
                 .id(leave.getId())
                 .employeeId(leave.getEmployee().getId())
-                .employeeName(leave.getEmployee().getFullName() + " " + leave.getEmployee().getSurname())
+                .employeeName(formatEmployeeName(leave.getEmployee()))
+                .employeeCode(leave.getEmployee().getEmployeeCode())
                 .epfNumber(leave.getEmployee().getEpfNumber())
+                .department(leave.getEmployee().getDepartment())
                 .leaveTypeId(leave.getLeaveType().getId())
                 .leaveTypeName(leave.getLeaveType().getLeaveTypeName())
                 .fromDate(leave.getFromDate())
@@ -175,8 +177,10 @@ public class LeaveServiceImpl implements LeaveService {
         return MaternityLeaveDto.builder()
                 .id(leave.getId())
                 .employeeId(leave.getEmployee().getId())
-                .employeeName(leave.getEmployee().getFullName() + " " + leave.getEmployee().getSurname())
+                .employeeName(formatEmployeeName(leave.getEmployee()))
+                .employeeCode(leave.getEmployee().getEmployeeCode())
                 .epfNumber(leave.getEmployee().getEpfNumber())
+                .department(leave.getEmployee().getDepartment())
                 .leaveTypeId(leave.getLeaveType().getId())
                 .leaveTypeName(leave.getLeaveType().getLeaveTypeName())
                 .fromDate(leave.getFromDate())
@@ -193,5 +197,21 @@ public class LeaveServiceImpl implements LeaveService {
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
                 .build();
+    }
+
+    private String formatEmployeeName(Employee employee) {
+        if (employee == null) return "N/A";
+        String fullName = employee.getFullName();
+        String surname = employee.getSurname();
+        
+        if (fullName == null) return surname != null ? surname : "N/A";
+        if (surname == null) return fullName;
+        
+        // If fullName already contains the surname (case insensitive), just use fullName
+        if (fullName.toLowerCase().contains(surname.toLowerCase())) {
+            return fullName;
+        }
+        
+        return fullName + " " + surname;
     }
 }

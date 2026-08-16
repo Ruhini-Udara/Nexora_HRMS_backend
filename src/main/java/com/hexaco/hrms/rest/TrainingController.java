@@ -4,7 +4,6 @@ import com.hexaco.hrms.dto.TrainingEventDto;
 import com.hexaco.hrms.dto.TrainingFeedbackDto;
 import com.hexaco.hrms.dto.TrainingRequestDto;
 import com.hexaco.hrms.service.TrainingService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import java.util.Map;
 @RequestMapping("/api/training")
 public class TrainingController {
 
-    @Autowired
-    private TrainingService trainingService;
+    private final TrainingService trainingService;
+
+    public TrainingController(TrainingService trainingService) {
+        this.trainingService = trainingService;
+    }
 
     @GetMapping("/debug")
     public ResponseEntity<String> debug() {
@@ -50,10 +52,15 @@ public class TrainingController {
 
     // API endpoint to update a training event
     @PutMapping("/events/{id}")
-    public ResponseEntity<TrainingEventDto> updateTrainingEvent(
+    public ResponseEntity<?> updateTrainingEvent(
             @PathVariable Long id,
             @RequestBody TrainingEventDto dto) {
-        return ResponseEntity.ok(trainingService.updateTrainingEvent(id, dto));
+        try {
+            TrainingEventDto updated = trainingService.updateTrainingEvent(id, dto);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     // API endpoint to update event status
@@ -131,6 +138,18 @@ public class TrainingController {
             @RequestParam String title) {
         try {
             return ResponseEntity.ok(trainingService.existsByTitle(title.trim()));
+        } catch (Exception e) {
+            return ResponseEntity.ok(false);
+        }
+    }
+
+    // API endpoint to check training code existence
+    @GetMapping("/events/exists-code")
+    public ResponseEntity<Boolean> checkEventCodeExistence(
+            @RequestParam String code,
+            @RequestParam(required = false) Long excludeId) {
+        try {
+            return ResponseEntity.ok(trainingService.existsByTrainingCode(code.trim(), excludeId));
         } catch (Exception e) {
             return ResponseEntity.ok(false);
         }

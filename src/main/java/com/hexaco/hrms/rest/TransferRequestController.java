@@ -31,8 +31,12 @@ public class TransferRequestController {
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<TransferRequestDto> updateStatus(@PathVariable Long id, @RequestParam String status) {
-        return ResponseEntity.ok(transferRequestService.updateStatus(id, status));
+    public ResponseEntity<TransferRequestDto> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            @RequestParam(required = false) String remarks,
+            @RequestParam(required = false) String boardMeetingDate) {
+        return ResponseEntity.ok(transferRequestService.updateStatus(id, status, remarks, boardMeetingDate));
     }
 
 

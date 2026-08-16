@@ -21,6 +21,19 @@ public class Employee {
     @Column(name = "employee_code", unique = true)
     private String employeeCode;
 
+    @Column(name = "fingerprint_user_id", unique = true)
+    private Long fingerprintUserId;
+
+    @Column(name = "fingerprint_enrolled", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
+    private Boolean fingerprintEnrolled = false;
+
+    @Column(name = "fingerprint_enrolled_at")
+    private LocalDateTime fingerprintEnrolledAt;
+
+    @Column(name = "last_fingerprint_sync_at")
+    private LocalDateTime lastFingerprintSyncAt;
+
     // Step 1: Personal Info
     @Column(nullable = false, unique = true)
     private String nicNumber;
@@ -56,9 +69,9 @@ public class Employee {
     @Column(nullable = false)
     private String department;
 
+    @Column(nullable = true)
+    private String branch;
 
-    
-    
     @Column(name = "epf_number")
     private String epfNumber;
 
@@ -71,6 +84,9 @@ public class Employee {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = true)
     private Role role;
+
+    @OneToOne(mappedBy = "employee")
+    private Nominee nominee;
 
     
 

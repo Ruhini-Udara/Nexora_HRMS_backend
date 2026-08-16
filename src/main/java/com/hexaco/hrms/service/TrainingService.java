@@ -12,7 +12,6 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TrainingEventRepository;
 import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,23 +25,27 @@ import java.util.stream.Collectors;
 @SuppressWarnings("null")
 public class TrainingService {
 
-    @Autowired
-    private TrainingEventRepository trainingEventRepository;
+    private final TrainingEventRepository trainingEventRepository;
+    private final TrainingRequestRepository trainingRequestRepository;
+    private final TrainingFeedbackRepository trainingFeedbackRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ApprovalService approvalService;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private TrainingRequestRepository trainingRequestRepository;
-
-    @Autowired
-    private TrainingFeedbackRepository trainingFeedbackRepository;
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private ApprovalService approvalService;
-
-    @Autowired
-    private NotificationService notificationService;
+    public TrainingService(
+            TrainingEventRepository trainingEventRepository,
+            TrainingRequestRepository trainingRequestRepository,
+            TrainingFeedbackRepository trainingFeedbackRepository,
+            EmployeeRepository employeeRepository,
+            ApprovalService approvalService,
+            NotificationService notificationService) {
+        this.trainingEventRepository = trainingEventRepository;
+        this.trainingRequestRepository = trainingRequestRepository;
+        this.trainingFeedbackRepository = trainingFeedbackRepository;
+        this.employeeRepository = employeeRepository;
+        this.approvalService = approvalService;
+        this.notificationService = notificationService;
+    }
 
     // --- Training Events ---
 
@@ -52,9 +55,17 @@ public class TrainingService {
             throw new RuntimeException("A training event with this title already exists.");
         }
 
+        // Check for duplicate training code (case insensitive)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCase(dto.getTrainingCode().trim())) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
         //Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
+                .trainingCode(dto.getTrainingCode())
                 .category(dto.getCategory())
                 .expectedParticipants(dto.getExpectedParticipants())
                 .description(dto.getDescription())
@@ -90,11 +101,19 @@ public class TrainingService {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
-        // Update event details
+        // Check for duplicate training code (case insensitive, excluding current event ID)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(dto.getTrainingCode().trim(), id)) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
         String oldStatus = event.getStatus();
+
 
         //Update event details
         event.setTitle(dto.getTitle());
+        event.setTrainingCode(dto.getTrainingCode());
         event.setCategory(dto.getCategory());
         event.setExpectedParticipants(dto.getExpectedParticipants());
         event.setDescription(dto.getDescription());
@@ -161,6 +180,7 @@ public class TrainingService {
                 .employee(employee)
                 .justification(dto.getJustification())
                 .attachmentPath(dto.getAttachmentPath())
+                .status(dto.getStatus() != null ? dto.getStatus() : "Pending")
                 .build();
 
         request = trainingRequestRepository.save(request);
@@ -266,6 +286,15 @@ public class TrainingService {
         return exists;
     }
 
+    // Check if training event code already exists
+    public boolean existsByTrainingCode(String code, Long excludeId) {
+        if (excludeId != null) {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(code.trim(), excludeId);
+        } else {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCase(code.trim());
+        }
+    }
+
     // --- Mappers ---
 
     // Map TrainingEvent to TrainingEventDto
@@ -273,6 +302,7 @@ public class TrainingService {
         return TrainingEventDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
+                .trainingCode(event.getTrainingCode())
                 .category(event.getCategory())
                 .expectedParticipants(event.getExpectedParticipants())
                 .description(event.getDescription())
@@ -307,7 +337,7 @@ public class TrainingService {
                 .trainingTime(request.getTrainingEvent().getTime())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
-                .eventStatus(request.getTrainingEvent().getStatus())
+                .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved" : request.getTrainingEvent().getStatus())
                 .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
                 .age(request.getEmployee().getDateOfBirth() != null ? 
                     java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)

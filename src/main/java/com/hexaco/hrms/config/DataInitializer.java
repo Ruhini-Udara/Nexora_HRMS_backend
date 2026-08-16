@@ -95,6 +95,7 @@ public class DataInitializer implements CommandLineRunner {
                         .designation(designation)
                         .employeeType("Permanent")
                         .department("IT")
+                        .branch("Head Office")
                         .build()));
     }
 

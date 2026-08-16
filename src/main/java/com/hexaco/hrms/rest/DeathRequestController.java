@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/death-requests")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RequiredArgsConstructor
 public class DeathRequestController {
 
@@ -63,5 +64,13 @@ public class DeathRequestController {
     public ResponseEntity<DeathRequestDto> submitToAdmin(@PathVariable Long id) {
         DeathRequestDto result = service.submitToAdmin(id);
         return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<DeathRequestDto> updateStatus(
+            @PathVariable Long id,
+            @RequestParam String status,
+            @RequestParam(required = false) String boardMeetingDate) {
+        return ResponseEntity.ok(service.updateStatus(id, status, boardMeetingDate));
     }
 }

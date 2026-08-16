@@ -1,5 +1,6 @@
 package com.hexaco.hrms.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,12 +14,12 @@ import lombok.*;
 public class Nominee {
 
     @Id
-    @Column(name = "employee_id")
-    private Long employeeId;
+    private Long id;
 
     @OneToOne
     @MapsId
     @JoinColumn(name = "employee_id")
+    @JsonIgnore
     private Employee employee;
 
     @Column(name = "nominee_name")

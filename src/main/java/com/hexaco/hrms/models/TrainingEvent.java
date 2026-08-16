@@ -13,6 +13,38 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class TrainingEvent {
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getTrainingCode() { return trainingCode; }
+    public void setTrainingCode(String trainingCode) { this.trainingCode = trainingCode; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
+    public Integer getExpectedParticipants() { return expectedParticipants; }
+    public void setExpectedParticipants(Integer expectedParticipants) { this.expectedParticipants = expectedParticipants; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public LocalDate getProposedStartDate() { return proposedStartDate; }
+    public void setProposedStartDate(LocalDate proposedStartDate) { this.proposedStartDate = proposedStartDate; }
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
+    public LocalDate getApplyBefore() { return applyBefore; }
+    public void setApplyBefore(LocalDate applyBefore) { this.applyBefore = applyBefore; }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
+    public Double getBudget() { return budget; }
+    public void setBudget(Double budget) { this.budget = budget; }
+    public String getInstructor() { return instructor; }
+    public void setInstructor(String instructor) { this.instructor = instructor; }
+    public String getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(String approvedBy) { this.approvedBy = approvedBy; }
+    public LocalDateTime getApprovedAt() { return approvedAt; }
+    public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,8 +53,11 @@ public class TrainingEvent {
     @Column(nullable = false)
     private String title;
 
+    @Column(name = "training_code")
+    private String trainingCode;
+
     @Column(nullable = false)
-    private String category; // e.g., Soft Skills, Technical Training
+    private String category; 
 
     @Column(name = "expected_participants")
     private Integer expectedParticipants;
@@ -45,7 +80,7 @@ public class TrainingEvent {
     private String instructor;
 
     @Column(nullable = false)
-    private String status; // e.g., Published, Draft
+    private String status; 
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

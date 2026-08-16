@@ -19,6 +19,7 @@ public class WelfareRequestService {
 
     private final WelfareRequestRepository welfareRequestRepository;
     private final EmployeeRepository employeeRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public WelfareRequestDto createRequest(WelfareRequestDto dto) {
@@ -31,7 +32,10 @@ public class WelfareRequestService {
                 .welfareType(dto.getWelfareType())
                 .amount(dto.getAmount())
                 .status(dto.getStatus() == null ? "Pending" : dto.getStatus())
-                .remarks(dto.getRemarks())
+                .employeeRemarks(dto.getEmployeeRemarks())
+                .epfNumber(employee.getEpfNumber())
+                .designation(employee.getDesignation() != null ? employee.getDesignation().getDesignationName() : "")
+                .branch(employee.getDepartment()) // Using department as branch for now
                 .supportingDocument(dto.getSupportingDocument())
                 .build();
 
@@ -55,11 +59,27 @@ public class WelfareRequestService {
     public WelfareRequestDto updateStatus(Long id, String status, String remarks) {
         WelfareRequest request = welfareRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Welfare request not found"));
+        
         request.setStatus(status);
         if (remarks != null) {
-            request.setRemarks(remarks);
+            request.setHrRemarks(remarks);
         }
-        return mapToDto(welfareRequestRepository.save(request));
+
+        WelfareRequest saved = welfareRequestRepository.save(request);
+        
+        // Trigger Notification for Approved/Rejected status
+        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            Employee emp = saved.getEmployee();
+            notificationService.sendWelfareStatusUpdate(
+                emp.getFullName(),
+                emp.getEmail(),
+                saved.getWelfareType(),
+                saved.getStatus(),
+                saved.getHrRemarks()
+            );
+        }
+        
+        return mapToDto(saved);
     }
 
     @Transactional
@@ -69,7 +89,7 @@ public class WelfareRequestService {
         request.setRequestDate(LocalDate.now());
         request.setWelfareType(dto.getWelfareType());
         request.setAmount(dto.getAmount());
-        request.setRemarks(dto.getRemarks());
+        request.setEmployeeRemarks(dto.getEmployeeRemarks());
         request.setSupportingDocument(dto.getSupportingDocument());
         request.setStatus(dto.getStatus() == null ? request.getStatus() : dto.getStatus());
         return mapToDto(welfareRequestRepository.save(request));
@@ -92,7 +112,11 @@ public class WelfareRequestService {
                 .welfareType(request.getWelfareType())
                 .amount(request.getAmount())
                 .status(request.getStatus())
-                .remarks(request.getRemarks())
+                .employeeRemarks(request.getEmployeeRemarks())
+                .hrRemarks(request.getHrRemarks())
+                .epfNumber(request.getEpfNumber())
+                .designation(request.getDesignation())
+                .branch(request.getBranch())
                 .supportingDocument(request.getSupportingDocument())
                 .createdAt(request.getCreatedAt())
                 .updatedAt(request.getUpdatedAt())

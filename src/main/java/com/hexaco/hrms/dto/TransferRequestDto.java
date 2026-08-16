@@ -25,6 +25,8 @@ public class TransferRequestDto {
     private String status;
     private String justificationDocumentPath;
     private String proofDocumentPath;
+    private String hrRemark;
+    private String boardMeetingDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

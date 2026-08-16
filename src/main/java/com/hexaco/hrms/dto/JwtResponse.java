@@ -18,4 +18,5 @@ public class JwtResponse {
     private String designation;
     private String epfNumber;
     private String department;
+    private String branch;
 }
