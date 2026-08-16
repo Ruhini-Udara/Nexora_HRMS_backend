@@ -80,6 +80,19 @@ public class TrainingController {
         return ResponseEntity.ok(trainingService.updateTrainingEvent(id, event));
     }
 
+    // API endpoint to delete or cancel a training event
+    @DeleteMapping("/events/{id}")
+    public ResponseEntity<?> deleteTrainingEvent(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long cancelledById) {
+        try {
+            trainingService.deleteTrainingEvent(id, cancelledById);
+            return ResponseEntity.ok(Map.of("message", "Training event successfully processed."));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     // --- Training Requests ---
 
     // API endpoint to apply for training
