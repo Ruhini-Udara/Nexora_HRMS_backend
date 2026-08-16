@@ -14,4 +14,6 @@ public interface TrainingFeedbackRepository extends JpaRepository<TrainingFeedba
     List<TrainingFeedback> findByEmployeeId(Long employeeId);
     Optional<TrainingFeedback> findByTrainingEventIdAndEmployeeId(Long eventId, Long employeeId);
     boolean existsByTrainingEventIdAndEmployeeId(Long eventId, Long employeeId);
+    // Check if any feedback exists for a training event
+    boolean existsByTrainingEventId(Long eventId);
 }
