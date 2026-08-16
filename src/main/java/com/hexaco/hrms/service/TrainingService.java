@@ -50,14 +50,14 @@ public class TrainingService {
     // --- Training Events ---
 
     public TrainingEventDto createTrainingEvent(TrainingEventDto dto) {
-        // Check for duplicates (same title only - case insensitive)
-        if (trainingEventRepository.existsByTitleIgnoreCase(dto.getTitle())) {
+        // Check for duplicates (same title only - case insensitive, ignoring cancelled events)
+        if (trainingEventRepository.existsByTitleIgnoreCaseAndStatusNot(dto.getTitle(), "Cancelled")) {
             throw new RuntimeException("A training event with this title already exists.");
         }
 
-        // Check for duplicate training code (case insensitive)
+        // Check for duplicate training code (case insensitive, ignoring cancelled events)
         if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
-            if (trainingEventRepository.existsByTrainingCodeIgnoreCase(dto.getTrainingCode().trim())) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(dto.getTrainingCode().trim(), "Cancelled")) {
                 throw new RuntimeException("A training event with this training code already exists.");
             }
         }
@@ -85,6 +85,7 @@ public class TrainingService {
     //Fetch all training events
     public List<TrainingEventDto> getAllTrainingEvents() {
         return trainingEventRepository.findAll().stream()
+                .filter(event -> !"Cancelled".equalsIgnoreCase(event.getStatus()))
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
@@ -101,9 +102,9 @@ public class TrainingService {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
-        // Check for duplicate training code (case insensitive, excluding current event ID)
+        // Check for duplicate training code (case insensitive, excluding current event ID and ignoring cancelled events)
         if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
-            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(dto.getTrainingCode().trim(), id)) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(dto.getTrainingCode().trim(), id, "Cancelled")) {
                 throw new RuntimeException("A training event with this training code already exists.");
             }
         }
@@ -281,7 +282,7 @@ public class TrainingService {
     // Check if training event title already exists
     public boolean existsByTitle(String title) {
         System.out.println("Service: Checking existence for title: [" + title + "]");
-        boolean exists = trainingEventRepository.existsByTitleIgnoreCase(title.trim());
+        boolean exists = trainingEventRepository.existsByTitleIgnoreCaseAndStatusNot(title.trim(), "Cancelled");
         System.out.println("Service: Database match found? " + exists);
         return exists;
     }
@@ -289,9 +290,49 @@ public class TrainingService {
     // Check if training event code already exists
     public boolean existsByTrainingCode(String code, Long excludeId) {
         if (excludeId != null) {
-            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNot(code.trim(), excludeId);
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(code.trim(), excludeId, "Cancelled");
         } else {
-            return trainingEventRepository.existsByTrainingCodeIgnoreCase(code.trim());
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(code.trim(), "Cancelled");
+        }
+    }
+
+    // Delete training event (hybrid: soft-delete if requests/feedback exist, hard-delete if plain event)
+    public void deleteTrainingEvent(Long id, Long cancelledById) {
+        TrainingEvent event = trainingEventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Training Event not found"));
+
+        boolean hasRequests = trainingRequestRepository.existsByTrainingEventId(id);
+        boolean hasFeedback = trainingFeedbackRepository.existsByTrainingEventId(id);
+
+        if (hasRequests || hasFeedback) {
+            // Soft delete: Set status to Cancelled
+            event.setStatus("Cancelled");
+            trainingEventRepository.save(event);
+
+            List<TrainingRequest> requests = trainingRequestRepository.findByTrainingEventId(id);
+            for (TrainingRequest req : requests) {
+                req.setStatus("Cancelled");
+                trainingRequestRepository.save(req);
+
+                // Create audit record in the approval table if cancelledById is provided
+                if (cancelledById != null) {
+                    Employee cancelledBy = employeeRepository.findById(cancelledById)
+                            .orElseThrow(() -> new RuntimeException("Cancelled-by employee not found"));
+
+                    Approval approval = Approval.builder()
+                            .refId(req.getId())
+                            .refType("TRAINING_REQUEST")
+                            .approvedBy(cancelledBy)
+                            .decision("CANCELLED")
+                            .remark("Training event cancelled by HR")
+                            .build();
+
+                    approvalService.saveApproval(approval);
+                }
+            }
+        } else {
+            // Hard delete from database
+            trainingEventRepository.delete(event);
         }
     }
 
