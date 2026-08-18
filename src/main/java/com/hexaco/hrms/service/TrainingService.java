@@ -50,19 +50,22 @@ public class TrainingService {
     // --- Training Events ---
 
     public TrainingEventDto createTrainingEvent(TrainingEventDto dto) {
-        // Check for duplicates (same title only - case insensitive, ignoring cancelled events)
+        // Check for duplicates (same title only - case insensitive, ignoring cancelled
+        // events)
         if (trainingEventRepository.existsByTitleIgnoreCaseAndStatusNot(dto.getTitle(), "Cancelled")) {
             throw new RuntimeException("A training event with this title already exists.");
         }
 
-        // Check for duplicate training code (case insensitive, ignoring cancelled events)
+        // Check for duplicate training code (case insensitive, ignoring cancelled
+        // events)
         if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
-            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(dto.getTrainingCode().trim(), "Cancelled")) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(dto.getTrainingCode().trim(),
+                    "Cancelled")) {
                 throw new RuntimeException("A training event with this training code already exists.");
             }
         }
 
-        //Build TrainingEventDto from TrainingEvent
+        // Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
                 .trainingCode(dto.getTrainingCode())
@@ -82,7 +85,7 @@ public class TrainingService {
         return mapToDto(event);
     }
 
-    //Fetch all training events
+    // Fetch all training events
     public List<TrainingEventDto> getAllTrainingEvents() {
         return trainingEventRepository.findAll().stream()
                 .filter(event -> !"Cancelled".equalsIgnoreCase(event.getStatus()))
@@ -90,29 +93,30 @@ public class TrainingService {
                 .collect(Collectors.toList());
     }
 
-    //Fetch training event by ID
+    // Fetch training event by ID
     public TrainingEventDto getTrainingEventById(Long id) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
         return mapToDto(event);
     }
 
-    //Update TrainingEvent
+    // Update TrainingEvent
     public TrainingEventDto updateTrainingEvent(Long id, TrainingEventDto dto) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
-        // Check for duplicate training code (case insensitive, excluding current event ID and ignoring cancelled events)
+        // Check for duplicate training code (case insensitive, excluding current event
+        // ID and ignoring cancelled events)
         if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
-            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(dto.getTrainingCode().trim(), id, "Cancelled")) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(dto.getTrainingCode().trim(),
+                    id, "Cancelled")) {
                 throw new RuntimeException("A training event with this training code already exists.");
             }
         }
 
         String oldStatus = event.getStatus();
 
-
-        //Update event details
+        // Update event details
         event.setTitle(dto.getTitle());
         event.setTrainingCode(dto.getTrainingCode());
         event.setCategory(dto.getCategory());
@@ -136,7 +140,7 @@ public class TrainingService {
             event.setApprovedBy(dto.getApprovedBy());
             event.setApprovedAt(LocalDateTime.now());
             event = trainingEventRepository.save(event);
-            
+
             final TrainingEvent finalizedEvent = event;
             List<TrainingRequest> requests = trainingRequestRepository.findByTrainingEventId(event.getId());
 
@@ -157,11 +161,11 @@ public class TrainingService {
                         req.getEmployee().getFullName(),
                         req.getEmployee().getEmail(),
                         finalizedEvent.getTitle(),
-                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString() : "TBD",
+                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString()
+                                : "TBD",
                         formatTime(finalizedEvent.getTime()),
                         finalizedEvent.getLocation(),
-                        finalizedEvent.getInstructor()
-                );
+                        finalizedEvent.getInstructor());
             }
         }
 
@@ -188,22 +192,23 @@ public class TrainingService {
         return mapToDto(request);
     }
 
-    //Fetch training requests by event
+    // Fetch training requests by event
     public List<TrainingRequestDto> getRequestsByEvent(Long eventId) {
         return trainingRequestRepository.findByTrainingEventId(eventId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    //Fetch training requests by employee
+    // Fetch training requests by employee
     public List<TrainingRequestDto> getRequestsByEmployee(Long employeeId) {
         return trainingRequestRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    //Update training request status
-    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason, Long approverId) {
+    // Update training request status
+    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason,
+            Long approverId) {
         TrainingRequest request = trainingRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Training Request not found"));
 
@@ -248,7 +253,7 @@ public class TrainingService {
 
         feedback.setTrainingEvent(event);
         feedback.setEmployee(employee);
-        
+
         if (dto.getAttendanceStatus() != null) {
             feedback.setAttendanceStatus(dto.getAttendanceStatus());
         }
@@ -290,13 +295,15 @@ public class TrainingService {
     // Check if training event code already exists
     public boolean existsByTrainingCode(String code, Long excludeId) {
         if (excludeId != null) {
-            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(code.trim(), excludeId, "Cancelled");
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(code.trim(), excludeId,
+                    "Cancelled");
         } else {
             return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(code.trim(), "Cancelled");
         }
     }
 
-    // Delete training event (hybrid: soft-delete if requests/feedback exist, hard-delete if plain event)
+    // Delete training event (hybrid: soft-delete if requests/feedback exist,
+    // hard-delete if plain event)
     public void deleteTrainingEvent(Long id, Long cancelledById) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
@@ -369,7 +376,9 @@ public class TrainingService {
                 .employeeName(request.getEmployee().getFullName() + " " + request.getEmployee().getSurname())
                 .epfNumber(request.getEmployee().getEpfNumber())
                 .department(request.getEmployee().getDepartment())
-                .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
+                .designation(request.getEmployee().getDesignation() != null
+                        ? request.getEmployee().getDesignation().getDesignationName()
+                        : null)
                 .personalEmail(request.getEmployee().getEmail())
                 .workEmail(request.getEmployee().getEmail())
                 .trainingTitle(request.getTrainingEvent().getTitle())
@@ -378,10 +387,12 @@ public class TrainingService {
                 .trainingTime(request.getTrainingEvent().getTime())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
-                .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved" : request.getTrainingEvent().getStatus())
+                .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved"
+                        : request.getTrainingEvent().getStatus())
                 .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
-                .age(request.getEmployee().getDateOfBirth() != null ? 
-                    java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)
+                .age(request.getEmployee().getDateOfBirth() != null
+                        ? java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears()
+                        : null)
                 .justification(request.getJustification())
                 .rejectionReason(request.getRejectionReason())
                 .attachmentPath(request.getAttachmentPath())
@@ -421,7 +432,8 @@ public class TrainingService {
             int minutes = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
             String ampm = hours >= 12 ? "PM" : "AM";
             int hours12 = hours % 12;
-            if (hours12 == 0) hours12 = 12;
+            if (hours12 == 0)
+                hours12 = 12;
             return String.format("%d:%02d %s", hours12, minutes, ampm);
         } catch (Exception e) {
             return time;

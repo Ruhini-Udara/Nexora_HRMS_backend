@@ -65,6 +65,9 @@ public class SecurityConfig {
             // Training
             .requestMatchers("/api/training/**").permitAll()
 
+            // Google Calendar integration
+            .requestMatchers("/api/calendar/**").permitAll()
+
             // Swagger
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
