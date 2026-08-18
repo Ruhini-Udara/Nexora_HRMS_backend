@@ -22,13 +22,13 @@ public class NotificationServiceImpl implements NotificationService {
     private boolean simulationMode;
 
     @Override
-    public void sendLeaveStatusUpdate(String recipientName, String email, String phoneNo, String leaveType, String status, String remark) {
-        
+    public void sendLeaveStatusUpdate(String recipientName, String email, String phoneNo, String leaveType,
+            String status, String remark) {
+
         String subject = "Leave Application Update: " + status;
         String content = String.format(
-            "Dear %s,\n\nYour %s request has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
-            recipientName, leaveType, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
-        );
+                "Dear %s,\n\nYour %s request has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                recipientName, leaveType, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         // 1. ALWAYS Log to console for debugging
         log.info("\n" +
@@ -66,12 +66,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendTrainingStatusUpdate(String recipientName, String email, String trainingTitle, String status, String remark) {
+    public void sendTrainingStatusUpdate(String recipientName, String email, String trainingTitle, String status,
+            String remark) {
         String subject = "Training Application Update: " + status;
         String content = String.format(
-            "Dear %s,\n\nYour application for the training \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
-            recipientName, trainingTitle, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
-        );
+                "Dear %s,\n\nYour application for the training \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                recipientName, trainingTitle, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -102,12 +102,12 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendWelfareStatusUpdate(String recipientName, String email, String welfareType, String status, String remark) {
+    public void sendWelfareStatusUpdate(String recipientName, String email, String welfareType, String status,
+            String remark) {
         String subject = "Welfare Request Update: " + status;
         String content = String.format(
-            "Dear %s,\n\nYour welfare request for \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
-            recipientName, welfareType, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
-        );
+                "Dear %s,\n\nYour welfare request for \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                recipientName, welfareType, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -138,19 +138,19 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor) {
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date,
+            String time, String location, String instructor) {
         String subject = "Training Finalized: " + trainingTitle;
         String content = String.format(
-            "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
-            "Details:\n" +
-            "Date: %s\n" +
-            "Time: %s\n" +
-            "Location: %s\n" +
-            "Instructor: %s\n\n" +
-            "Please mark your calendar. We look forward to your participation.\n\n" +
-            "Best Regards,\nNexora HRMS System",
-            recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD")
-        );
+                "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
+                        "Details:\n" +
+                        "Date: %s\n" +
+                        "Time: %s\n" +
+                        "Location: %s\n" +
+                        "Instructor: %s\n\n" +
+                        "Please mark your calendar. We look forward to your participation.\n\n" +
+                        "Best Regards,\nNexora HRMS System",
+                recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD"));
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -177,6 +177,48 @@ public class NotificationServiceImpl implements NotificationService {
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Finalized Training Email content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendCompanyEventNotification(String email, String title, String description, String date, String time,
+            String type) {
+        String subject = "New Company Event: " + title;
+        String content = String.format(
+                "Dear Employee,\n\nA new company event has been scheduled.\n\n" +
+                        "Details:\n" +
+                        "Title: %s\n" +
+                        "Type: %s\n" +
+                        "Date: %s\n" +
+                        "Time: %s\n" +
+                        "Description: %s\n\n" +
+                        "Best Regards,\nNexora HRMS System",
+                title, type, date, time, (description != null && !description.isEmpty() ? description : "N/A"));
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 COMPANY EVENT NOTIFICATION LOG                                           ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Company Event Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send company event email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Company Event Email content: \n{}", content);
         }
     }
 }
