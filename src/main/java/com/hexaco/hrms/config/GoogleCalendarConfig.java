@@ -9,6 +9,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -17,6 +18,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Configuration
+@ConditionalOnProperty(name = "google.calendar.enabled", havingValue = "true", matchIfMissing = false)
 public class GoogleCalendarConfig {
 
     private final ResourceLoader resourceLoader;
