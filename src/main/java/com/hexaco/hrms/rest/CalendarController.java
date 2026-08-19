@@ -5,6 +5,7 @@ import com.hexaco.hrms.service.NotificationService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/calendar")
 @RequiredArgsConstructor
 @Slf4j
+@ConditionalOnBean(GoogleCalendarService.class)
 public class CalendarController {
 
     private final GoogleCalendarService googleCalendarService;
