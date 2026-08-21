@@ -34,4 +34,6 @@ public class EmployeeDTO {
     private Boolean fingerprintEnrolled;
     private String fingerprintEnrolledAt;
     private String lastFingerprintSyncAt;
+    
+    private String profilePicturePath;
 }

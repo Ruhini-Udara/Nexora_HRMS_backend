@@ -75,4 +75,15 @@ public class EmployeeController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PatchMapping("/{id}/profile-picture")
+    public ResponseEntity<Employee> updateProfilePicture(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        String profilePicturePath = body.get("profilePicturePath");
+        try {
+            Employee updated = employeeService.updateProfilePicture(id, profilePicturePath);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -268,4 +268,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return employee;
     }
+
+    @Override
+    @Transactional
+    public Employee updateProfilePicture(Long id, String profilePicturePath) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+        employee.setProfilePicturePath(profilePicturePath);
+        return employeeRepository.save(employee);
+    }
 }

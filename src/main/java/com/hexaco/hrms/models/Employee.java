@@ -90,6 +90,9 @@ public class Employee {
 
     
 
+    @Column(name = "profile_picture_path")
+    private String profilePicturePath;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
