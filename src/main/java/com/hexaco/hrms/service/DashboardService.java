@@ -31,8 +31,8 @@ public class DashboardService {
         LocalDate oneMonthFromNow = today.plusMonths(1);
 
         // Delayed Approvals (Combined from overseas and maternity where status = SUBMITTED and created < 2 days ago)
-        long delayedOverseas = overseasLeaveRepository.findByStatusAndCreatedAtBefore("SUBMITTED", twoDaysAgo).size();
-        long delayedMaternity = maternityLeaveRepository.findByStatusAndCreatedAtBefore("SUBMITTED", twoDaysAgo).size();
+        long delayedOverseas = overseasLeaveRepository.findByStatusAndCreatedAtBefore("PENDING_HR_APPROVAL", twoDaysAgo).size();
+        long delayedMaternity = maternityLeaveRepository.findByStatusAndCreatedAtBefore("PENDING_HR_APPROVAL", twoDaysAgo).size();
 
         // Pending Leaves
         long pendingOverseas = overseasLeaveRepository.countPending();

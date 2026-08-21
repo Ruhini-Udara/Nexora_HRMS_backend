@@ -24,34 +24,43 @@ public class ApprovalBottleneckScheduler {
     private final UserAccountRepository userAccountRepository;
     private final SystemNotificationService notificationService;
 
-    // Run once a day at midnight
+    // Run every minute (for testing purposes) - change back to "0 0 0 * * ?" for
+    // production
     @Scheduled(cron = "0 0 0 * * ?")
     public void trackApprovalBottlenecks() {
         log.info("Starting approval bottleneck tracking...");
         LocalDateTime thresholdDate = LocalDateTime.now().minusDays(2);
 
         // Find pending Overseas Leaves
-        List<OverseasLeave> delayedOverseasLeaves = overseasLeaveRepository.findByStatusAndCreatedAtBefore("SUBMITTED", thresholdDate);
+        List<OverseasLeave> delayedOverseasLeaves = overseasLeaveRepository
+                .findByStatusAndCreatedAtBefore("PENDING_HR_APPROVAL", thresholdDate);
+        log.info("Found {} delayed Overseas Leaves", delayedOverseasLeaves.size());
         for (OverseasLeave leave : delayedOverseasLeaves) {
-            notifyApprovers("Overseas Leave Pending Approval", 
-                            "Overseas leave for " + leave.getEmployee().getFullName() + " has been pending for over 2 days.",
-                            "/hr/leave-requests/overseas-leave");
+            notifyApprovers("Overseas Leave Pending Approval",
+                    "Overseas leave for " + leave.getEmployee().getFullName() + " has been pending for over 2 days.",
+                    "/hr/leave-requests/overseas-leave");
         }
 
         // Find pending Maternity Leaves
-        List<MaternityLeave> delayedMaternityLeaves = maternityLeaveRepository.findByStatusAndCreatedAtBefore("SUBMITTED", thresholdDate);
+        List<MaternityLeave> delayedMaternityLeaves = maternityLeaveRepository
+                .findByStatusAndCreatedAtBefore("PENDING_HR_APPROVAL", thresholdDate);
+        log.info("Found {} delayed Maternity Leaves", delayedMaternityLeaves.size());
         for (MaternityLeave leave : delayedMaternityLeaves) {
-            notifyApprovers("Maternity Leave Pending Approval", 
-                            "Maternity leave for " + leave.getEmployee().getFullName() + " has been pending for over 2 days.",
-                            "/hr/leave-requests/maternity-leave");
+            notifyApprovers("Maternity Leave Pending Approval",
+                    "Maternity leave for " + leave.getEmployee().getFullName() + " has been pending for over 2 days.",
+                    "/hr/leave-requests/maternity-leave");
         }
-        
+
         log.info("Finished approval bottleneck tracking.");
     }
 
     private void notifyApprovers(String title, String message, String link) {
         // Find HR role users
-        List<UserAccount> hrUsers = userAccountRepository.findByRoleRoleName("ROLE_HR");
+        java.util.List<UserAccount> hrUsers = new java.util.ArrayList<>(
+                userAccountRepository.findByRoleRoleName("ROLE_HR"));
+        hrUsers.addAll(userAccountRepository.findByRoleRoleName("HR"));
+
+        log.info("Found {} HR users to notify", hrUsers.size());
         for (UserAccount hr : hrUsers) {
             notificationService.createNotification(hr.getEmployee(), title, message, link);
         }
