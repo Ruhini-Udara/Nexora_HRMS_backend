@@ -8,6 +8,7 @@ import com.google.api.services.calendar.model.EventDateTime;
 import com.hexaco.hrms.service.GoogleCalendarService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
@@ -25,13 +26,18 @@ import java.util.stream.Collectors;
 @ConditionalOnBean(Calendar.class)
 public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
-    private final Calendar googleCalendar;
+    @Autowired(required = false)
+    private Calendar googleCalendar;
 
-    @Value("${google.calendar.id}")
+    @Value("${google.calendar.id:primary}")
     private String calendarId;
 
     @Override
     public void createEvent(String title, String description, LocalDateTime start, LocalDateTime end, List<String> attendeeEmails) {
+        if (googleCalendar == null) {
+            log.warn("Google Calendar is not configured. Skipping event creation for: {}", title);
+            return;
+        }
         try {
             Event event = new Event()
                     .setSummary(title)
@@ -57,6 +63,10 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     @Override
     public List<com.hexaco.hrms.dto.CalendarEventDto> getEvents() {
+        if (googleCalendar == null) {
+            log.warn("Google Calendar is not configured. Returning empty event list.");
+            return java.util.List.of();
+        }
         try {
             Calendar.Events.List request = googleCalendar.events().list(calendarId);
             List<Event> googleEvents = request.execute().getItems();
