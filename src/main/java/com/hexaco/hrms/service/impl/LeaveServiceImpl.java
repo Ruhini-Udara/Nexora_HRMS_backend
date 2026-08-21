@@ -2,6 +2,7 @@ package com.hexaco.hrms.service.impl;
 
 import com.hexaco.hrms.dto.MaternityLeaveDto;
 import com.hexaco.hrms.dto.OverseasLeaveDto;
+import com.hexaco.hrms.dto.NormalLeaveDto;
 import com.hexaco.hrms.models.*;
 import com.hexaco.hrms.repository.*;
 import com.hexaco.hrms.service.LeaveService;
@@ -18,6 +19,7 @@ public class LeaveServiceImpl implements LeaveService {
 
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final NormalLeaveRepository normalLeaveRepository;
     private final EmployeeRepository employeeRepository;
     private final UserAccountRepository userAccountRepository;
     private final LeaveTypeRepository leaveTypeRepository;
@@ -134,6 +136,56 @@ public class LeaveServiceImpl implements LeaveService {
         return maternityLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToMaternityDto).collect(Collectors.toList());
     }
 
+    @Override
+    public NormalLeaveDto submitNormalLeave(NormalLeaveDto dto) {
+        Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
+                .orElseThrow(() -> new RuntimeException("LeaveType not found"));
+
+        NormalLeave requestedLeave = NormalLeave.builder()
+                .branch(dto.getBranch())
+                .contactNumber(dto.getContactNumber())
+                .build();
+
+        // Map parent class fields
+        requestedLeave.setEmployee(employee);
+        requestedLeave.setLeaveType(leaveType);
+        requestedLeave.setFromDate(dto.getFromDate());
+        requestedLeave.setEndDate(dto.getEndDate());
+        requestedLeave.setTotalDays(dto.getTotalDays());
+        requestedLeave.setReason(dto.getReason());
+
+        // Smart Routing Logic
+        if (dto.getTotalDays() >= 3) {
+            requestedLeave.setStatus(STATUS_PENDING_HR);
+        } else {
+            requestedLeave.setStatus("PENDING_SUPERVISOR_APPROVAL");
+        }
+
+        return mapToNormalDto(normalLeaveRepository.save(requestedLeave));
+    }
+
+    @Override
+    public Optional<NormalLeaveDto> getNormalLeaveById(Long id) {
+        return normalLeaveRepository.findById(id).map(this::mapToNormalDto);
+    }
+
+    @Override
+    public List<NormalLeaveDto> getAllNormalLeaves() {
+        return normalLeaveRepository.findAll().stream().map(this::mapToNormalDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<NormalLeaveDto> getNormalLeavesByStatus(String status) {
+        return normalLeaveRepository.findByStatus(status).stream().map(this::mapToNormalDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<NormalLeaveDto> getNormalLeavesByEmployeeId(Long employeeId) {
+        return normalLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToNormalDto).collect(Collectors.toList());
+    }
+
     private boolean isHrEmployee(Long employeeId) {
         List<UserAccount> accounts = userAccountRepository.findByEmployeeId(employeeId);
         for (UserAccount acc : accounts) {
@@ -194,6 +246,28 @@ public class LeaveServiceImpl implements LeaveService {
                 .contactNumber(leave.getContactNumber())
                 .email(leave.getEmail())
                 .specialRemark(leave.getSpecialRemark())
+                .createdAt(leave.getCreatedAt())
+                .updatedAt(leave.getUpdatedAt())
+                .build();
+    }
+
+    private NormalLeaveDto mapToNormalDto(NormalLeave leave) {
+        return NormalLeaveDto.builder()
+                .id(leave.getId())
+                .employeeId(leave.getEmployee().getId())
+                .employeeName(formatEmployeeName(leave.getEmployee()))
+                .employeeCode(leave.getEmployee().getEmployeeCode())
+                .epfNumber(leave.getEmployee().getEpfNumber())
+                .department(leave.getEmployee().getDepartment())
+                .leaveTypeId(leave.getLeaveType().getId())
+                .leaveTypeName(leave.getLeaveType().getLeaveTypeName())
+                .fromDate(leave.getFromDate())
+                .endDate(leave.getEndDate())
+                .totalDays(leave.getTotalDays())
+                .reason(leave.getReason())
+                .status(leave.getStatus())
+                .branch(leave.getBranch())
+                .contactNumber(leave.getContactNumber())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
                 .build();

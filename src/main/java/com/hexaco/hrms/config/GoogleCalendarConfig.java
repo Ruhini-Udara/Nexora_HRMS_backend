@@ -6,6 +6,8 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,8 @@ import java.util.Collections;
 @Configuration
 public class GoogleCalendarConfig {
 
+    private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarConfig.class);
+
     private final ResourceLoader resourceLoader;
 
     @Value("${google.calendar.credentials.path:classpath:google-credentials.json}")
@@ -31,13 +35,22 @@ public class GoogleCalendarConfig {
     @Bean
     public Calendar googleCalendar() throws IOException, GeneralSecurityException {
         Resource resource = resourceLoader.getResource(credentialsPath);
-        GoogleCredentials credentials = GoogleCredentials.fromStream(resource.getInputStream())
-                .createScoped(Collections.singleton(CalendarScopes.CALENDAR));
-        return new Calendar.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                GsonFactory.getDefaultInstance(),
-                new HttpCredentialsAdapter(credentials))
-                .setApplicationName("Nexora HRMS")
-                .build();
+        if (!resource.exists()) {
+            logger.warn("Google credentials file not found at '{}'. Google Calendar integration will be disabled.", credentialsPath);
+            return null;
+        }
+        try {
+            GoogleCredentials credentials = GoogleCredentials.fromStream(resource.getInputStream())
+                    .createScoped(Collections.singleton(CalendarScopes.CALENDAR));
+            return new Calendar.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    GsonFactory.getDefaultInstance(),
+                    new HttpCredentialsAdapter(credentials))
+                    .setApplicationName("Nexora HRMS")
+                    .build();
+        } catch (Exception e) {
+            logger.warn("Failed to initialize Google Calendar: {}. Google Calendar integration will be disabled.", e.getMessage());
+            return null;
+        }
     }
 }
