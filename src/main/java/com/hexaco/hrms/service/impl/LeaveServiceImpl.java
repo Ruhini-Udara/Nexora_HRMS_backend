@@ -3,6 +3,7 @@ package com.hexaco.hrms.service.impl;
 import com.hexaco.hrms.dto.MaternityLeaveDto;
 import com.hexaco.hrms.dto.OverseasLeaveDto;
 import com.hexaco.hrms.dto.NormalLeaveDto;
+import com.hexaco.hrms.dto.LeaveImpactDto;
 import com.hexaco.hrms.models.*;
 import com.hexaco.hrms.repository.*;
 import com.hexaco.hrms.service.LeaveService;
@@ -184,6 +185,57 @@ public class LeaveServiceImpl implements LeaveService {
     @Override
     public List<NormalLeaveDto> getNormalLeavesByEmployeeId(Long employeeId) {
         return normalLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToNormalDto).collect(Collectors.toList());
+    }
+
+    public LeaveImpactDto getOverseasLeaveImpact(Long leaveId) {
+        OverseasLeave leave = overseasLeaveRepository.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Overseas leave not found"));
+        return calculateLeaveImpact(leave.getEmployee(), leave.getFromDate(), leave.getEndDate(), leave.getTotalDays(), leave.getId());
+    }
+
+    @Override
+    public LeaveImpactDto getMaternityLeaveImpact(Long leaveId) {
+        MaternityLeave leave = maternityLeaveRepository.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Maternity leave not found"));
+        return calculateLeaveImpact(leave.getEmployee(), leave.getFromDate(), leave.getEndDate(), leave.getTotalDays(), leave.getId());
+    }
+
+    private LeaveImpactDto calculateLeaveImpact(Employee employee, java.time.LocalDate fromDate, java.time.LocalDate endDate, int totalDays, Long excludeLeaveId) {
+        String department = employee.getDepartment();
+        if (department == null) {
+            department = "";
+        }
+
+        long departmentEmployees = employeeRepository.findByDepartmentIgnoreCase(department).size();
+        
+        long overlappingOverseas = overseasLeaveRepository.countOverlappingLeavesByDepartment(department, fromDate, endDate, excludeLeaveId);
+        long overlappingMaternity = maternityLeaveRepository.countOverlappingLeavesByDepartment(department, fromDate, endDate, excludeLeaveId);
+        
+        long alreadyOnLeave = overlappingOverseas + overlappingMaternity;
+        long availableAfterApproval = departmentEmployees - alreadyOnLeave - 1; // subtract 1 for the requesting employee
+
+        if (availableAfterApproval < 0) availableAfterApproval = 0;
+        if (departmentEmployees == 0) departmentEmployees = 1; // prevent division by zero
+
+        double availabilityPercentage = ((double) availableAfterApproval / departmentEmployees) * 100.0;
+        
+        String riskLevel = "High Risk";
+        if (availabilityPercentage >= 80) {
+            riskLevel = "Low Risk";
+        } else if (availabilityPercentage >= 60) {
+            riskLevel = "Medium Risk";
+        }
+
+        return LeaveImpactDto.builder()
+                .employeeName(formatEmployeeName(employee))
+                .department(department.isEmpty() ? "Unassigned" : department)
+                .leaveDuration(totalDays)
+                .departmentEmployees(departmentEmployees)
+                .alreadyOnLeave(alreadyOnLeave)
+                .availableAfterApproval(availableAfterApproval)
+                .availabilityPercentage(availabilityPercentage)
+                .riskLevel(riskLevel)
+                .build();
     }
 
     private boolean isHrEmployee(Long employeeId) {

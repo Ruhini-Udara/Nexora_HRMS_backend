@@ -34,6 +34,67 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public Employee registerEmployee(EmployeeDTO dto) {
+        // Validate required fields
+        if (dto.getNicNumber() == null || dto.getNicNumber().trim().isEmpty()) {
+            throw new RuntimeException("NIC Number is required.");
+        }
+        if (dto.getFullName() == null || dto.getFullName().trim().isEmpty()) {
+            throw new RuntimeException("Full Name is required.");
+        }
+        if (dto.getSurname() == null || dto.getSurname().trim().isEmpty()) {
+            throw new RuntimeException("Surname is required.");
+        }
+        if (dto.getSex() == null || dto.getSex().trim().isEmpty()) {
+            throw new RuntimeException("Sex is required.");
+        }
+        if (dto.getEmail() == null || dto.getEmail().trim().isEmpty()) {
+            throw new RuntimeException("Email Address is required.");
+        }
+
+        // Validate NIC Format (Sri Lankan): 9 digits + v/V/x/X or 12 digits
+        String nic = dto.getNicNumber().trim();
+        if (!nic.matches("^([0-9]{9}[vVxX]|[0-9]{12})$")) {
+            throw new RuntimeException("Invalid Sri Lankan NIC format. Must be 9 digits with V/X or 12 digits.");
+        }
+
+        // Validate Email format
+        String email = dto.getEmail().trim();
+        if (!email.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
+            throw new RuntimeException("Invalid Email Address format.");
+        }
+
+        // Check uniqueness of NIC Number
+        if (employeeRepository.findByNicNumber(nic).isPresent()) {
+            throw new RuntimeException("An employee with this NIC number already exists.");
+        }
+
+        // Check uniqueness of Email
+        if (employeeRepository.findByEmail(email).isPresent()) {
+            throw new RuntimeException("An employee with this Email address already exists.");
+        }
+
+        // Validate EPF format & uniqueness (if provided)
+        if (dto.getEpfNumber() != null && !dto.getEpfNumber().trim().isEmpty()) {
+            String epf = dto.getEpfNumber().trim();
+            if (!epf.matches("^[a-zA-Z0-9/-]+$")) {
+                throw new RuntimeException("Invalid EPF format. Must contain only alphanumeric characters, dashes, or slashes.");
+            }
+            if (employeeRepository.findByEpfNumber(epf).isPresent()) {
+                throw new RuntimeException("An employee with this EPF number already exists.");
+            }
+        }
+
+        // Validate ETF format & uniqueness (if provided)
+        if (dto.getEtfNumber() != null && !dto.getEtfNumber().trim().isEmpty()) {
+            String etf = dto.getEtfNumber().trim();
+            if (!etf.matches("^[a-zA-Z0-9/-]+$")) {
+                throw new RuntimeException("Invalid ETF format. Must contain only alphanumeric characters, dashes, or slashes.");
+            }
+            if (employeeRepository.findByEtfNumber(etf).isPresent()) {
+                throw new RuntimeException("An employee with this ETF number already exists.");
+            }
+        }
+
         // Look up designation by ID
         Designation designation = null;
         if (dto.getDesignationId() != null) {
@@ -206,5 +267,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setFingerprintEnrolled(false);
         }
         return employee;
+    }
+
+    @Override
+    @Transactional
+    public Employee updateProfilePicture(Long id, String profilePicturePath) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+        employee.setProfilePicturePath(profilePicturePath);
+        return employeeRepository.save(employee);
     }
 }

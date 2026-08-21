@@ -9,6 +9,7 @@ import com.hexaco.hrms.service.GoogleCalendarService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@ConditionalOnBean(Calendar.class)
 public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     @Autowired(required = false)

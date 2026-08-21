@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -19,6 +20,7 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 
 @Configuration
+@ConditionalOnProperty(name = "google.calendar.enabled", havingValue = "true", matchIfMissing = false)
 public class GoogleCalendarConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(GoogleCalendarConfig.class);
