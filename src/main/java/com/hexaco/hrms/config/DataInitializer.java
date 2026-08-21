@@ -195,5 +195,16 @@ public class DataInitializer implements CommandLineRunner {
                         .role(employeeRole)
                         .employee(employee)
                         .build()));
+
+        // Fix plaintext passwords for manually added users (like HR, Director, etc.)
+        List<UserAccount> allUsers = userAccountRepository.findAll();
+        for (UserAccount u : allUsers) {
+            // BCrypt hashes start with $2a$, $2b$, or $2y$
+            if (u.getPasswordHash() != null && !u.getPasswordHash().startsWith("$2a$")) {
+                System.out.println("Converting plaintext password to BCrypt for user: " + u.getEmail());
+                u.setPasswordHash(passwordEncoder.encode(u.getPasswordHash()));
+                userAccountRepository.save(u);
+            }
+        }
     }
 }

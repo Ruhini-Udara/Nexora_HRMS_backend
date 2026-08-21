@@ -58,6 +58,12 @@ public class OverseasLeaveController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/{id}/impact")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    public ResponseEntity<com.hexaco.hrms.dto.LeaveImpactDto> getOverseasLeaveImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(leaveService.getOverseasLeaveImpact(id));
+    }
+
     @GetMapping("/board-meeting-report")
     @PreAuthorize("hasAnyRole('ADMIN', 'DIRECTOR')")
     public void generateBoardReport(HttpServletResponse response) throws IOException {
