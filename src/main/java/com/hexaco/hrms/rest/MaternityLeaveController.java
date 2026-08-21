@@ -50,4 +50,10 @@ public class MaternityLeaveController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/{id}/impact")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    public ResponseEntity<com.hexaco.hrms.dto.LeaveImpactDto> getMaternityLeaveImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(leaveService.getMaternityLeaveImpact(id));
+    }
 }
