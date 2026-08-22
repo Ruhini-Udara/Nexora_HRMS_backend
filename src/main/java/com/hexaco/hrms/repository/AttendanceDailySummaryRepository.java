@@ -11,4 +11,5 @@ import java.util.Optional;
 @Repository
 public interface AttendanceDailySummaryRepository extends JpaRepository<AttendanceDailySummary, Long>, JpaSpecificationExecutor<AttendanceDailySummary> {
     Optional<AttendanceDailySummary> findByEmployeeIdAndAttendanceDate(Long employeeId, LocalDate attendanceDate);
+    long countByAttendanceDate(LocalDate date);
 }

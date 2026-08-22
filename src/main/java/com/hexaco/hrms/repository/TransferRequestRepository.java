@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface TransferRequestRepository extends JpaRepository<TransferRequest, Long> {
     List<TransferRequest> findByEmployeeId(Long employeeId);
+    List<TransferRequest> findByStatus(String status);
 }

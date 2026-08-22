@@ -12,6 +12,7 @@ import java.util.List;
 public interface OverseasLeaveRepository extends JpaRepository<OverseasLeave, Long> {
     List<OverseasLeave> findByStatus(String status);
     List<OverseasLeave> findByEmployeeId(Long employeeId);
+    List<OverseasLeave> findByStatusIgnoreCase(String status);
     List<OverseasLeave> findByStatusAndCreatedAtBefore(String status, java.time.LocalDateTime date);
 
     @Query("SELECT COUNT(l) FROM OverseasLeave l WHERE l.status = 'PENDING_HR_APPROVAL' OR l.status = 'PENDING_ADMIN_APPROVAL' OR l.status = 'SUBMITTED'")
