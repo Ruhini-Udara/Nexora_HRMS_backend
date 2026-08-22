@@ -21,6 +21,10 @@ public class DashboardAnalyticsDto {
     private long pendingMaternity;
     private long delayedApprovals;
     
+    private long totalStaff;
+    private long activeTrainingPrograms;
+    private String attendancePercentage;
+    
     private List<PassportExpiryAlert> passportExpiryAlerts;
     private List<MaternityReturnAlert> upcomingMaternityReturns;
     
