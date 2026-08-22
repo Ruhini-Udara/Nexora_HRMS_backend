@@ -40,4 +40,9 @@ public class DashboardController {
     public ResponseEntity<DirectorDashboardDto> getDirectorDashboard() {
         return ResponseEntity.ok(directorDashboardService.getDirectorDashboard());
     }
+
+    @GetMapping("/test")
+    public ResponseEntity<DashboardAnalyticsDto> getTestAnalytics() {
+        return ResponseEntity.ok(dashboardService.getAnalytics());
+    }
 }
