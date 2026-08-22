@@ -3,6 +3,7 @@ package com.hexaco.hrms.repository;
 import com.hexaco.hrms.models.TrainingEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
+import java.util.List;
  
 // Repository interface for TrainingEvent
 public interface TrainingEventRepository extends JpaRepository<TrainingEvent, Long> {
@@ -20,4 +21,6 @@ public interface TrainingEventRepository extends JpaRepository<TrainingEvent, Lo
     boolean existsByTrainingCodeIgnoreCaseAndIdNot(String trainingCode, Long id);
     // Checks if an event with the same training code (case-insensitive) exists, excluding a specific ID and status
     boolean existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(String trainingCode, Long id, String status);
+    List<TrainingEvent> findByStatus(String status);
+    long countByApplyBeforeBetween(LocalDate startDate, LocalDate endDate);
 }
