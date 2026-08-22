@@ -76,18 +76,16 @@ public class DashboardService {
         long totalStaff = employeeRepository.count();
         
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        long newHiresThisWeek = employeeRepository.findAll().stream()
-                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isAfter(sevenDaysAgo))
-                .count();
+        long newHiresThisWeek = employeeRepository.countByCreatedAtAfter(sevenDaysAgo);
         
         List<TrainingEvent> allEvents = trainingEventRepository.findAll();
         long activeTrainingPrograms = allEvents.stream()
-                .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()) || "SCHEDULED".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()) 
+                          || "SCHEDULED".equalsIgnoreCase(e.getStatus())
+                          || "Published".equalsIgnoreCase(e.getStatus()))
                 .count();
                 
-        long trainingsFinishingSoon = allEvents.stream()
-                .filter(e -> e.getApplyBefore() != null && e.getApplyBefore().isAfter(today) && e.getApplyBefore().isBefore(today.plusDays(7)))
-                .count();
+        long trainingsFinishingSoon = trainingEventRepository.countByApplyBeforeBetween(today, today.plusDays(7));
                 
         // Attendance
         long presentTodayCount = attendanceRepo.countByAttendanceDate(today);
