@@ -50,4 +50,11 @@ public class NormalLeaveController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @GetMapping("/{id}/impact")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    public ResponseEntity<com.hexaco.hrms.dto.LeaveImpactDto> getNormalLeaveImpact(@PathVariable Long id) {
+        com.hexaco.hrms.dto.LeaveImpactDto impact = leaveService.getNormalLeaveImpact(id);
+        return ResponseEntity.ok(impact);
+    }
 }

@@ -32,4 +32,5 @@ public interface LeaveService {
     List<NormalLeaveDto> getNormalLeavesByEmployeeId(Long employeeId);
 
     LeaveImpactDto getMaternityLeaveImpact(Long leaveId);
+    LeaveImpactDto getNormalLeaveImpact(Long leaveId);
 }

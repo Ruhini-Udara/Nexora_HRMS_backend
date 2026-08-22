@@ -200,6 +200,13 @@ public class LeaveServiceImpl implements LeaveService {
         return calculateLeaveImpact(leave.getEmployee(), leave.getFromDate(), leave.getEndDate(), leave.getTotalDays(), leave.getId());
     }
 
+    @Override
+    public LeaveImpactDto getNormalLeaveImpact(Long leaveId) {
+        NormalLeave leave = normalLeaveRepository.findById(leaveId)
+                .orElseThrow(() -> new RuntimeException("Normal leave not found"));
+        return calculateLeaveImpact(leave.getEmployee(), leave.getFromDate(), leave.getEndDate(), leave.getTotalDays(), leave.getId());
+    }
+
     private LeaveImpactDto calculateLeaveImpact(Employee employee, java.time.LocalDate fromDate, java.time.LocalDate endDate, int totalDays, Long excludeLeaveId) {
         String department = employee.getDepartment();
         if (department == null) {
@@ -210,8 +217,9 @@ public class LeaveServiceImpl implements LeaveService {
         
         long overlappingOverseas = overseasLeaveRepository.countOverlappingLeavesByDepartment(department, fromDate, endDate, excludeLeaveId);
         long overlappingMaternity = maternityLeaveRepository.countOverlappingLeavesByDepartment(department, fromDate, endDate, excludeLeaveId);
+        long overlappingNormal = normalLeaveRepository.countOverlappingLeavesByDepartment(department, fromDate, endDate, excludeLeaveId);
         
-        long alreadyOnLeave = overlappingOverseas + overlappingMaternity;
+        long alreadyOnLeave = overlappingOverseas + overlappingMaternity + overlappingNormal;
         long availableAfterApproval = departmentEmployees - alreadyOnLeave - 1; // subtract 1 for the requesting employee
 
         if (availableAfterApproval < 0) availableAfterApproval = 0;
