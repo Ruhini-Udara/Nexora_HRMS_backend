@@ -86,7 +86,7 @@ public class DashboardService {
                 .count();
                 
         long trainingsFinishingSoon = allEvents.stream()
-                .filter(e -> e.getEndDate() != null && e.getEndDate().isAfter(today) && e.getEndDate().isBefore(today.plusDays(7)))
+                .filter(e -> e.getApplyBefore() != null && e.getApplyBefore().isAfter(today) && e.getApplyBefore().isBefore(today.plusDays(7)))
                 .count();
                 
         // Attendance
