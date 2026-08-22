@@ -22,7 +22,9 @@ public class DashboardAnalyticsDto {
     private long delayedApprovals;
     
     private long totalStaff;
+    private long newHiresThisWeek;
     private long activeTrainingPrograms;
+    private long trainingsFinishingSoon;
     private String attendancePercentage;
     
     private List<PassportExpiryAlert> passportExpiryAlerts;

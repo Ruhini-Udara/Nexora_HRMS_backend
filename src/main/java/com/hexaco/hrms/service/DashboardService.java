@@ -75,9 +75,18 @@ public class DashboardService {
         // New HR Stats
         long totalStaff = employeeRepository.count();
         
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        long newHiresThisWeek = employeeRepository.findAll().stream()
+                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isAfter(sevenDaysAgo))
+                .count();
+        
         List<TrainingEvent> allEvents = trainingEventRepository.findAll();
         long activeTrainingPrograms = allEvents.stream()
                 .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()) || "SCHEDULED".equalsIgnoreCase(e.getStatus()))
+                .count();
+                
+        long trainingsFinishingSoon = allEvents.stream()
+                .filter(e -> e.getEndDate() != null && e.getEndDate().isAfter(today) && e.getEndDate().isBefore(today.plusDays(7)))
                 .count();
                 
         // Attendance
@@ -95,7 +104,9 @@ public class DashboardService {
                 .pendingMaternity(pendingMaternity)
                 .delayedApprovals(delayedOverseas + delayedMaternity)
                 .totalStaff(totalStaff)
+                .newHiresThisWeek(newHiresThisWeek)
                 .activeTrainingPrograms(activeTrainingPrograms)
+                .trainingsFinishingSoon(trainingsFinishingSoon)
                 .attendancePercentage(attendancePercentage + "%")
                 .passportExpiryAlerts(expiringPassports.stream()
                         .map(l -> new DashboardAnalyticsDto.PassportExpiryAlert(
