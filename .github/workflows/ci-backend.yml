@@ -31,3 +31,7 @@ jobs:
       - name: Run Tests
         run: ./mvnw test
         working-directory: .
+        
+      - name: Build Docker Image
+        run: docker build -t nexora-backend:latest .
+        working-directory: .
