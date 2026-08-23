@@ -89,7 +89,7 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
     }
 
     private void saveOrUpdateLeaveBalance(Employee employee, int year, int annual, int casual, int medical) {
-        Optional<LeaveBalance> existing = leaveBalanceRepository.findByEmployeeIdAndYear(employee.getId(), year);
+        Optional<LeaveBalance> existing = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(employee.getId(), year);
         if (existing.isPresent()) {
             LeaveBalance lb = existing.get();
             // Update quotas only if not finalized and not manually edited (to prevent overwriting manual adjustments)
@@ -102,7 +102,7 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
         } else {
             LeaveBalance lb = LeaveBalance.builder()
                     .employee(employee)
-                    .year(year)
+                    .leaveYear(year)
                     .annualLeaveQuota(annual)
                     .casualLeaveQuota(casual)
                     .medicalLeaveQuota(medical)
@@ -118,15 +118,15 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
 
     @Override
     public List<LeaveBalance> getLeaveBalancesByYear(int year) {
-        return leaveBalanceRepository.findByYear(year);
+        return leaveBalanceRepository.findByLeaveYear(year);
     }
 
     @Override
     public List<LeaveBalance> getLeaveBalancesByBranchAndYear(String branch, int year) {
         if (branch == null || branch.isEmpty() || "all".equalsIgnoreCase(branch)) {
-            return leaveBalanceRepository.findByYear(year);
+            return leaveBalanceRepository.findByLeaveYear(year);
         }
-        return leaveBalanceRepository.findByEmployeeBranchAndYear(branch, year);
+        return leaveBalanceRepository.findByEmployeeBranchAndLeaveYear(branch, year);
     }
 
     @Override
@@ -137,9 +137,9 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
 
         List<LeaveBalance> balances;
         if (branch == null || branch.isEmpty() || "all".equalsIgnoreCase(branch)) {
-            balances = leaveBalanceRepository.findByYear(year);
+            balances = leaveBalanceRepository.findByLeaveYear(year);
         } else {
-            balances = leaveBalanceRepository.findByEmployeeBranchAndYear(branch, year);
+            balances = leaveBalanceRepository.findByEmployeeBranchAndLeaveYear(branch, year);
         }
 
         for (LeaveBalance lb : balances) {

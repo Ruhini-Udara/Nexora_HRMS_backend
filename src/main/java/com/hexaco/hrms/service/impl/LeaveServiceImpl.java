@@ -323,7 +323,7 @@ public class LeaveServiceImpl implements LeaveService {
         // Look up leave balance for the employee in the current year
         int currentYear = LocalDate.now().getYear();
         Optional<LeaveBalance> balanceOpt = leaveBalanceRepository
-                .findByEmployeeIdAndYear(leave.getEmployee().getId(), currentYear);
+                .findByEmployeeIdAndLeaveYear(leave.getEmployee().getId(), currentYear);
 
         int annualRemaining = 0;
         int sickRemaining   = 0;  // medical leave shown as "Sick" on supervisor UI

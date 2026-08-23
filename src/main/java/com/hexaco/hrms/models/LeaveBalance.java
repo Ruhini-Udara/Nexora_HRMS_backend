@@ -24,7 +24,7 @@ public class LeaveBalance {
     private Employee employee;
 
     @Column(name = "leave_year", nullable = false)
-    private Integer year;
+    private Integer leaveYear;
 
     @Column(name = "annual_leave_quota")
     private Integer annualLeaveQuota;
