@@ -10,6 +10,7 @@ import com.hexaco.hrms.service.LeaveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,10 +25,17 @@ public class LeaveServiceImpl implements LeaveService {
     private final EmployeeRepository employeeRepository;
     private final UserAccountRepository userAccountRepository;
     private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     
     // Status Constants to avoid hard-coding
     private static final String STATUS_PENDING_HR = "PENDING_HR_APPROVAL";
     private static final String STATUS_PENDING_ADMIN = "PENDING_ADMIN_APPROVAL";
+
+    @Override
+    public java.util.List<Long> getEmployeesOnLeave(java.time.LocalDate date) {
+        return leaveRequestRepository.findApprovedLeaveEmployeeIdsByDate(date);
+    }
 
     @Override
     public OverseasLeaveDto submitOverseasLeave(OverseasLeaveDto dto) {
@@ -312,6 +320,29 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     private NormalLeaveDto mapToNormalDto(NormalLeave leave) {
+        // Look up leave balance for the employee in the current year
+        int currentYear = LocalDate.now().getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveYear(leave.getEmployee().getId(), currentYear);
+
+        int annualRemaining = 0;
+        int sickRemaining   = 0;  // medical leave shown as "Sick" on supervisor UI
+        int casualRemaining = 0;
+
+        if (balanceOpt.isPresent()) {
+            LeaveBalance lb = balanceOpt.get();
+            int annualQuota  = lb.getAnnualLeaveQuota()  != null ? lb.getAnnualLeaveQuota()  : 0;
+            int annualUsed   = lb.getAnnualLeaveUsed()   != null ? lb.getAnnualLeaveUsed()   : 0;
+            int medicalQuota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+            int medicalUsed  = lb.getMedicalLeaveUsed()  != null ? lb.getMedicalLeaveUsed()  : 0;
+            int casualQuota  = lb.getCasualLeaveQuota()  != null ? lb.getCasualLeaveQuota()  : 0;
+            int casualUsed   = lb.getCasualLeaveUsed()   != null ? lb.getCasualLeaveUsed()   : 0;
+
+            annualRemaining = Math.max(0, annualQuota  - annualUsed);
+            sickRemaining   = Math.max(0, medicalQuota - medicalUsed);
+            casualRemaining = Math.max(0, casualQuota  - casualUsed);
+        }
+
         return NormalLeaveDto.builder()
                 .id(leave.getId())
                 .employeeId(leave.getEmployee().getId())
@@ -330,6 +361,9 @@ public class LeaveServiceImpl implements LeaveService {
                 .contactNumber(leave.getContactNumber())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
+                .annualLeaveRemaining(annualRemaining)
+                .sickLeaveRemaining(sickRemaining)
+                .casualLeaveRemaining(casualRemaining)
                 .build();
     }
 

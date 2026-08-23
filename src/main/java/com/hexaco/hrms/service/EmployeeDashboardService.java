@@ -52,7 +52,7 @@ public class EmployeeDashboardService {
 
         // 2. Leave Balance
         int totalLeaveBalance = 0;
-        Optional<LeaveBalance> balanceOpt = leaveBalanceRepo.findByEmployeeIdAndYear(employeeId, year);
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepo.findByEmployeeIdAndLeaveYear(employeeId, year);
         if (balanceOpt.isPresent()) {
             LeaveBalance lb = balanceOpt.get();
             int annual = (lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0) - (lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0);

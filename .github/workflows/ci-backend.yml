@@ -2,9 +2,9 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "hr-normal-leave-backend" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "hr-normal-leave-backend" ]
   workflow_dispatch:
 
 jobs:
@@ -24,12 +24,8 @@ jobs:
       - name: Make mvnw executable
         run: chmod +x ./mvnw
         
-      - name: Build with Maven
-        run: ./mvnw clean install -DskipTests
-        working-directory: .
-        
-      - name: Run Tests
-        run: ./mvnw test
+      - name: Build, Test, and Verify with Maven
+        run: ./mvnw clean verify
         working-directory: .
         
       - name: Build Docker Image

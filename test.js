@@ -1,0 +1,1 @@
+const { Client } = require('pg'); const client = new Client({ connectionString: 'postgresql://postgres:postgres@localhost:5432/hrms_db' }); client.connect(); client.query('SELECT id, full_name FROM employee WHERE id = 26', (err, res) => { console.log(err ? err.stack : res.rows); client.end(); });
