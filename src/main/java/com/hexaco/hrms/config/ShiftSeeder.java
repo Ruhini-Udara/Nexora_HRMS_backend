@@ -26,16 +26,19 @@ public class ShiftSeeder implements CommandLineRunner {
                     .shiftName("Normal Shift (08:30–16:30)")
                     .startTime(LocalTime.of(8, 30))
                     .endTime(LocalTime.of(16, 30))
+                    .standardHours(8.0)
                     .build());
             shiftRepository.save(AttendanceShift.builder()
                     .shiftName("Temporary Shift (08:15–16:45)")
                     .startTime(LocalTime.of(8, 15))
                     .endTime(LocalTime.of(16, 45))
+                    .standardHours(8.5)
                     .build());
             shiftRepository.save(AttendanceShift.builder()
                     .shiftName("Driver Shift (08:00–17:00)")
                     .startTime(LocalTime.of(8, 0))
                     .endTime(LocalTime.of(17, 0))
+                    .standardHours(9.0)
                     .build());
         }
 
