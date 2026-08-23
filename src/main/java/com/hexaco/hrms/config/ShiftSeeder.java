@@ -20,7 +20,11 @@ public class ShiftSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (shiftRepository.count() < 3) {
+        // Re-seed if shifts are missing or any are missing standardHours (required field)
+        boolean needsReseed = shiftRepository.count() < 3 ||
+                shiftRepository.findAll().stream().anyMatch(s -> s.getStandardHours() == null);
+
+        if (needsReseed) {
             shiftRepository.deleteAll();
             shiftRepository.save(AttendanceShift.builder()
                     .shiftName("Normal Shift (08:30–16:30)")
