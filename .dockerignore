@@ -1,0 +1,14 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!target/*.jar
+.git/
+.gitignore
+.idea/
+.vscode/
+.dockerignore
+Dockerfile
+*.md
+.env
+.env.*
+build_errors.txt
+hs_err_pid*.log
