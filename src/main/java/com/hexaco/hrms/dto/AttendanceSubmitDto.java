@@ -30,7 +30,9 @@ public class AttendanceSubmitDto {
     public static class AttendanceRecordDto {
         private Long employeeId;
         private String status;          // PRESENT, ABSENT, LATE, HALF_DAY
+        private LocalDate inDate;
         private LocalTime inTime;       // null if Absent
+        private LocalDate outDate;
         private LocalTime outTime;      // null if Absent
         private String remarks;
     }

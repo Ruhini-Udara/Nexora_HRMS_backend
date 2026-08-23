@@ -36,20 +36,39 @@ public class ManualAttendanceService {
     }
 
     // ── Get attendance records for a specific date (returns ALL employees in dept) ──
-    public List<ManualAttendanceDto> getAttendanceByDate(LocalDate date, String department) {
+    public List<ManualAttendanceDto> getAttendanceByDate(LocalDate date, String department, Long supervisorId) {
         List<Employee> employees;
-        if (department != null && !department.isBlank() && !department.equalsIgnoreCase("All Departments")) {
+        if (supervisorId != null) {
+            employees = employeeRepository.findByReportingOfficerId(supervisorId);
+            // Fallback for demo: if no subordinates found, fetch all employees
+            if (employees.isEmpty()) {
+                employees = employeeRepository.findAll();
+            }
+            if (department != null && !department.isBlank() && !department.equalsIgnoreCase("All Departments")) {
+                employees = employees.stream().filter(e -> department.equalsIgnoreCase(e.getDepartment())).collect(Collectors.toList());
+            }
+        } else if (department != null && !department.isBlank() && !department.equalsIgnoreCase("All Departments")) {
             employees = employeeRepository.findByDepartmentIgnoreCase(department);
         } else {
             employees = employeeRepository.findAll();
         }
 
         return employees.stream().map(emp -> {
-            ManualAttendance attendance = attendanceRepository
-                    .findByEmployeeIdAndAttendanceDate(emp.getId(), date)
-                    .orElse(null);
-            
+            ManualAttendance attendance = null;
+            try {
+                attendance = attendanceRepository
+                        .findByEmployeeIdAndAttendanceDate(emp.getId(), date)
+                        .orElse(null);
+            } catch (org.springframework.orm.jpa.JpaObjectRetrievalFailureException | jakarta.persistence.EntityNotFoundException e) {
+                // Ignore employees with broken foreign keys (e.g. deleted designations) that cause Hibernate to fail fetching
+                System.out.println("Skipping employee " + emp.getId() + " due to data integrity issue: " + e.getMessage());
+            }
+
             if (attendance != null) {
+                // Explicitly set the employee in case Hibernate failed to eagerly load it due to corrupted foreign keys
+                if (attendance.getEmployee() == null) {
+                    attendance.setEmployee(emp);
+                }
                 return mapToDto(attendance);
             } else {
                 // Return a "blank" DTO for employees with no record yet
@@ -88,13 +107,20 @@ public class ManualAttendanceService {
 
         return submitDto.getRecords().stream().map(record -> {
             try {
-                Employee emp = employeeRepository.findById(record.getEmployeeId())
+                Employee emp = employeeRepository.findAll().stream()
+                        .filter(e -> e.getId().equals(record.getEmployeeId()))
+                        .findFirst()
                         .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + record.getEmployeeId()));
 
                 // Find existing or create new
-                ManualAttendance attendance = attendanceRepository
-                        .findByEmployeeIdAndAttendanceDate(emp.getId(), submitDto.getAttendanceDate())
-                        .orElse(new ManualAttendance());
+                ManualAttendance attendance;
+                try {
+                    attendance = attendanceRepository
+                            .findByEmployeeIdAndAttendanceDate(emp.getId(), submitDto.getAttendanceDate())
+                            .orElse(new ManualAttendance());
+                } catch (org.springframework.orm.jpa.JpaObjectRetrievalFailureException | jakarta.persistence.EntityNotFoundException e) {
+                    attendance = new ManualAttendance();
+                }
 
                 attendance.setEmployee(emp);
                 attendance.setShift(shift);

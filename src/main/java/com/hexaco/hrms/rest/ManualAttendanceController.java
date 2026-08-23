@@ -29,8 +29,9 @@ public class ManualAttendanceController {
     @GetMapping("/manual")
     public ResponseEntity<List<ManualAttendanceDto>> getAttendance(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String department) {
-        return ResponseEntity.ok(attendanceService.getAttendanceByDate(date, department));
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Long supervisorId) {
+        return ResponseEntity.ok(attendanceService.getAttendanceByDate(date, department, supervisorId));
     }
 
     // ── GET /api/attendance/manual/employee/{employeeId} ──────────────────────
@@ -50,3 +51,4 @@ public class ManualAttendanceController {
         }
     }
 }
+

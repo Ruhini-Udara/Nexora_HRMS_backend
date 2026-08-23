@@ -17,6 +17,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Optional<Employee> findByEtfNumber(String etfNumber);
     Optional<Employee> findByFingerprintUserId(Long fingerprintUserId);
     List<Employee> findByDepartmentIgnoreCase(String department);
+    List<Employee> findByReportingOfficerId(Long reportingOfficerId);
 
     @Query("SELECT e.department, COUNT(e) FROM Employee e GROUP BY e.department")
     List<Object[]> countEmployeesByDepartment();

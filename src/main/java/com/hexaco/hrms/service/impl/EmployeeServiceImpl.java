@@ -190,6 +190,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
+    public java.util.List<Employee> getEmployeesBySupervisor(Long supervisorId) {
+        java.util.List<Employee> employees = employeeRepository.findByReportingOfficerId(supervisorId);
+        employees.forEach(this::ensureFingerprintIdentity);
+        return employees;
+    }
+
+    @Override
+    @Transactional
     public void deleteEmployeeByCode(String code) {
         Employee employee = employeeRepository.findByEmployeeCode(code)
                 .orElseThrow(() -> new RuntimeException("Employee not found with code: " + code));
