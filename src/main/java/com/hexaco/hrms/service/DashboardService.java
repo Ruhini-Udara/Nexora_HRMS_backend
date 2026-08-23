@@ -6,6 +6,9 @@ import com.hexaco.hrms.models.OverseasLeave;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
+import com.hexaco.hrms.repository.TrainingEventRepository;
+import com.hexaco.hrms.repository.AttendanceDailySummaryRepository;
+import com.hexaco.hrms.models.TrainingEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,8 @@ public class DashboardService {
     private final EmployeeRepository employeeRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final TrainingEventRepository trainingEventRepository;
+    private final AttendanceDailySummaryRepository attendanceRepo;
 
     public DashboardAnalyticsDto getAnalytics() {
         LocalDateTime twoDaysAgo = LocalDateTime.now().minusDays(2);
@@ -67,12 +72,40 @@ public class DashboardService {
             deptLeaveImpact.merge(dept != null ? dept : "Unassigned", count, Long::sum);
         }
 
+        // New HR Stats
+        long totalStaff = employeeRepository.count();
+        
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        long newHiresThisWeek = employeeRepository.countByCreatedAtAfter(sevenDaysAgo);
+        
+        List<TrainingEvent> allEvents = trainingEventRepository.findAll();
+        long activeTrainingPrograms = allEvents.stream()
+                .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()) 
+                          || "SCHEDULED".equalsIgnoreCase(e.getStatus())
+                          || "Published".equalsIgnoreCase(e.getStatus()))
+                .count();
+                
+        long trainingsFinishingSoon = trainingEventRepository.countByApplyBeforeBetween(today, today.plusDays(7));
+                
+        // Attendance
+        long presentTodayCount = attendanceRepo.countByAttendanceDate(today);
+        String attendancePercentage = "0";
+        if (totalStaff > 0) {
+            double percentage = ((double) presentTodayCount / totalStaff) * 100;
+            attendancePercentage = String.format("%.1f", percentage);
+        }
+
         return DashboardAnalyticsDto.builder()
-                .presentToday(0) // Dummy for now
+                .presentToday((int) presentTodayCount)
                 .lateToday(0)    // Dummy for now
                 .pendingOverseas(pendingOverseas)
                 .pendingMaternity(pendingMaternity)
                 .delayedApprovals(delayedOverseas + delayedMaternity)
+                .totalStaff(totalStaff)
+                .newHiresThisWeek(newHiresThisWeek)
+                .activeTrainingPrograms(activeTrainingPrograms)
+                .trainingsFinishingSoon(trainingsFinishingSoon)
+                .attendancePercentage(attendancePercentage + "%")
                 .passportExpiryAlerts(expiringPassports.stream()
                         .map(l -> new DashboardAnalyticsDto.PassportExpiryAlert(
                                 l.getEmployee().getFullName(),

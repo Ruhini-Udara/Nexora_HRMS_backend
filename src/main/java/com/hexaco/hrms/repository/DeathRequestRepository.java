@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface DeathRequestRepository extends JpaRepository<DeathRequest, Long> {
     List<DeathRequest> findByEmployeeId(Long employeeId);
+    List<DeathRequest> findByStatus(String status);
 }
