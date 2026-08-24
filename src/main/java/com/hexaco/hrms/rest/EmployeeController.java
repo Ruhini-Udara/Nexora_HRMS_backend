@@ -86,4 +86,10 @@ public class EmployeeController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/exists-nic/{nicNumber}")
+    public ResponseEntity<Boolean> existsByNicNumber(@PathVariable String nicNumber) {
+        boolean exists = employeeService.existsByNicNumber(nicNumber);
+        return ResponseEntity.ok(exists);
+    }
 }
