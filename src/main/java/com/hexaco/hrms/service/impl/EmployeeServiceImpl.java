@@ -285,4 +285,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setProfilePicturePath(profilePicturePath);
         return employeeRepository.save(employee);
     }
+
+    @Override
+    public boolean existsByNicNumber(String nicNumber) {
+        if (nicNumber == null || nicNumber.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByNicNumber(nicNumber.trim()).isPresent();
+    }
 }

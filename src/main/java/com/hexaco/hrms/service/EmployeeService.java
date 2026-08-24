@@ -12,4 +12,5 @@ public interface EmployeeService {
     Employee updateEmployee(String code, com.hexaco.hrms.dto.EmployeeUpdateDTO dto);
     Employee updateFingerprintStatus(String code, Boolean fingerprintEnrolled);
     Employee updateProfilePicture(Long id, String profilePicturePath);
+    boolean existsByNicNumber(String nicNumber);
 }
