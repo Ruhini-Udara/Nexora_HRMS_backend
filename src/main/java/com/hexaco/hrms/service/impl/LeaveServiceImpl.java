@@ -95,6 +95,23 @@ public class LeaveServiceImpl implements LeaveService {
     public MaternityLeaveDto submitMaternityLeave(MaternityLeaveDto dto) {
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        // Validation: Only female employees can apply
+        if (employee.getSex() == null || !employee.getSex().equalsIgnoreCase("FEMALE")) {
+            throw new RuntimeException("Only female employees are eligible to apply for maternity leave.");
+        }
+
+        // Validation: Minimum 80 days of service
+        if (employee.getDateJoined() == null) {
+            throw new RuntimeException("Employee's joined date is not set, cannot verify eligibility.");
+        }
+        if (dto.getFromDate() != null) {
+            long daysOfService = java.time.temporal.ChronoUnit.DAYS.between(employee.getDateJoined(), dto.getFromDate());
+            if (daysOfService < 80) {
+                throw new RuntimeException("Employee must have a minimum service of 80 days before the leave starts.");
+            }
+        }
+
         LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
                 .orElseThrow(() -> new RuntimeException("LeaveType not found"));
 
@@ -104,6 +121,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .branch(dto.getBranch())
                 .contactNumber(dto.getContactNumber())
                 .email(dto.getEmail())
+                .level(dto.getLevel())
                 .specialRemark(dto.getSpecialRemark())
                 .build();
 
@@ -313,6 +331,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .branch(leave.getBranch())
                 .contactNumber(leave.getContactNumber())
                 .email(leave.getEmail())
+                .level(leave.getLevel())
                 .specialRemark(leave.getSpecialRemark())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
