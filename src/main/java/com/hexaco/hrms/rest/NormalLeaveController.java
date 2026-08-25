@@ -25,14 +25,14 @@ public class NormalLeaveController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor', 'Admin', 'Hr', 'Director', 'Supervisor')")
     public ResponseEntity<List<NormalLeaveDto>> getAllNormalLeaves() {
         List<NormalLeaveDto> leaves = leaveService.getAllNormalLeaves();
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor', 'Admin', 'Hr', 'Director', 'Supervisor')")
     public ResponseEntity<List<NormalLeaveDto>> getNormalLeavesByStatus(@PathVariable String status) {
         List<NormalLeaveDto> leaves = leaveService.getNormalLeavesByStatus(status);
         return ResponseEntity.ok(leaves);
@@ -49,5 +49,12 @@ public class NormalLeaveController {
         return leaveService.getNormalLeaveById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/impact")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    public ResponseEntity<com.hexaco.hrms.dto.LeaveImpactDto> getNormalLeaveImpact(@PathVariable Long id) {
+        com.hexaco.hrms.dto.LeaveImpactDto impact = leaveService.getNormalLeaveImpact(id);
+        return ResponseEntity.ok(impact);
     }
 }

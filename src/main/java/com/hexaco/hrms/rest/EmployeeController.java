@@ -35,7 +35,10 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<java.util.List<Employee>> getAllEmployees() {
+    public ResponseEntity<java.util.List<Employee>> getAllEmployees(@RequestParam(required = false) Long supervisorId) {
+        if (supervisorId != null) {
+            return ResponseEntity.ok(employeeService.getEmployeesBySupervisor(supervisorId));
+        }
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
@@ -85,5 +88,11 @@ public class EmployeeController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping("/exists-nic/{nicNumber}")
+    public ResponseEntity<Boolean> existsByNicNumber(@PathVariable String nicNumber) {
+        boolean exists = employeeService.existsByNicNumber(nicNumber);
+        return ResponseEntity.ok(exists);
     }
 }

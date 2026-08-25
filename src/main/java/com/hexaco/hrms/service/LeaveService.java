@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LeaveService {
+    java.util.List<Long> getEmployeesOnLeave(java.time.LocalDate date);
     
     // Overseas Leave Methods
     OverseasLeaveDto submitOverseasLeave(OverseasLeaveDto requestedLeave);
@@ -32,4 +33,5 @@ public interface LeaveService {
     List<NormalLeaveDto> getNormalLeavesByEmployeeId(Long employeeId);
 
     LeaveImpactDto getMaternityLeaveImpact(Long leaveId);
+    LeaveImpactDto getNormalLeaveImpact(Long leaveId);
 }

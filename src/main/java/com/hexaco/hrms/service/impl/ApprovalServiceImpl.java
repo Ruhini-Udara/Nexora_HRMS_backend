@@ -2,10 +2,12 @@ package com.hexaco.hrms.service.impl;
 
 import com.hexaco.hrms.models.Approval;
 import com.hexaco.hrms.models.MaternityLeave;
+import com.hexaco.hrms.models.NormalLeave;
 import com.hexaco.hrms.models.OverseasLeave;
 import com.hexaco.hrms.models.TrainingRequest;
 import com.hexaco.hrms.repository.ApprovalRepository;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
+import com.hexaco.hrms.repository.NormalLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
@@ -31,6 +33,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final NormalLeaveRepository normalLeaveRepository;
     private final TrainingRequestRepository trainingRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
@@ -104,6 +107,33 @@ public class ApprovalServiceImpl implements ApprovalService {
                 notificationService.sendLeaveStatusUpdate(
                     leave.getEmployee().getFullName(), leave.getEmail(), leave.getContactNumber(),
                     "Maternity Leave", newStatus, approval.getRemark()
+                );
+            }
+        } else if ("NORMAL_LEAVE".equals(approval.getRefType())) {
+            NormalLeave leave = normalLeaveRepository.findById(approval.getRefId())
+                .orElseThrow(() -> new RuntimeException("Normal Leave not found"));
+
+            // Prevent self-approval
+            if (leave.getEmployee().getId().equals(approval.getApprovedBy().getId())) {
+                throw new RuntimeException("You cannot approve your own leave request.");
+            }
+
+            if (isApproved(approval.getDecision())) {
+                newStatus = STATUS_APPROVED;
+            } else if (isRejected(approval.getDecision())) {
+                newStatus = STATUS_REJECTED;
+            } else {
+                newStatus = leave.getStatus();
+            }
+
+            leave.setStatus(newStatus);
+            normalLeaveRepository.save(leave);
+
+            // Trigger Notification
+            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {
+                notificationService.sendLeaveStatusUpdate(
+                    leave.getEmployee().getFullName(), leave.getEmployee().getEmail(), leave.getContactNumber(),
+                    "Normal Leave", newStatus, approval.getRemark()
                 );
             }
         }
