@@ -9,6 +9,7 @@ import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.NormalLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.repository.TrainingRequestRepository;
 import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
