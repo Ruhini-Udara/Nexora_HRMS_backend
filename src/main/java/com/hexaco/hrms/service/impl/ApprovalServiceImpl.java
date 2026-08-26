@@ -3,14 +3,11 @@ package com.hexaco.hrms.service.impl;
 import com.hexaco.hrms.models.Approval;
 import com.hexaco.hrms.models.MaternityLeave;
 import com.hexaco.hrms.models.OverseasLeave;
-import com.hexaco.hrms.models.TrainingRequest;
 import com.hexaco.hrms.repository.ApprovalRepository;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
-import com.hexaco.hrms.repository.TrainingRequestRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
 import com.hexaco.hrms.models.UserAccount;
-import java.util.Optional;
 import com.hexaco.hrms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +22,6 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
-    private final TrainingRequestRepository trainingRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
     

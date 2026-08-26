@@ -1,3 +1,4 @@
+
 package com.hexaco.hrms.rest;
 
 import com.hexaco.hrms.dto.ResignationDto;
@@ -43,5 +44,12 @@ public class ResignationController {
             @RequestParam(required = false) String remarks,
             @RequestParam(required = false) String boardMeetingDate) {
         return ResponseEntity.ok(resignationService.updateResignationStatus(id, status, remarks, boardMeetingDate));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ResignationDto> updateResignation(
+            @PathVariable Long id,
+            @RequestBody ResignationDto dto) {
+        return ResponseEntity.ok(resignationService.updateResignation(id, dto));
     }
 }

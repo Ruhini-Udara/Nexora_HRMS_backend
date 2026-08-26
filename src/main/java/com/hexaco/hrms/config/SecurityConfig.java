@@ -55,6 +55,8 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
             .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
+            .requestMatchers("/api/welfare-requests", "/api/welfare-requests/**").permitAll()
+            .requestMatchers("/api/transfer-requests", "/api/transfer-requests/**").permitAll()
             .requestMatchers("/error").permitAll()
 
             // Public GET APIs
