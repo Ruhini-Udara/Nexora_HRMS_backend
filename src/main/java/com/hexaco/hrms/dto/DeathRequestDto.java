@@ -35,6 +35,8 @@ public class DeathRequestDto {
     public void setRequesterDesignation(String requesterDesignation) { this.requesterDesignation = requesterDesignation; }
     public String getRequesterEmpId() { return requesterEmpId; }
     public void setRequesterEmpId(String requesterEmpId) { this.requesterEmpId = requesterEmpId; }
+    public String getRequesterNic() { return requesterNic; }
+    public void setRequesterNic(String requesterNic) { this.requesterNic = requesterNic; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
     public String getContactNumber() { return contactNumber; }
@@ -80,6 +82,7 @@ public class DeathRequestDto {
     private String requesterBranch;
     private String requesterDesignation;
     private String requesterEmpId;
+    private String requesterNic;
     private String address;
     private String contactNumber;
     private String specialRemark;

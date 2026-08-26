@@ -58,6 +58,7 @@ public class DeathRequestService {
                 .requesterBranch(dto.getRequesterBranch())
                 .requesterDesignation(dto.getRequesterDesignation())
                 .requesterEmpId(dto.getRequesterEmpId())
+                .requesterNic(dto.getRequesterNic())
                 .address(dto.getAddress())
                 .contactNumber(dto.getContactNumber())
                 .specialRemark(dto.getSpecialRemark())
@@ -114,6 +115,7 @@ public class DeathRequestService {
         request.setRequesterBranch(dto.getRequesterBranch());
         request.setRequesterDesignation(dto.getRequesterDesignation());
         request.setRequesterEmpId(dto.getRequesterEmpId());
+        request.setRequesterNic(dto.getRequesterNic());
         request.setAddress(dto.getAddress());
         request.setContactNumber(dto.getContactNumber());
         request.setSpecialRemark(dto.getSpecialRemark());
@@ -180,6 +182,7 @@ public class DeathRequestService {
                 .requesterBranch(request.getRequesterBranch())
                 .requesterDesignation(request.getRequesterDesignation())
                 .requesterEmpId(request.getRequesterEmpId())
+                .requesterNic(request.getRequesterNic())
                 .address(request.getAddress())
                 .contactNumber(request.getContactNumber())
                 .specialRemark(request.getSpecialRemark())
