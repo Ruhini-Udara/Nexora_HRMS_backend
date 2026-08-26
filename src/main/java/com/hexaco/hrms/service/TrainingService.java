@@ -12,7 +12,6 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TrainingEventRepository;
 import com.hexaco.hrms.repository.TrainingFeedbackRepository;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,35 +25,50 @@ import java.util.stream.Collectors;
 @SuppressWarnings("null")
 public class TrainingService {
 
-    @Autowired
-    private TrainingEventRepository trainingEventRepository;
+    private final TrainingEventRepository trainingEventRepository;
+    private final TrainingRequestRepository trainingRequestRepository;
+    private final TrainingFeedbackRepository trainingFeedbackRepository;
+    private final EmployeeRepository employeeRepository;
+    private final ApprovalService approvalService;
+    private final NotificationService notificationService;
 
-    @Autowired
-    private TrainingRequestRepository trainingRequestRepository;
-
-    @Autowired
-    private TrainingFeedbackRepository trainingFeedbackRepository;
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
-    private ApprovalService approvalService;
-
-    @Autowired
-    private NotificationService notificationService;
+    public TrainingService(
+            TrainingEventRepository trainingEventRepository,
+            TrainingRequestRepository trainingRequestRepository,
+            TrainingFeedbackRepository trainingFeedbackRepository,
+            EmployeeRepository employeeRepository,
+            ApprovalService approvalService,
+            NotificationService notificationService) {
+        this.trainingEventRepository = trainingEventRepository;
+        this.trainingRequestRepository = trainingRequestRepository;
+        this.trainingFeedbackRepository = trainingFeedbackRepository;
+        this.employeeRepository = employeeRepository;
+        this.approvalService = approvalService;
+        this.notificationService = notificationService;
+    }
 
     // --- Training Events ---
 
     public TrainingEventDto createTrainingEvent(TrainingEventDto dto) {
-        // Check for duplicates (same title only - case insensitive)
-        if (trainingEventRepository.existsByTitleIgnoreCase(dto.getTitle())) {
+        // Check for duplicates (same title only - case insensitive, ignoring cancelled
+        // events)
+        if (trainingEventRepository.existsByTitleIgnoreCaseAndStatusNot(dto.getTitle(), "Cancelled")) {
             throw new RuntimeException("A training event with this title already exists.");
         }
 
-        //Build TrainingEventDto from TrainingEvent
+        // Check for duplicate training code (case insensitive, ignoring cancelled
+        // events)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(dto.getTrainingCode().trim(),
+                    "Cancelled")) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
+        // Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
+                .trainingCode(dto.getTrainingCode())
                 .category(dto.getCategory())
                 .expectedParticipants(dto.getExpectedParticipants())
                 .description(dto.getDescription())
@@ -71,30 +85,40 @@ public class TrainingService {
         return mapToDto(event);
     }
 
-    //Fetch all training events
+    // Fetch all training events
     public List<TrainingEventDto> getAllTrainingEvents() {
         return trainingEventRepository.findAll().stream()
+                .filter(event -> !"Cancelled".equalsIgnoreCase(event.getStatus()))
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    //Fetch training event by ID
+    // Fetch training event by ID
     public TrainingEventDto getTrainingEventById(Long id) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
         return mapToDto(event);
     }
 
-    //Update TrainingEvent
+    // Update TrainingEvent
     public TrainingEventDto updateTrainingEvent(Long id, TrainingEventDto dto) {
         TrainingEvent event = trainingEventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Training Event not found"));
 
+        // Check for duplicate training code (case insensitive, excluding current event
+        // ID and ignoring cancelled events)
+        if (dto.getTrainingCode() != null && !dto.getTrainingCode().trim().isEmpty()) {
+            if (trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(dto.getTrainingCode().trim(),
+                    id, "Cancelled")) {
+                throw new RuntimeException("A training event with this training code already exists.");
+            }
+        }
+
         String oldStatus = event.getStatus();
 
-
-        //Update event details
+        // Update event details
         event.setTitle(dto.getTitle());
+        event.setTrainingCode(dto.getTrainingCode());
         event.setCategory(dto.getCategory());
         event.setExpectedParticipants(dto.getExpectedParticipants());
         event.setDescription(dto.getDescription());
@@ -116,7 +140,7 @@ public class TrainingService {
             event.setApprovedBy(dto.getApprovedBy());
             event.setApprovedAt(LocalDateTime.now());
             event = trainingEventRepository.save(event);
-            
+
             final TrainingEvent finalizedEvent = event;
             List<TrainingRequest> requests = trainingRequestRepository.findByTrainingEventId(event.getId());
 
@@ -137,11 +161,11 @@ public class TrainingService {
                         req.getEmployee().getFullName(),
                         req.getEmployee().getEmail(),
                         finalizedEvent.getTitle(),
-                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString() : "TBD",
+                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString()
+                                : "TBD",
                         formatTime(finalizedEvent.getTime()),
                         finalizedEvent.getLocation(),
-                        finalizedEvent.getInstructor()
-                );
+                        finalizedEvent.getInstructor());
             }
         }
 
@@ -161,28 +185,30 @@ public class TrainingService {
                 .employee(employee)
                 .justification(dto.getJustification())
                 .attachmentPath(dto.getAttachmentPath())
+                .status(dto.getStatus() != null ? dto.getStatus() : "Pending")
                 .build();
 
         request = trainingRequestRepository.save(request);
         return mapToDto(request);
     }
 
-    //Fetch training requests by event
+    // Fetch training requests by event
     public List<TrainingRequestDto> getRequestsByEvent(Long eventId) {
         return trainingRequestRepository.findByTrainingEventId(eventId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    //Fetch training requests by employee
+    // Fetch training requests by employee
     public List<TrainingRequestDto> getRequestsByEmployee(Long employeeId) {
         return trainingRequestRepository.findByEmployeeId(employeeId).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
 
-    //Update training request status
-    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason, Long approverId) {
+    // Update training request status
+    public TrainingRequestDto updateRequestStatus(Long requestId, String status, String rejectionReason,
+            Long approverId) {
         TrainingRequest request = trainingRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Training Request not found"));
 
@@ -227,7 +253,7 @@ public class TrainingService {
 
         feedback.setTrainingEvent(event);
         feedback.setEmployee(employee);
-        
+
         if (dto.getAttendanceStatus() != null) {
             feedback.setAttendanceStatus(dto.getAttendanceStatus());
         }
@@ -261,9 +287,60 @@ public class TrainingService {
     // Check if training event title already exists
     public boolean existsByTitle(String title) {
         System.out.println("Service: Checking existence for title: [" + title + "]");
-        boolean exists = trainingEventRepository.existsByTitleIgnoreCase(title.trim());
+        boolean exists = trainingEventRepository.existsByTitleIgnoreCaseAndStatusNot(title.trim(), "Cancelled");
         System.out.println("Service: Database match found? " + exists);
         return exists;
+    }
+
+    // Check if training event code already exists
+    public boolean existsByTrainingCode(String code, Long excludeId) {
+        if (excludeId != null) {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndIdNotAndStatusNot(code.trim(), excludeId,
+                    "Cancelled");
+        } else {
+            return trainingEventRepository.existsByTrainingCodeIgnoreCaseAndStatusNot(code.trim(), "Cancelled");
+        }
+    }
+
+    // Delete training event (hybrid: soft-delete if requests/feedback exist,
+    // hard-delete if plain event)
+    public void deleteTrainingEvent(Long id, Long cancelledById) {
+        TrainingEvent event = trainingEventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Training Event not found"));
+
+        boolean hasRequests = trainingRequestRepository.existsByTrainingEventId(id);
+        boolean hasFeedback = trainingFeedbackRepository.existsByTrainingEventId(id);
+
+        if (hasRequests || hasFeedback) {
+            // Soft delete: Set status to Cancelled
+            event.setStatus("Cancelled");
+            trainingEventRepository.save(event);
+
+            List<TrainingRequest> requests = trainingRequestRepository.findByTrainingEventId(id);
+            for (TrainingRequest req : requests) {
+                req.setStatus("Cancelled");
+                trainingRequestRepository.save(req);
+
+                // Create audit record in the approval table if cancelledById is provided
+                if (cancelledById != null) {
+                    Employee cancelledBy = employeeRepository.findById(cancelledById)
+                            .orElseThrow(() -> new RuntimeException("Cancelled-by employee not found"));
+
+                    Approval approval = Approval.builder()
+                            .refId(req.getId())
+                            .refType("TRAINING_REQUEST")
+                            .approvedBy(cancelledBy)
+                            .decision("CANCELLED")
+                            .remark("Training event cancelled by HR")
+                            .build();
+
+                    approvalService.saveApproval(approval);
+                }
+            }
+        } else {
+            // Hard delete from database
+            trainingEventRepository.delete(event);
+        }
     }
 
     // --- Mappers ---
@@ -273,6 +350,7 @@ public class TrainingService {
         return TrainingEventDto.builder()
                 .id(event.getId())
                 .title(event.getTitle())
+                .trainingCode(event.getTrainingCode())
                 .category(event.getCategory())
                 .expectedParticipants(event.getExpectedParticipants())
                 .description(event.getDescription())
@@ -298,7 +376,9 @@ public class TrainingService {
                 .employeeName(request.getEmployee().getFullName() + " " + request.getEmployee().getSurname())
                 .epfNumber(request.getEmployee().getEpfNumber())
                 .department(request.getEmployee().getDepartment())
-                .designation(request.getEmployee().getDesignation() != null ? request.getEmployee().getDesignation().getDesignationName() : null)
+                .designation(request.getEmployee().getDesignation() != null
+                        ? request.getEmployee().getDesignation().getDesignationName()
+                        : null)
                 .personalEmail(request.getEmployee().getEmail())
                 .workEmail(request.getEmployee().getEmail())
                 .trainingTitle(request.getTrainingEvent().getTitle())
@@ -307,10 +387,12 @@ public class TrainingService {
                 .trainingTime(request.getTrainingEvent().getTime())
                 .dateSubmitted(request.getDateSubmitted())
                 .status(request.getStatus())
-                .eventStatus(request.getTrainingEvent().getStatus())
+                .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved"
+                        : request.getTrainingEvent().getStatus())
                 .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
-                .age(request.getEmployee().getDateOfBirth() != null ? 
-                    java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears() : null)
+                .age(request.getEmployee().getDateOfBirth() != null
+                        ? java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears()
+                        : null)
                 .justification(request.getJustification())
                 .rejectionReason(request.getRejectionReason())
                 .attachmentPath(request.getAttachmentPath())
@@ -350,7 +432,8 @@ public class TrainingService {
             int minutes = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
             String ampm = hours >= 12 ? "PM" : "AM";
             int hours12 = hours % 12;
-            if (hours12 == 0) hours12 = 12;
+            if (hours12 == 0)
+                hours12 = 12;
             return String.format("%d:%02d %s", hours12, minutes, ampm);
         } catch (Exception e) {
             return time;

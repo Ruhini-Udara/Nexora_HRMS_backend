@@ -23,4 +23,8 @@ public class Designation {
     @Column(name = "description")
     private String description;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "shift_id")
+    private Shift shift;
+
 }

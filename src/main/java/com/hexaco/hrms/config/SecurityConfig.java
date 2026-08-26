@@ -62,9 +62,13 @@ public class SecurityConfig {
             // Public GET APIs
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/shifts", "/api/shifts/**").permitAll()
 
             // Training
             .requestMatchers("/api/training/**").permitAll()
+
+            // Google Calendar integration
+            .requestMatchers("/api/calendar/**").permitAll()
 
             // Swagger
             .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()

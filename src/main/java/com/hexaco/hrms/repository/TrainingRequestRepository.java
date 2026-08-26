@@ -13,4 +13,6 @@ public interface TrainingRequestRepository extends JpaRepository<TrainingRequest
     List<TrainingRequest> findByEmployeeId(Long employeeId);
     // Find all requests for a training event
     List<TrainingRequest> findByTrainingEventId(Long eventId);
+    // Check if any request exists for a training event
+    boolean existsByTrainingEventId(Long eventId);
 }

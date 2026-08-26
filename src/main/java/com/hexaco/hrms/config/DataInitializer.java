@@ -19,6 +19,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UserAccountRepository userAccountRepository;
     private final EmployeeRepository employeeRepository;
     private final DesignationRepository designationRepository;
+    private final ShiftRepository shiftRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
@@ -31,7 +32,13 @@ public class DataInitializer implements CommandLineRunner {
             // 2. Initialize Designations
             initializeDesignations();
 
-            // 3. Get Admin Designation safely
+            // 3. Initialize Shifts
+            initializeShifts();
+
+            // 4. Initialize Shift Assignments
+            initializeShiftAssignments();
+
+            // 5. Get Admin Designation safely
             Designation adminDesignation = designationRepository.findAll().stream()
                     .filter(d -> d.getDesignationName().equalsIgnoreCase("System Administrator"))
                     .findFirst()
@@ -40,10 +47,10 @@ public class DataInitializer implements CommandLineRunner {
                             .description("Default Admin Designation")
                             .build()));
 
-            // 4. Initialize a default Employee
+            // 6. Initialize a default Employee
             Employee adminEmployee = initializeEmployee(adminDesignation);
 
-            // 5. Initialize User Accounts
+            // 7. Initialize User Accounts
             initializeUserAccounts(adminEmployee);
         } catch (Exception e) {
             System.err.println("Error during Data Initialization: " + e.getMessage());
@@ -52,7 +59,8 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeRoles() {
-        List<String> roleNames = Arrays.asList("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_HR", "ROLE_DIRECTOR", "ROLE_SUPERVISOR");
+        List<String> roleNames = Arrays.asList("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_HR", "ROLE_DIRECTOR",
+                "ROLE_SUPERVISOR");
         for (String roleName : roleNames) {
             if (roleRepository.findByRoleName(roleName).isEmpty()) {
                 roleRepository.save(Role.builder()
@@ -64,8 +72,10 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeDesignations() {
-        List<String> names = Arrays.asList("System Administrator", "Director", "HR Manager", "Software Engineer",
-                "Operations Manager");
+        List<String> names = Arrays.asList(
+                "System Administrator", "Director", "HR Manager", "Software Engineer", "Operations Manager",
+                "Senior Engineer", "Engineer", "HR Executive", "Sales Executive", "Product Manager", "Driver",
+                "Support Staff");
         for (String name : names) {
             boolean exists = designationRepository.findAll().stream()
                     .anyMatch(d -> d.getDesignationName().equalsIgnoreCase(name));
@@ -74,6 +84,59 @@ public class DataInitializer implements CommandLineRunner {
                         .designationName(name)
                         .description("Default " + name)
                         .build());
+            }
+        }
+    }
+
+    private void initializeShifts() {
+        List<Shift> defaultShifts = Arrays.asList(
+                Shift.builder()
+                        .name("Normal Shift")
+                        .startTime(java.time.LocalTime.of(8, 30))
+                        .endTime(java.time.LocalTime.of(16, 30))
+                        .description("Standard operational hours")
+                        .build(),
+                Shift.builder()
+                        .name("Temporary Shift")
+                        .startTime(java.time.LocalTime.of(8, 15))
+                        .endTime(java.time.LocalTime.of(16, 45))
+                        .description("Contract staff & interns")
+                        .build(),
+                Shift.builder()
+                        .name("Drivers Shift")
+                        .startTime(java.time.LocalTime.of(8, 0))
+                        .endTime(java.time.LocalTime.of(17, 0))
+                        .description("Transport & Logistics")
+                        .build());
+
+        for (Shift shift : defaultShifts) {
+            if (shiftRepository.findByName(shift.getName()).isEmpty()) {
+                shiftRepository.save(shift);
+            }
+        }
+    }
+
+    private void initializeShiftAssignments() {
+        Shift normalShift = shiftRepository.findByName("Normal Shift").orElse(null);
+        Shift temporaryShift = shiftRepository.findByName("Temporary Shift").orElse(null);
+        Shift driversShift = shiftRepository.findByName("Drivers Shift").orElse(null);
+
+        if (normalShift == null || driversShift == null || temporaryShift == null) {
+            return;
+        }
+
+        List<Designation> designations = designationRepository.findAll();
+        for (Designation designation : designations) {
+            if (designation.getShift() == null) {
+                String name = designation.getDesignationName().toLowerCase();
+                if (name.contains("driver")) {
+                    designation.setShift(driversShift);
+                } else if (name.contains("support") || name.contains("temp")) {
+                    designation.setShift(temporaryShift);
+                } else {
+                    designation.setShift(normalShift);
+                }
+                designationRepository.save(designation);
             }
         }
     }
@@ -132,5 +195,16 @@ public class DataInitializer implements CommandLineRunner {
                         .role(employeeRole)
                         .employee(employee)
                         .build()));
+
+        // Fix plaintext passwords for manually added users (like HR, Director, etc.)
+        List<UserAccount> allUsers = userAccountRepository.findAll();
+        for (UserAccount u : allUsers) {
+            // BCrypt hashes start with $2a$, $2b$, or $2y$
+            if (u.getPasswordHash() != null && !u.getPasswordHash().startsWith("$2a$")) {
+                System.out.println("Converting plaintext password to BCrypt for user: " + u.getEmail());
+                u.setPasswordHash(passwordEncoder.encode(u.getPasswordHash()));
+                userAccountRepository.save(u);
+            }
+        }
     }
 }

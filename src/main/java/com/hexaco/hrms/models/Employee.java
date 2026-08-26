@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Employee {
 
     @Id
@@ -86,9 +87,20 @@ public class Employee {
     private Role role;
 
     @OneToOne(mappedBy = "employee")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Nominee nominee;
 
-    
+    // Supervisor / Reporting Officer
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporting_officer_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Employee reportingOfficer;
+
+    @Column(name = "reporting_officer_name")
+    private String reportingOfficerName;
+
+    @Column(name = "profile_picture_path")
+    private String profilePicturePath;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

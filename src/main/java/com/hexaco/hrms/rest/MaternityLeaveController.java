@@ -25,14 +25,14 @@ public class MaternityLeaveController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<MaternityLeaveDto>> getAllMaternityLeaves() {
         List<MaternityLeaveDto> leaves = leaveService.getAllMaternityLeaves();
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'admin', 'hr', 'director')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<MaternityLeaveDto>> getMaternityLeavesByStatus(@PathVariable String status) {
         List<MaternityLeaveDto> leaves = leaveService.getMaternityLeavesByStatus(status);
         return ResponseEntity.ok(leaves);
@@ -49,5 +49,11 @@ public class MaternityLeaveController {
         return leaveService.getMaternityLeaveById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/impact")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    public ResponseEntity<com.hexaco.hrms.dto.LeaveImpactDto> getMaternityLeaveImpact(@PathVariable Long id) {
+        return ResponseEntity.ok(leaveService.getMaternityLeaveImpact(id));
     }
 }

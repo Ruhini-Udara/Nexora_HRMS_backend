@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ApprovalServiceImplTest {
 
-    private final ApprovalServiceImpl approvalService = new ApprovalServiceImpl(null, null, null, null, null);
+    private final ApprovalServiceImpl approvalService = new ApprovalServiceImpl(null, null, null, null, null, null, null);
 
     @Test
     public void testCalculateNextOverseasStatus_EmployeeFlow() {

@@ -2,15 +2,23 @@ package com.hexaco.hrms.service.impl;
 
 import com.hexaco.hrms.models.Approval;
 import com.hexaco.hrms.models.MaternityLeave;
+import com.hexaco.hrms.models.NormalLeave;
 import com.hexaco.hrms.models.OverseasLeave;
 import com.hexaco.hrms.repository.ApprovalRepository;
 import com.hexaco.hrms.repository.MaternityLeaveRepository;
+import com.hexaco.hrms.repository.NormalLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
 import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.ApprovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +30,8 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final ApprovalRepository approvalRepository;
     private final OverseasLeaveRepository overseasLeaveRepository;
     private final MaternityLeaveRepository maternityLeaveRepository;
+    private final NormalLeaveRepository normalLeaveRepository;
+    private final TrainingRequestRepository trainingRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
     
@@ -79,15 +89,48 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
 
             String requesterRole = detectHighestRole(leave.getEmployee().getId());
-            newStatus = calculateNextMaternityStatus(leave.getStatus(), approval.getDecision(), requesterRole);
+            String oldStatus = leave.getStatus();
+            newStatus = calculateNextMaternityStatus(oldStatus, approval.getDecision(), requesterRole);
             leave.setStatus(newStatus);
             maternityLeaveRepository.save(leave);
+
+            // Trigger Finance Integration on Final Approval
+            if (STATUS_APPROVED.equals(newStatus) && !STATUS_APPROVED.equals(oldStatus)) {
+                triggerFinanceIntegrationPlaceholder(leave);
+            }
 
             // Trigger Notification
             if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {
                 notificationService.sendLeaveStatusUpdate(
                     leave.getEmployee().getFullName(), leave.getEmail(), leave.getContactNumber(),
                     "Maternity Leave", newStatus, approval.getRemark()
+                );
+            }
+        } else if ("NORMAL_LEAVE".equals(approval.getRefType())) {
+            NormalLeave leave = normalLeaveRepository.findById(approval.getRefId())
+                .orElseThrow(() -> new RuntimeException("Normal Leave not found"));
+
+            // Prevent self-approval
+            if (leave.getEmployee().getId().equals(approval.getApprovedBy().getId())) {
+                throw new RuntimeException("You cannot approve your own leave request.");
+            }
+
+            if (isApproved(approval.getDecision())) {
+                newStatus = STATUS_APPROVED;
+            } else if (isRejected(approval.getDecision())) {
+                newStatus = STATUS_REJECTED;
+            } else {
+                newStatus = leave.getStatus();
+            }
+
+            leave.setStatus(newStatus);
+            normalLeaveRepository.save(leave);
+
+            // Trigger Notification
+            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {
+                notificationService.sendLeaveStatusUpdate(
+                    leave.getEmployee().getFullName(), leave.getEmployee().getEmail(), leave.getContactNumber(),
+                    "Normal Leave", newStatus, approval.getRemark()
                 );
             }
         }
@@ -138,7 +181,6 @@ public class ApprovalServiceImpl implements ApprovalService {
         if (STATUS_PENDING_HR.equals(status)) return handleMaternityHrStep(isAdmin);
         if (STATUS_PENDING_ADMIN.equals(status)) return handleMaternityAdminStep(isDirector);
         if (STATUS_PENDING_DIRECTOR.equals(status)) {
-            triggerFinanceIntegrationPlaceholder();
             return STATUS_APPROVED;
         }
 
@@ -150,9 +192,6 @@ public class ApprovalServiceImpl implements ApprovalService {
     }
 
     private String handleMaternityAdminStep(boolean isDirector) {
-        if (isDirector) {
-            triggerFinanceIntegrationPlaceholder();
-        }
         return STATUS_APPROVED;
     }
 
@@ -178,8 +217,34 @@ public class ApprovalServiceImpl implements ApprovalService {
         return highestRole;
     }
 
-    private void triggerFinanceIntegrationPlaceholder() {
-        System.out.println("\n💰 [FINANCE MODULE INTEGRATION]: Requesting salary calculation for approved Maternity Leave...\n");
+    private void triggerFinanceIntegrationPlaceholder(MaternityLeave leave) {
+        System.out.println("\n💰 [FINANCE MODULE INTEGRATION]: Pushing approved Maternity Leave to Payroll API...\n");
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String financeApiUrl = "http://finance-system.internal/api/payroll/maternity-leave";
+            
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("employeeId", leave.getEmployee().getId());
+            payload.put("employeeName", leave.getEmployee().getFullName());
+            payload.put("epfNumber", leave.getEmployee().getEpfNumber());
+            payload.put("leaveId", leave.getId());
+            payload.put("level", leave.getLevel());
+            payload.put("fromDate", leave.getFromDate().toString());
+            payload.put("endDate", leave.getEndDate().toString());
+            payload.put("totalDays", leave.getTotalDays());
+            payload.put("status", leave.getStatus());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
+
+            System.out.println("Payload: " + payload);
+            
+            // This will throw an exception since the URL is fake, we catch it to prevent blocking the transaction
+            restTemplate.postForObject(financeApiUrl, request, String.class);
+        } catch (Exception e) {
+            System.out.println("⚠️ [FINANCE MODULE INTEGRATION]: Finance API is offline or unreachable. Payload was generated but not delivered. Error: " + e.getMessage() + "\n");
+        }
     }
 
     @Override

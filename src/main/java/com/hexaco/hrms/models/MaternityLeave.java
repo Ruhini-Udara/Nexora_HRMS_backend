@@ -26,6 +26,9 @@ public class MaternityLeave extends LeaveRequest {
 
     private String email;
 
+    @Column(name = "leave_level")
+    private String level;
+
     @Column(name = "special_remark", columnDefinition = "TEXT")
     private String specialRemark;
 }

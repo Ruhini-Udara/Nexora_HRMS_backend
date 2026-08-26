@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface DesignationRepository extends JpaRepository<Designation, Long> {
+    boolean existsByShift_Id(Long shiftId);
 }

@@ -96,6 +96,7 @@ public class AuthController {
                                 .epfNumber(userAccount.getEmployee().getEpfNumber()) // Sends EPF number.
                                 .department(userAccount.getEmployee().getDepartment()) // Sends department name.
                                 .branch(userAccount.getEmployee().getBranch()) // Sends branch name.
+                                .profilePicturePath(userAccount.getEmployee().getProfilePicturePath())
                                 .build()); // Finishes building JwtResponse.
         }
 }
