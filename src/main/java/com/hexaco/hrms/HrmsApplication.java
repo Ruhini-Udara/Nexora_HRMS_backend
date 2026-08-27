@@ -16,5 +16,4 @@ public class HrmsApplication {
 		
 		SpringApplication.run(HrmsApplication.class, args);
 	}
-
 }

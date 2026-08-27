@@ -56,6 +56,7 @@ public class SecurityConfig {
             .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
             .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
             .requestMatchers("/error").permitAll()
+            .requestMatchers("/public/**").permitAll()
 
             // Public GET APIs
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
@@ -74,6 +75,7 @@ public class SecurityConfig {
             // Fingerprint attendance endpoints
             .requestMatchers("/api/attendance/punches/**").permitAll()
             .requestMatchers("/api/attendance/sync-runs/**").permitAll()
+            .requestMatchers("/api/v1/leave-balance/sync-historical").permitAll()
 
             .anyRequest().authenticated()
         );
