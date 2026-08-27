@@ -1,7 +1,7 @@
 package com.hexaco.hrms.config;
 
-import com.hexaco.hrms.models.AttendanceShift;
-import com.hexaco.hrms.repository.AttendanceShiftRepository;
+import com.hexaco.hrms.models.Shift;
+import com.hexaco.hrms.repository.ShiftRepository;
 import lombok.RequiredArgsConstructor;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.repository.EmployeeRepository;
@@ -15,34 +15,29 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShiftSeeder implements CommandLineRunner {
 
-    private final AttendanceShiftRepository shiftRepository;
+    private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
 
     @Override
     public void run(String... args) throws Exception {
         // Re-seed if shifts are missing or any are missing standardHours (required field)
-        boolean needsReseed = shiftRepository.count() < 3 ||
-                shiftRepository.findAll().stream().anyMatch(s -> s.getStandardHours() == null);
+        boolean needsReseed = shiftRepository.count() < 3;
 
         if (needsReseed) {
-            shiftRepository.deleteAll();
-            shiftRepository.save(AttendanceShift.builder()
-                    .shiftName("Normal Shift (08:30–16:30)")
+            shiftRepository.save(Shift.builder()
+                    .name("Normal Shift (08:30–16:30)")
                     .startTime(LocalTime.of(8, 30))
                     .endTime(LocalTime.of(16, 30))
-                    .standardHours(8.0)
                     .build());
-            shiftRepository.save(AttendanceShift.builder()
-                    .shiftName("Temporary Shift (08:15–16:45)")
+            shiftRepository.save(Shift.builder()
+                    .name("Temporary Shift (08:15–16:45)")
                     .startTime(LocalTime.of(8, 15))
                     .endTime(LocalTime.of(16, 45))
-                    .standardHours(8.5)
                     .build());
-            shiftRepository.save(AttendanceShift.builder()
-                    .shiftName("Driver Shift (08:00–17:00)")
+            shiftRepository.save(Shift.builder()
+                    .name("Driver Shift (08:00–17:00)")
                     .startTime(LocalTime.of(8, 0))
                     .endTime(LocalTime.of(17, 0))
-                    .standardHours(9.0)
                     .build());
         }
 
