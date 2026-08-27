@@ -1,3 +1,4 @@
+
 package com.hexaco.hrms.service;
 
 import com.hexaco.hrms.dto.ResignationDto;
@@ -9,4 +10,5 @@ public interface ResignationService {
     List<ResignationDto> getResignationsByEmployeeId(Long employeeId);
     ResignationDto updateResignationStatus(Long id, String status, String remarks, String boardMeetingDate);
     ResignationDto getResignationById(Long id);
+    ResignationDto updateResignation(Long id, ResignationDto dto);
 }

@@ -38,6 +38,8 @@ public class DeathRequest {
     public void setRequesterDesignation(String requesterDesignation) { this.requesterDesignation = requesterDesignation; }
     public String getRequesterEmpId() { return requesterEmpId; }
     public void setRequesterEmpId(String requesterEmpId) { this.requesterEmpId = requesterEmpId; }
+    public String getRequesterNic() { return requesterNic; }
+    public void setRequesterNic(String requesterNic) { this.requesterNic = requesterNic; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
     public String getContactNumber() { return contactNumber; }
@@ -94,6 +96,9 @@ public class DeathRequest {
 
     @Column(name = "requester_emp_id")
     private String requesterEmpId;
+
+    @Column(name = "requester_nic")
+    private String requesterNic;
 
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
