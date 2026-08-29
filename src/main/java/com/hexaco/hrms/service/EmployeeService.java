@@ -12,4 +12,5 @@ public interface EmployeeService {
     Employee updateFingerprintStatus(String code, Boolean fingerprintEnrolled);
     Employee updateProfilePicture(Long id, String profilePicturePath);
     boolean existsByNicNumber(String nicNumber);
+    boolean existsByEmail(String email);
 }

@@ -14,6 +14,7 @@ public class EmployeeDTO {
     private String email;
     private String homeAddress;
     private String maritalStatus;
+    private String phoneNumber;
 
     // Step 2: Employment Info
     private Long designationId;

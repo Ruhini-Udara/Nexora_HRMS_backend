@@ -11,4 +11,5 @@ public class EmployeeUpdateDTO {
     private Long designationId;
     private String employeeType;
     private Boolean fingerprintEnrolled;
+    private String phoneNumber;
 }
