@@ -95,4 +95,10 @@ public class EmployeeController {
         boolean exists = employeeService.existsByNicNumber(nicNumber);
         return ResponseEntity.ok(exists);
     }
+
+    @GetMapping("/exists-email/{email:.+}")
+    public ResponseEntity<Boolean> existsByEmail(@PathVariable String email) {
+        boolean exists = employeeService.existsByEmail(email);
+        return ResponseEntity.ok(exists);
+    }
 }
