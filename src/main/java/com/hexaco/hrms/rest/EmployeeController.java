@@ -101,4 +101,16 @@ public class EmployeeController {
         boolean exists = employeeService.existsByEmail(email);
         return ResponseEntity.ok(exists);
     }
+
+    @GetMapping("/exists-phone")
+    public ResponseEntity<Boolean> existsByPhoneParam(@org.springframework.web.bind.annotation.RequestParam(required = false) String phoneNumber) {
+        boolean exists = employeeService.existsByPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(exists);
+    }
+
+    @GetMapping("/exists-phone/{phoneNumber}")
+    public ResponseEntity<Boolean> existsByPhoneNumber(@PathVariable String phoneNumber) {
+        boolean exists = employeeService.existsByPhoneNumber(phoneNumber);
+        return ResponseEntity.ok(exists);
+    }
 }
