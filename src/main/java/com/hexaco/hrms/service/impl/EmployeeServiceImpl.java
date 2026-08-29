@@ -309,4 +309,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return employeeRepository.findByEmail(email.trim()).isPresent();
     }
+
+    @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByPhoneNumber(phoneNumber.trim()).isPresent();
+    }
 }

@@ -14,4 +14,5 @@ public interface EmployeeService {
     Employee updateProfilePicture(Long id, String profilePicturePath);
     boolean existsByNicNumber(String nicNumber);
     boolean existsByEmail(String email);
+    boolean existsByPhoneNumber(String phoneNumber);
 }
