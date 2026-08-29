@@ -30,7 +30,9 @@ public class ManualAttendanceDto {
     private LocalDate attendanceDate;
     private String status;          // PRESENT, ABSENT, LATE, HALF_DAY
 
+    private LocalDate inDate;
     private LocalTime inTime;
+    private LocalDate outDate;
     private LocalTime outTime;
     private BigDecimal workHours;
     private BigDecimal overtimeHours;

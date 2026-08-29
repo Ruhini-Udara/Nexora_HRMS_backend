@@ -23,8 +23,8 @@ public class LeaveBalance {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @Column(nullable = false)
-    private Integer year;
+    @Column(name = "year", nullable = false)
+    private Integer leaveYear;
 
     @Column(name = "annual_leave_quota")
     private Integer annualLeaveQuota;

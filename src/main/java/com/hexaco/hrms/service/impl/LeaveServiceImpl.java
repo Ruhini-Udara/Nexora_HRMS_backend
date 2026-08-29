@@ -10,6 +10,7 @@ import com.hexaco.hrms.service.LeaveService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,10 +25,17 @@ public class LeaveServiceImpl implements LeaveService {
     private final EmployeeRepository employeeRepository;
     private final UserAccountRepository userAccountRepository;
     private final LeaveTypeRepository leaveTypeRepository;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final LeaveRequestRepository leaveRequestRepository;
     
     // Status Constants to avoid hard-coding
     private static final String STATUS_PENDING_HR = "PENDING_HR_APPROVAL";
     private static final String STATUS_PENDING_ADMIN = "PENDING_ADMIN_APPROVAL";
+
+    @Override
+    public java.util.List<Long> getEmployeesOnLeave(java.time.LocalDate date) {
+        return leaveRequestRepository.findApprovedLeaveEmployeeIdsByDate(date);
+    }
 
     @Override
     public OverseasLeaveDto submitOverseasLeave(OverseasLeaveDto dto) {
@@ -87,6 +95,23 @@ public class LeaveServiceImpl implements LeaveService {
     public MaternityLeaveDto submitMaternityLeave(MaternityLeaveDto dto) {
         Employee employee = employeeRepository.findById(dto.getEmployeeId())
                 .orElseThrow(() -> new RuntimeException("Employee not found"));
+
+        // Validation: Only female employees can apply
+        if (employee.getSex() == null || !employee.getSex().equalsIgnoreCase("FEMALE")) {
+            throw new RuntimeException("Only female employees are eligible to apply for maternity leave.");
+        }
+
+        // Validation: Minimum 80 days of service
+        if (employee.getDateJoined() == null) {
+            throw new RuntimeException("Employee's joined date is not set, cannot verify eligibility.");
+        }
+        if (dto.getFromDate() != null) {
+            long daysOfService = java.time.temporal.ChronoUnit.DAYS.between(employee.getDateJoined(), dto.getFromDate());
+            if (daysOfService < 80) {
+                throw new RuntimeException("Employee must have a minimum service of 80 days before the leave starts.");
+            }
+        }
+
         LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
                 .orElseThrow(() -> new RuntimeException("LeaveType not found"));
 
@@ -96,6 +121,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .branch(dto.getBranch())
                 .contactNumber(dto.getContactNumber())
                 .email(dto.getEmail())
+                .level(dto.getLevel())
                 .specialRemark(dto.getSpecialRemark())
                 .build();
 
@@ -156,6 +182,31 @@ public class LeaveServiceImpl implements LeaveService {
         requestedLeave.setEndDate(dto.getEndDate());
         requestedLeave.setTotalDays(dto.getTotalDays());
         requestedLeave.setReason(dto.getReason());
+
+        // Validate Leave Balance Quota
+        int currentYear = LocalDate.now().getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(employee.getId(), currentYear);
+        if (balanceOpt.isPresent()) {
+            LeaveBalance lb = balanceOpt.get();
+            String typeName = leaveType.getLeaveTypeName().toLowerCase();
+            int quota = 0;
+            int used = 0;
+            if (typeName.contains("annual")) {
+                quota = lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0;
+                used = lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0;
+            } else if (typeName.contains("casual")) {
+                quota = lb.getCasualLeaveQuota() != null ? lb.getCasualLeaveQuota() : 0;
+                used = lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0;
+            } else if (typeName.contains("medical") || typeName.contains("sick")) {
+                quota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+                used = lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0;
+            }
+            
+            if (used + dto.getTotalDays() > quota) {
+                throw new RuntimeException("Leave request exceeds available " + leaveType.getLeaveTypeName() + " balance. Requested: " + dto.getTotalDays() + ", Available: " + Math.max(0, quota - used));
+            }
+        }
+
 
         // Smart Routing Logic
         if (dto.getTotalDays() >= 3) {
@@ -305,6 +356,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .branch(leave.getBranch())
                 .contactNumber(leave.getContactNumber())
                 .email(leave.getEmail())
+                .level(leave.getLevel())
                 .specialRemark(leave.getSpecialRemark())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
@@ -312,6 +364,29 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     private NormalLeaveDto mapToNormalDto(NormalLeave leave) {
+        // Look up leave balance for the employee in the current year
+        int currentYear = LocalDate.now().getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository
+                .findByEmployeeIdAndLeaveYear(leave.getEmployee().getId(), currentYear);
+
+        int annualRemaining = 0;
+        int medicalRemaining   = 0;
+        int casualRemaining = 0;
+
+        if (balanceOpt.isPresent()) {
+            LeaveBalance lb = balanceOpt.get();
+            int annualQuota  = lb.getAnnualLeaveQuota()  != null ? lb.getAnnualLeaveQuota()  : 0;
+            int annualUsed   = lb.getAnnualLeaveUsed()   != null ? lb.getAnnualLeaveUsed()   : 0;
+            int medicalQuota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+            int medicalUsed  = lb.getMedicalLeaveUsed()  != null ? lb.getMedicalLeaveUsed()  : 0;
+            int casualQuota  = lb.getCasualLeaveQuota()  != null ? lb.getCasualLeaveQuota()  : 0;
+            int casualUsed   = lb.getCasualLeaveUsed()   != null ? lb.getCasualLeaveUsed()   : 0;
+
+            annualRemaining = Math.max(0, annualQuota  - annualUsed);
+            medicalRemaining   = Math.max(0, medicalQuota - medicalUsed);
+            casualRemaining = Math.max(0, casualQuota  - casualUsed);
+        }
+
         return NormalLeaveDto.builder()
                 .id(leave.getId())
                 .employeeId(leave.getEmployee().getId())
@@ -330,6 +405,9 @@ public class LeaveServiceImpl implements LeaveService {
                 .contactNumber(leave.getContactNumber())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
+                .annualLeaveRemaining(annualRemaining)
+                .medicalLeaveRemaining(medicalRemaining)
+                .casualLeaveRemaining(casualRemaining)
                 .build();
     }
 

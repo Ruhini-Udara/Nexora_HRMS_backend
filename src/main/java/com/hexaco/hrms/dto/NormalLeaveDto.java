@@ -27,4 +27,9 @@ public class NormalLeaveDto {
     private String contactNumber;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Leave balance remaining (quota - used) for the current year
+    private Integer annualLeaveRemaining;
+    private Integer medicalLeaveRemaining;   // mapped from medicalLeaveQuota - medicalLeaveUsed
+    private Integer casualLeaveRemaining;
 }

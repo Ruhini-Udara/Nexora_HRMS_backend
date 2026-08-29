@@ -26,6 +26,7 @@ public class EmployeeDashboardService {
     private final MaternityLeaveRepository maternityLeaveRepo;
     private final TransferRequestRepository transferReqRepo;
     private final WelfareRequestRepository welfareReqRepo;
+    private final ManualAttendanceRepository manualAttendanceRepo;
 
     private boolean isPending(String status) {
         if (status == null) return false;
@@ -41,9 +42,18 @@ public class EmployeeDashboardService {
         String attendanceStatus = "Not Checked In";
         String attendanceTime = null;
         Optional<AttendanceDailySummary> summaryOpt = attendanceRepo.findByEmployeeIdAndAttendanceDate(employeeId, today);
+        Optional<ManualAttendance> manualOpt = manualAttendanceRepo.findByEmployeeIdAndAttendanceDate(employeeId, today);
+
         if (summaryOpt.isPresent() && summaryOpt.get().getCheckInTime() != null) {
             attendanceStatus = "Checked In";
             LocalDateTime checkIn = summaryOpt.get().getCheckInTime();
+            String amPm = checkIn.getHour() >= 12 ? "PM" : "AM";
+            int hour = checkIn.getHour() % 12;
+            if (hour == 0) hour = 12;
+            attendanceTime = String.format("at %d:%02d %s", hour, checkIn.getMinute(), amPm);
+        } else if (manualOpt.isPresent() && "APPROVED".equalsIgnoreCase(manualOpt.get().getApprovalStatus()) && manualOpt.get().getInTime() != null) {
+            attendanceStatus = "Checked In";
+            java.time.LocalTime checkIn = manualOpt.get().getInTime();
             String amPm = checkIn.getHour() >= 12 ? "PM" : "AM";
             int hour = checkIn.getHour() % 12;
             if (hour == 0) hour = 12;
@@ -52,7 +62,7 @@ public class EmployeeDashboardService {
 
         // 2. Leave Balance
         int totalLeaveBalance = 0;
-        Optional<LeaveBalance> balanceOpt = leaveBalanceRepo.findByEmployeeIdAndYear(employeeId, year);
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepo.findByEmployeeIdAndLeaveYear(employeeId, year);
         if (balanceOpt.isPresent()) {
             LeaveBalance lb = balanceOpt.get();
             int annual = (lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0) - (lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0);

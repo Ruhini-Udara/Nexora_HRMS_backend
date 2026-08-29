@@ -35,7 +35,10 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<java.util.List<Employee>> getAllEmployees() {
+    public ResponseEntity<java.util.List<Employee>> getAllEmployees(@RequestParam(required = false) Long supervisorId) {
+        if (supervisorId != null) {
+            return ResponseEntity.ok(employeeService.getEmployeesBySupervisor(supervisorId));
+        }
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 

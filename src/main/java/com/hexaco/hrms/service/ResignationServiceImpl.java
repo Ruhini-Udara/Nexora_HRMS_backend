@@ -1,3 +1,4 @@
+
 package com.hexaco.hrms.service;
 
 import com.hexaco.hrms.dto.ResignationDto;
@@ -91,6 +92,26 @@ public class ResignationServiceImpl implements ResignationService {
         Resignation resignation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resignation request not found with id: " + id));
         return mapToDto(resignation);
+    }
+
+    @Override
+    @Transactional
+    public ResignationDto updateResignation(Long id, ResignationDto dto) {
+        Resignation resignation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resignation request not found with id: " + id));
+        
+        resignation.setResignationDate(dto.getResignationDate());
+        resignation.setLastWorkingDate(dto.getLastWorkingDate());
+        resignation.setObligationDetails(dto.getObligationDetails());
+        resignation.setReason(dto.getReason());
+        resignation.setSpecialRemark(dto.getSpecialRemark());
+        resignation.setStatus(dto.getStatus() != null ? dto.getStatus() : resignation.getStatus());
+        
+        if (dto.getResignationLetterDoc() != null) resignation.setResignationLetterDoc(dto.getResignationLetterDoc());
+        if (dto.getClearanceLetterDoc() != null) resignation.setClearanceLetterDoc(dto.getClearanceLetterDoc());
+        if (dto.getHandoverChecklistDoc() != null) resignation.setHandoverChecklistDoc(dto.getHandoverChecklistDoc());
+        
+        return mapToDto(repository.save(resignation));
     }
 
     private ResignationDto mapToDto(Resignation resignation) {

@@ -25,12 +25,13 @@ public class ManualAttendance {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee employee;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "shift_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private AttendanceShift shift;
+    private Shift shift;
 
     @Column(name = "attendance_date", nullable = false)
     private LocalDate attendanceDate;
@@ -39,8 +40,14 @@ public class ManualAttendance {
     @Column(nullable = false)
     private String status;
 
+    @Column(name = "in_date")
+    private LocalDate inDate;
+
     @Column(name = "in_time")
     private LocalTime inTime;
+
+    @Column(name = "out_date")
+    private LocalDate outDate;
 
     @Column(name = "out_time")
     private LocalTime outTime;

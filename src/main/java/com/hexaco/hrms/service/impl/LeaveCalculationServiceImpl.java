@@ -17,10 +17,12 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
 
     private final EmployeeRepository employeeRepository;
     private final LeaveBalanceRepository leaveBalanceRepository;
+    private final com.hexaco.hrms.service.LeaveBalanceService leaveBalanceService;
 
-    public LeaveCalculationServiceImpl(EmployeeRepository employeeRepository, LeaveBalanceRepository leaveBalanceRepository) {
+    public LeaveCalculationServiceImpl(EmployeeRepository employeeRepository, LeaveBalanceRepository leaveBalanceRepository, com.hexaco.hrms.service.LeaveBalanceService leaveBalanceService) {
         this.employeeRepository = employeeRepository;
         this.leaveBalanceRepository = leaveBalanceRepository;
+        this.leaveBalanceService = leaveBalanceService;
     }
 
     @Override
@@ -30,66 +32,13 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
         LocalDate cutOffDate = LocalDate.of(2011, 7, 2);
 
         for (Employee employee : employees) {
-            LocalDate joinDate = employee.getDateJoined();
-            if (joinDate == null) {
-                // If no join date, default to a safe standard (pre-2011: 21 leaves)
-                saveOrUpdateLeaveBalance(employee, year, 7, 0, 14);
-                continue;
-            }
-
-            int annual = 0;
-            int casual = 0;
-            int medical = 0;
-
-            // Check if it is the First Year of employment
-            if (joinDate.getYear() == year) {
-                // Prorated first year logic
-                LocalDate april1st = LocalDate.of(year, 4, 1);
-                LocalDate july1st = LocalDate.of(year, 7, 1);
-                LocalDate october1st = LocalDate.of(year, 10, 1);
-
-                if (!joinDate.isAfter(april1st)) {
-                    // <= April 1st: 14 leaves (Medical 6, Casual 2, Annual 6)
-                    annual = 6;
-                    casual = 2;
-                    medical = 6;
-                } else if (!joinDate.isAfter(july1st)) {
-                    // <= July 1st: 10 leaves (Medical 4, Casual 2, Annual 4)
-                    annual = 4;
-                    casual = 2;
-                    medical = 4;
-                } else if (!joinDate.isAfter(october1st)) {
-                    // <= October 1st: 7 leaves (Medical 3, Casual 1, Annual 3)
-                    annual = 3;
-                    casual = 1;
-                    medical = 3;
-                } else {
-                    // > October 1st: 4 leaves (Medical 2, Casual 0, Annual 2)
-                    annual = 2;
-                    casual = 0;
-                    medical = 2;
-                }
-            } else {
-                // Regular permanent employees
-                if (joinDate.isAfter(cutOffDate)) {
-                    // > 02/07/2011: 35 leaves (Medical 14, Casual 7, Annual 14)
-                    annual = 14;
-                    casual = 7;
-                    medical = 14;
-                } else {
-                    // <= 02/07/2011: 21 leaves (Medical 14, Annual 7, Casual 0)
-                    annual = 7;
-                    casual = 0;
-                    medical = 14;
-                }
-            }
-
-            saveOrUpdateLeaveBalance(employee, year, annual, casual, medical);
+            // Use the new dynamic LeaveBalanceService to calculate based on policies
+            leaveBalanceService.calculateLeave(employee.getId(), year);
         }
     }
 
     private void saveOrUpdateLeaveBalance(Employee employee, int year, int annual, int casual, int medical) {
-        Optional<LeaveBalance> existing = leaveBalanceRepository.findByEmployeeIdAndYear(employee.getId(), year);
+        Optional<LeaveBalance> existing = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(employee.getId(), year);
         if (existing.isPresent()) {
             LeaveBalance lb = existing.get();
             // Update quotas only if not finalized and not manually edited (to prevent overwriting manual adjustments)
@@ -102,7 +51,7 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
         } else {
             LeaveBalance lb = LeaveBalance.builder()
                     .employee(employee)
-                    .year(year)
+                    .leaveYear(year)
                     .annualLeaveQuota(annual)
                     .casualLeaveQuota(casual)
                     .medicalLeaveQuota(medical)
@@ -118,15 +67,15 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
 
     @Override
     public List<LeaveBalance> getLeaveBalancesByYear(int year) {
-        return leaveBalanceRepository.findByYear(year);
+        return leaveBalanceRepository.findByLeaveYear(year);
     }
 
     @Override
     public List<LeaveBalance> getLeaveBalancesByBranchAndYear(String branch, int year) {
         if (branch == null || branch.isEmpty() || "all".equalsIgnoreCase(branch)) {
-            return leaveBalanceRepository.findByYear(year);
+            return leaveBalanceRepository.findByLeaveYear(year);
         }
-        return leaveBalanceRepository.findByEmployeeBranchAndYear(branch, year);
+        return leaveBalanceRepository.findByEmployeeBranchAndLeaveYear(branch, year);
     }
 
     @Override
@@ -137,9 +86,9 @@ public class LeaveCalculationServiceImpl implements LeaveCalculationService {
 
         List<LeaveBalance> balances;
         if (branch == null || branch.isEmpty() || "all".equalsIgnoreCase(branch)) {
-            balances = leaveBalanceRepository.findByYear(year);
+            balances = leaveBalanceRepository.findByLeaveYear(year);
         } else {
-            balances = leaveBalanceRepository.findByEmployeeBranchAndYear(branch, year);
+            balances = leaveBalanceRepository.findByEmployeeBranchAndLeaveYear(branch, year);
         }
 
         for (LeaveBalance lb : balances) {

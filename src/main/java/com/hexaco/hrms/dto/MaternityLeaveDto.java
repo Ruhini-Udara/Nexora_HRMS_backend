@@ -28,6 +28,7 @@ public class MaternityLeaveDto {
     private String branch;
     private String contactNumber;
     private String email;
+    private String level;
     private String specialRemark;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

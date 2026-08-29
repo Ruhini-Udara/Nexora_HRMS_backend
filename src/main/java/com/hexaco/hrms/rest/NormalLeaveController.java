@@ -25,14 +25,14 @@ public class NormalLeaveController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor', 'Admin', 'Hr', 'Director', 'Supervisor')")
     public ResponseEntity<List<NormalLeaveDto>> getAllNormalLeaves() {
         List<NormalLeaveDto> leaves = leaveService.getAllNormalLeaves();
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor', 'Admin', 'Hr', 'Director', 'Supervisor')")
     public ResponseEntity<List<NormalLeaveDto>> getNormalLeavesByStatus(@PathVariable String status) {
         List<NormalLeaveDto> leaves = leaveService.getNormalLeavesByStatus(status);
         return ResponseEntity.ok(leaves);

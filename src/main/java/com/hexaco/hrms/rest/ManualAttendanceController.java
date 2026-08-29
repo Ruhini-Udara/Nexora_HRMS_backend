@@ -2,7 +2,7 @@ package com.hexaco.hrms.rest;
 
 import com.hexaco.hrms.dto.AttendanceSubmitDto;
 import com.hexaco.hrms.dto.ManualAttendanceDto;
-import com.hexaco.hrms.models.AttendanceShift;
+import com.hexaco.hrms.models.Shift;
 import com.hexaco.hrms.service.ManualAttendanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -21,7 +21,7 @@ public class ManualAttendanceController {
 
     // ── GET /api/attendance/shifts ────────────────────────────────────────────
     @GetMapping("/shifts")
-    public ResponseEntity<List<AttendanceShift>> getAllShifts() {
+    public ResponseEntity<List<Shift>> getAllShifts() {
         return ResponseEntity.ok(attendanceService.getAllShifts());
     }
 
@@ -29,8 +29,9 @@ public class ManualAttendanceController {
     @GetMapping("/manual")
     public ResponseEntity<List<ManualAttendanceDto>> getAttendance(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @RequestParam(required = false) String department) {
-        return ResponseEntity.ok(attendanceService.getAttendanceByDate(date, department));
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) Long supervisorId) {
+        return ResponseEntity.ok(attendanceService.getAttendanceByDate(date, department, supervisorId));
     }
 
     // ── GET /api/attendance/manual/employee/{employeeId} ──────────────────────
@@ -49,4 +50,39 @@ public class ManualAttendanceController {
             return ResponseEntity.status(500).body("Error saving attendance: " + e.getMessage());
         }
     }
+
+    // ── POST /api/attendance/manual/employee/{employeeId}/request ─────────────
+    @PostMapping("/manual/employee/{employeeId}/request")
+    public ResponseEntity<?> submitEmployeeRequest(
+            @PathVariable Long employeeId,
+            @RequestBody com.hexaco.hrms.dto.EmployeeAttendanceRequestDto dto) {
+        try {
+            return ResponseEntity.ok(attendanceService.submitEmployeeRequest(employeeId, dto));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error submitting request: " + e.getMessage());
+        }
+    }
+
+    // ── POST /api/attendance/manual/employee/cancel/{id} ──────────────────────
+    @PostMapping("/manual/employee/cancel/{id}")
+    public ResponseEntity<?> cancelEmployeeRequest(@PathVariable Long id) {
+        try {
+            attendanceService.cancelEmployeeRequest(id);
+            return ResponseEntity.ok("Request cancelled successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error cancelling request: " + e.getMessage());
+        }
+    }
+
+    // ── POST /api/attendance/manual/supervisor/approve-multiple ───────────────
+    @PostMapping("/manual/supervisor/approve-multiple")
+    public ResponseEntity<?> approveMultipleRequests(@RequestBody List<Long> attendanceIds) {
+        try {
+            attendanceService.approveMultipleRequests(attendanceIds);
+            return ResponseEntity.ok("Requests approved successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error approving requests: " + e.getMessage());
+        }
+    }
 }
+
