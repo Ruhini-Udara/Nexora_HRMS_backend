@@ -21,6 +21,7 @@ public class DeathRequestService {
     private final DeathRequestRepository repository;
     private final EmployeeRepository employeeRepository;
     private final NomineeRepository nomineeRepository;
+    private final NotificationService notificationService;
 
     public List<DeathRequestDto> getAllRequests() {
         return repository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
@@ -82,7 +83,7 @@ public class DeathRequestService {
         Nominee nominee = employee.getNominee();
         
         if (nominee == null) {
-            nominee = nomineeRepository.findById(employee.getId())
+            nominee = nomineeRepository.findByEmployeeId(employee.getId())
                     .orElseGet(() -> {
                         Nominee n = new Nominee();
                         n.setEmployee(employee);
@@ -150,7 +151,9 @@ public class DeathRequestService {
                 .orElseThrow(() -> new RuntimeException("Request not found"));
         request.setStatus("REJECTED");
         request.setHrRemark(reason);
-        return mapToDto(repository.save(request));
+        DeathRequest saved = repository.save(request);
+        sendDeathStatusNotification(saved);
+        return mapToDto(saved);
     }
 
     public DeathRequestDto submitToAdmin(Long id) {
@@ -166,10 +169,13 @@ public class DeathRequestService {
                 .orElseThrow(() -> new RuntimeException("Request not found"));
         request.setStatus(status);
         if (boardMeetingDate != null) request.setBoardMeetingDate(boardMeetingDate);
-        return mapToDto(repository.save(request));
+        DeathRequest saved = repository.save(request);
+        sendDeathStatusNotification(saved);
+        return mapToDto(saved);
     }
 
     private DeathRequestDto mapToDto(DeathRequest request) {
+        Nominee nominee = nomineeRepository.findByEmployeeId(request.getEmployee().getId()).orElse(null);
         return DeathRequestDto.builder()
                 .id(request.getId())
                 .employeeId(request.getEmployee().getId())
@@ -191,10 +197,10 @@ public class DeathRequestService {
                 .nomineeBank(request.getNomineeBank())
                 .nomineeBranch(request.getNomineeBranch())
                 .nomineeAccount(request.getNomineeAccount())
-                .nomineeRelationship(request.getEmployee().getNominee() != null ? request.getEmployee().getNominee().getRelationship() : null)
-                .nomineeNic(request.getEmployee().getNominee() != null ? request.getEmployee().getNominee().getNic() : null)
-                .nomineePhone(request.getEmployee().getNominee() != null ? request.getEmployee().getNominee().getPhoneNo() : null)
-                .nomineeAddress(request.getEmployee().getNominee() != null ? request.getEmployee().getNominee().getAddress() : null)
+                .nomineeRelationship(nominee != null ? nominee.getRelationship() : null)
+                .nomineeNic(nominee != null ? nominee.getNic() : null)
+                .nomineePhone(nominee != null ? nominee.getPhoneNo() : null)
+                .nomineeAddress(nominee != null ? nominee.getAddress() : null)
                 .deathCertificateDoc(request.getDeathCertificateDoc())
                 .nomineeIdDoc(request.getNomineeIdDoc())
                 .requestLetterDoc(request.getRequestLetterDoc())
@@ -203,5 +209,28 @@ public class DeathRequestService {
                 .createdAt(request.getCreatedAt())
                 .updatedAt(request.getUpdatedAt())
                 .build();
+    }
+
+    private void sendDeathStatusNotification(DeathRequest request) {
+        String status = request.getStatus();
+        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) ||
+            "Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            
+            String requesterEmail = null;
+            if (request.getRequesterEmpId() != null && !request.getRequesterEmpId().trim().isEmpty()) {
+                requesterEmail = employeeRepository.findByEmployeeCode(request.getRequesterEmpId().trim())
+                        .map(Employee::getEmail)
+                        .orElse(null);
+            }
+            if (requesterEmail != null && !requesterEmail.isEmpty()) {
+                notificationService.sendDeathApplicationStatusUpdate(
+                        request.getRequesterName(),
+                        requesterEmail,
+                        request.getEmployeeName(),
+                        status,
+                        request.getHrRemark()
+                );
+            }
+        }
     }
 }

@@ -19,6 +19,7 @@ public class ResignationServiceImpl implements ResignationService {
 
     private final ResignationRepository repository;
     private final EmployeeRepository employeeRepository;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -84,6 +85,17 @@ public class ResignationServiceImpl implements ResignationService {
         }
         
         Resignation updated = repository.save(resignation);
+        
+        if ("Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || 
+            "APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            notificationService.sendResignationStatusUpdate(
+                    updated.getEmployee().getFullName(),
+                    updated.getEmployee().getEmail(),
+                    status,
+                    remarks
+            );
+        }
+        
         return mapToDto(updated);
     }
 
