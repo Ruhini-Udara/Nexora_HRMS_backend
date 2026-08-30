@@ -97,6 +97,11 @@ public class AuthController {
                                 .department(userAccount.getEmployee().getDepartment()) // Sends department name.
                                 .branch(userAccount.getEmployee().getBranch()) // Sends branch name.
                                 .profilePicturePath(userAccount.getEmployee().getProfilePicturePath())
+                                .employeeType(userAccount.getEmployee().getEmployeeType())
+                                .isActive(userAccount.isActive())
+                                .gender(userAccount.getEmployee().getSex())
+                                .phoneNumber(userAccount.getEmployee().getPhoneNumber())
+                                .personalEmail(userAccount.getEmployee().getEmail())
                                 .build()); // Finishes building JwtResponse.
         }
 }

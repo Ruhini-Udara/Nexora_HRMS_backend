@@ -20,4 +20,9 @@ public class JwtResponse {
     private String department;
     private String branch;
     private String profilePicturePath;
+    private String employeeType;
+    private Boolean isActive;
+    private String gender;
+    private String phoneNumber;
+    private String personalEmail;
 }
