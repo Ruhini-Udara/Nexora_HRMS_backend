@@ -105,13 +105,21 @@ public class EmployeeServiceImpl implements EmployeeService {
                             () -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
         }
 
+        LocalDate dob = parseDate(dto.getDateOfBirth());
+        LocalDate dateJoined = parseDate(dto.getDateJoined());
+        if (dob != null && dateJoined != null) {
+            if (dateJoined.isBefore(dob.plusYears(18))) {
+                throw new RuntimeException("Date joined must be after birthday + 18 years.");
+            }
+        }
+
         Employee employee = Employee.builder()
                 .nicNumber(dto.getNicNumber())
                 .sex(dto.getSex())
                 .fullName(dto.getFullName())
                 .surname(dto.getSurname())
-                .dateOfBirth(parseDate(dto.getDateOfBirth()))
-                .dateJoined(parseDate(dto.getDateJoined()))
+                .dateOfBirth(dob)
+                .dateJoined(dateJoined)
                 .email(dto.getEmail() != null ? dto.getEmail().trim() : null)
                 .homeAddress(dto.getHomeAddress())
                 .maritalStatus(dto.getMaritalStatus())
