@@ -330,4 +330,46 @@ public class NotificationServiceImpl implements NotificationService {
             log.info("ℹ️ [SIMULATION MODE] Termination Email content: \n{}", content);
         }
     }
+
+    @Override
+    public void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark) {
+        String subject = "Death Application Update: " + status;
+        
+        String customMessage = String.format("The death application for %s has been %s.", deceasedEmployeeName, status);
+        if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
+            customMessage = String.format("The death application for %s has been successfully processed and approved.", deceasedEmployeeName);
+        } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            customMessage = String.format("We are sorry to inform you that the death application for %s has been rejected.", deceasedEmployeeName);
+        }
+        
+        String content = String.format(
+                "Dear %s,\n\n%s\nRemark: %s\n\nBest Regards,\nHR Mate",
+                recipientName, customMessage, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 DEATH APPLICATION NOTIFICATION LOG                                       ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Death Application Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real death application email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Death Application Email content: \n{}", content);
+        }
+    }
 }

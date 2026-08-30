@@ -40,3 +40,10 @@ src/main/resources/google-credentials.json
 
 
 node_modules/
+
+### Custom Scratch Files ###
+DeleteRecord.java
+DeleteRecord.class
+test_draft.json
+package.json
+package-lock.json

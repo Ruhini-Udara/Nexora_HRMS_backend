@@ -9,4 +9,5 @@ public interface NotificationService {
     void sendTransferStatusUpdate(String recipientName, String email, String status, String remark);
     void sendResignationStatusUpdate(String recipientName, String email, String status, String remark);
     void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark);
+    void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark);
 }
