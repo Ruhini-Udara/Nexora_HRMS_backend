@@ -64,6 +64,7 @@ public class SecurityConfig {
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/shifts", "/api/shifts/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/leave-policies/**", "/api/leave-policies/**").permitAll()
 
             // Training
             .requestMatchers("/api/training/**").permitAll()
