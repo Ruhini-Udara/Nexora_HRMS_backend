@@ -59,6 +59,9 @@ public class Employee {
     private String homeAddress;
     private String maritalStatus;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
     // Step 2: Employment Info
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "designation_id" , nullable = false)
