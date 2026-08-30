@@ -149,7 +149,7 @@ public class NotificationServiceImpl implements NotificationService {
                         "Location: %s\n" +
                         "Instructor: %s\n\n" +
                         "Please mark your calendar. We look forward to your participation.\n\n" +
-                        "Best Regards,\nNexora HRMS System",
+                        "Best Regards,\nHR Mate",
                 recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD"));
 
         log.info("\n" +
@@ -192,7 +192,7 @@ public class NotificationServiceImpl implements NotificationService {
                         "Date: %s\n" +
                         "Time: %s\n" +
                         "Description: %s\n\n" +
-                        "Best Regards,\nNexora HRMS System",
+                        "Best Regards,\nHR Mate",
                 title, type, date, time, (description != null && !description.isEmpty() ? description : "N/A"));
 
         log.info("\n" +
@@ -219,6 +219,115 @@ public class NotificationServiceImpl implements NotificationService {
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Company Event Email content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendTransferStatusUpdate(String recipientName, String email, String status, String remark) {
+        String subject = "Transfer Request Update: " + status;
+        String content = String.format(
+                "Dear %s,\n\nYour transfer request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
+                recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 TRANSFER NOTIFICATION LOG                                                ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Transfer Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real transfer email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Transfer Email content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendResignationStatusUpdate(String recipientName, String email, String status, String remark) {
+        String subject = "Resignation Request Update: " + status;
+        String content = String.format(
+                "Dear %s,\n\nYour resignation request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
+                recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 RESIGNATION NOTIFICATION LOG                                             ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Resignation Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real resignation email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Resignation Email content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark) {
+        String subject = "Important Notice Regarding Your Employment";
+        
+        String customMessage = "Your termination status has been updated to: " + status + ".";
+        // Apply requested specific message for rejected/terminated states if applicable
+        if ("REJECTED".equalsIgnoreCase(status) || "TERMINATED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status)) {
+             customMessage = "We are sorry to inform you that you have been terminated by board after inquiry.";
+        }
+        
+        String content = String.format(
+                "Dear %s,\n\n%s\nRemark: %s\n\nBest Regards,\nHR Mate",
+                recipientName, customMessage, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 TERMINATION NOTIFICATION LOG                                             ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(email);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Termination Email successfully sent to {}", email);
+            } catch (Exception e) {
+                log.error("❌ Failed to send real termination email to {}: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Termination Email content: \n{}", content);
         }
     }
 }

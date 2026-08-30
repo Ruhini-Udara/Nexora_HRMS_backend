@@ -38,3 +38,5 @@ build/
 # Google Credentials
 src/main/resources/google-credentials.json
 
+
+node_modules/
