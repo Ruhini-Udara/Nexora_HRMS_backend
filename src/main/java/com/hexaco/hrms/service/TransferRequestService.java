@@ -20,6 +20,8 @@ public class TransferRequestService {
     private final TransferRequestRepository transferRequestRepository;
 
     private final EmployeeRepository employeeRepository;
+    
+    private final NotificationService notificationService;
 
     @Transactional
     public TransferRequestDto createRequest(TransferRequestDto dto) {
@@ -62,7 +64,19 @@ public class TransferRequestService {
         request.setStatus(status);
         if (remarks != null) request.setHrRemark(remarks);
         if (boardMeetingDate != null) request.setBoardMeetingDate(boardMeetingDate);
-        return mapToDto(transferRequestRepository.save(request));
+        
+        TransferRequest saved = transferRequestRepository.save(request);
+        
+        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            notificationService.sendTransferStatusUpdate(
+                    saved.getEmployee().getFullName(),
+                    saved.getEmployee().getEmail(),
+                    status,
+                    remarks
+            );
+        }
+        
+        return mapToDto(saved);
     }
 
     @Transactional

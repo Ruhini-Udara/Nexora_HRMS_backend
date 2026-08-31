@@ -30,6 +30,6 @@ public class NormalLeaveDto {
 
     // Leave balance remaining (quota - used) for the current year
     private Integer annualLeaveRemaining;
-    private Integer sickLeaveRemaining;   // mapped from medicalLeaveQuota - medicalLeaveUsed
+    private Integer medicalLeaveRemaining;   // mapped from medicalLeaveQuota - medicalLeaveUsed
     private Integer casualLeaveRemaining;
 }

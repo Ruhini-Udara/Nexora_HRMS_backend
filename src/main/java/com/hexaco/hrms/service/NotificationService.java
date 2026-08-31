@@ -6,4 +6,8 @@ public interface NotificationService {
     void sendWelfareStatusUpdate(String recipientName, String email, String welfareType, String status, String remark);
     void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor);
     void sendCompanyEventNotification(String email, String title, String description, String date, String time, String type);
+    void sendTransferStatusUpdate(String recipientName, String email, String status, String remark);
+    void sendResignationStatusUpdate(String recipientName, String email, String status, String remark);
+    void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark);
+    void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark);
 }

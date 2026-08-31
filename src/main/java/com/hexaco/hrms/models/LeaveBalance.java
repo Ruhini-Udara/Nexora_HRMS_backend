@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "leave_balance", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"employee_id", "leave_year"})
+    @UniqueConstraint(columnNames = {"employee_id", "year"})
 })
 @Getter
 @Setter
@@ -23,7 +23,7 @@ public class LeaveBalance {
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @Column(name = "leave_year", nullable = false)
+    @Column(name = "year", nullable = false)
     private Integer leaveYear;
 
     @Column(name = "annual_leave_quota")

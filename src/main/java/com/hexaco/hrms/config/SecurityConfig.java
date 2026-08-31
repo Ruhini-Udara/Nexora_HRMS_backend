@@ -55,12 +55,17 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/death-requests", "/api/death-requests/**").permitAll()
             .requestMatchers("/api/resignations", "/api/resignations/**").permitAll()
+            .requestMatchers("/api/terminations", "/api/terminations/**").permitAll()
+            .requestMatchers("/api/welfare-requests", "/api/welfare-requests/**").permitAll()
+            .requestMatchers("/api/transfer-requests", "/api/transfer-requests/**").permitAll()
             .requestMatchers("/error").permitAll()
+            .requestMatchers("/public/**").permitAll()
 
             // Public GET APIs
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/designations").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/employees").permitAll()
             .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/shifts", "/api/shifts/**").permitAll()
+            .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/leave-policies/**", "/api/leave-policies/**").permitAll()
 
             // Training
             .requestMatchers("/api/training/**").permitAll()
@@ -74,6 +79,7 @@ public class SecurityConfig {
             // Fingerprint attendance endpoints
             .requestMatchers("/api/attendance/punches/**").permitAll()
             .requestMatchers("/api/attendance/sync-runs/**").permitAll()
+            .requestMatchers("/api/v1/leave-balance/sync-historical").permitAll()
 
             .anyRequest().authenticated()
         );

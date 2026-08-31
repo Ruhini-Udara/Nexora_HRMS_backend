@@ -77,7 +77,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (dto.getEpfNumber() != null && !dto.getEpfNumber().trim().isEmpty()) {
             String epf = dto.getEpfNumber().trim();
             if (!epf.matches("^[a-zA-Z0-9/-]+$")) {
-                throw new RuntimeException("Invalid EPF format. Must contain only alphanumeric characters, dashes, or slashes.");
+                throw new RuntimeException(
+                        "Invalid EPF format. Must contain only alphanumeric characters, dashes, or slashes.");
             }
             if (employeeRepository.findByEpfNumber(epf).isPresent()) {
                 throw new RuntimeException("An employee with this EPF number already exists.");
@@ -88,7 +89,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (dto.getEtfNumber() != null && !dto.getEtfNumber().trim().isEmpty()) {
             String etf = dto.getEtfNumber().trim();
             if (!etf.matches("^[a-zA-Z0-9/-]+$")) {
-                throw new RuntimeException("Invalid ETF format. Must contain only alphanumeric characters, dashes, or slashes.");
+                throw new RuntimeException(
+                        "Invalid ETF format. Must contain only alphanumeric characters, dashes, or slashes.");
             }
             if (employeeRepository.findByEtfNumber(etf).isPresent()) {
                 throw new RuntimeException("An employee with this ETF number already exists.");
@@ -99,7 +101,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         Designation designation = null;
         if (dto.getDesignationId() != null) {
             designation = designationRepository.findById(dto.getDesignationId())
-                    .orElseThrow(() -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
+                    .orElseThrow(
+                            () -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
+        }
+
+        LocalDate dob = parseDate(dto.getDateOfBirth());
+        LocalDate dateJoined = parseDate(dto.getDateJoined());
+        if (dob != null && dateJoined != null) {
+            if (dateJoined.isBefore(dob.plusYears(18))) {
+                throw new RuntimeException("Date joined must be after birthday + 18 years.");
+            }
         }
 
         Employee employee = Employee.builder()
@@ -107,11 +118,12 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .sex(dto.getSex())
                 .fullName(dto.getFullName())
                 .surname(dto.getSurname())
-                .dateOfBirth(parseDate(dto.getDateOfBirth()))
-                .dateJoined(parseDate(dto.getDateJoined()))
+                .dateOfBirth(dob)
+                .dateJoined(dateJoined)
                 .email(dto.getEmail() != null ? dto.getEmail().trim() : null)
                 .homeAddress(dto.getHomeAddress())
                 .maritalStatus(dto.getMaritalStatus())
+                .phoneNumber(dto.getPhoneNumber())
                 .designation(designation)
                 .employeeType(dto.getEmployeeType())
                 .department(dto.getDepartment())
@@ -201,7 +213,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployeeByCode(String code) {
         Employee employee = employeeRepository.findByEmployeeCode(code)
                 .orElseThrow(() -> new RuntimeException("Employee not found with code: " + code));
-        
+
         userAccountRepository.deleteByEmployee(employee);
         employeeRepository.delete(employee);
     }
@@ -234,9 +246,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (dto.getEmployeeType() != null) {
             employee.setEmployeeType(dto.getEmployeeType());
         }
+        if (dto.getPhoneNumber() != null) {
+            employee.setPhoneNumber(dto.getPhoneNumber());
+        }
         if (dto.getDesignationId() != null) {
             Designation designation = designationRepository.findById(dto.getDesignationId())
-                    .orElseThrow(() -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
+                    .orElseThrow(
+                            () -> new RuntimeException("Designation not found with id: " + dto.getDesignationId()));
             employee.setDesignation(designation);
         }
         if (dto.getFingerprintEnrolled() != null) {
@@ -292,5 +308,21 @@ public class EmployeeServiceImpl implements EmployeeService {
             return false;
         }
         return employeeRepository.findByNicNumber(nicNumber.trim()).isPresent();
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByEmail(email.trim()).isPresent();
+    }
+
+    @Override
+    public boolean existsByPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByPhoneNumber(phoneNumber.trim()).isPresent();
     }
 }
