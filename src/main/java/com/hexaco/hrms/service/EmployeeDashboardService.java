@@ -27,6 +27,7 @@ public class EmployeeDashboardService {
     private final TransferRequestRepository transferReqRepo;
     private final WelfareRequestRepository welfareReqRepo;
     private final ManualAttendanceRepository manualAttendanceRepo;
+    private final EmployeeRepository employeeRepo;
 
     private boolean isPending(String status) {
         if (status == null) return false;
@@ -120,6 +121,22 @@ public class EmployeeDashboardService {
         allRequests.sort(Comparator.comparing(RecentRequestItemDto::getDateSubmitted).reversed());
         List<RecentRequestItemDto> recentRequests = allRequests.size() > 5 ? allRequests.subList(0, 5) : allRequests;
 
+        // Shift info from employee designation
+        String shiftName = null;
+        String shiftStartTime = null;
+        String shiftEndTime = null;
+        Optional<Employee> empOpt = employeeRepo.findById(employeeId);
+        if (empOpt.isPresent() && empOpt.get().getDesignation() != null && empOpt.get().getDesignation().getShift() != null) {
+            Shift shift = empOpt.get().getDesignation().getShift();
+            shiftName = shift.getName();
+            if (shift.getStartTime() != null) {
+                shiftStartTime = shift.getStartTime().toString();
+            }
+            if (shift.getEndTime() != null) {
+                shiftEndTime = shift.getEndTime().toString();
+            }
+        }
+
         return EmployeeDashboardDto.builder()
                 .attendanceStatus(attendanceStatus)
                 .attendanceTime(attendanceTime)
@@ -127,6 +144,9 @@ public class EmployeeDashboardService {
                 .activeTrainingPrograms(activeTrainingPrograms)
                 .pendingRequestsCount(pendingCount)
                 .recentRequests(recentRequests)
+                .shiftName(shiftName)
+                .shiftStartTime(shiftStartTime)
+                .shiftEndTime(shiftEndTime)
                 .build();
     }
 }
