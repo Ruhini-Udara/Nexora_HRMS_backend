@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "leave_balance", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"employee_id", "leave_year"})
+    @UniqueConstraint(columnNames = {"employee_id", "year"})
 })
 @Getter
 @Setter
@@ -21,9 +21,10 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee employee;
 
-    @Column(name = "leave_year", nullable = false)
+    @Column(name = "year", nullable = false)
     private Integer leaveYear;
 
     @Column(name = "annual_leave_quota")
@@ -53,6 +54,7 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "finalized_by")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee finalizedBy;
 
     @Column(name = "finalized_at")
@@ -64,6 +66,7 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "last_edited_by")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee lastEditedBy;
 
     @Column(name = "created_at", updatable = false)
@@ -71,6 +74,9 @@ public class LeaveBalance {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "calculation_source")
+    private String calculationSource; // AUTOMATIC, HISTORICAL_IMPORT, MANUAL_ADJUSTMENT
 
     @PrePersist
     protected void onCreate() {

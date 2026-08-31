@@ -12,7 +12,11 @@ import org.springframework.data.repository.query.Param;
 @Repository
 public interface NormalLeaveRepository extends JpaRepository<NormalLeave, Long> {
     List<NormalLeave> findByStatus(String status);
+    
+    @Query("SELECT nl FROM NormalLeave nl WHERE nl.status = :status AND nl.employee.id IN (SELECT e.id FROM Employee e)")
+    List<NormalLeave> findValidApprovedLeaves(@Param("status") String status);
     List<NormalLeave> findByEmployeeId(Long employeeId);
+    List<NormalLeave> findByEmployeeIdAndStatus(Long employeeId, String status);
 
     @Query("SELECT COUNT(l) FROM NormalLeave l WHERE l.employee.department = :department " +
            "AND l.status = 'APPROVED' " +

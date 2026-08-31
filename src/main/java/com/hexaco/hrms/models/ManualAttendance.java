@@ -31,7 +31,7 @@ public class ManualAttendance {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "shift_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-    private AttendanceShift shift;
+    private Shift shift;
 
     @Column(name = "attendance_date", nullable = false)
     private LocalDate attendanceDate;

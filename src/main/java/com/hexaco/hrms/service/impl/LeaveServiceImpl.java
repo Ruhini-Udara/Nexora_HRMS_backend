@@ -183,6 +183,31 @@ public class LeaveServiceImpl implements LeaveService {
         requestedLeave.setTotalDays(dto.getTotalDays());
         requestedLeave.setReason(dto.getReason());
 
+        // Validate Leave Balance Quota
+        int currentYear = LocalDate.now().getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(employee.getId(), currentYear);
+        if (balanceOpt.isPresent()) {
+            LeaveBalance lb = balanceOpt.get();
+            String typeName = leaveType.getLeaveTypeName().toLowerCase();
+            int quota = 0;
+            int used = 0;
+            if (typeName.contains("annual")) {
+                quota = lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0;
+                used = lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0;
+            } else if (typeName.contains("casual")) {
+                quota = lb.getCasualLeaveQuota() != null ? lb.getCasualLeaveQuota() : 0;
+                used = lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0;
+            } else if (typeName.contains("medical") || typeName.contains("sick")) {
+                quota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+                used = lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0;
+            }
+            
+            if (used + dto.getTotalDays() > quota) {
+                throw new RuntimeException("Leave request exceeds available " + leaveType.getLeaveTypeName() + " balance. Requested: " + dto.getTotalDays() + ", Available: " + Math.max(0, quota - used));
+            }
+        }
+
+
         // Smart Routing Logic
         if (dto.getTotalDays() >= 3) {
             requestedLeave.setStatus(STATUS_PENDING_HR);
@@ -345,7 +370,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .findByEmployeeIdAndLeaveYear(leave.getEmployee().getId(), currentYear);
 
         int annualRemaining = 0;
-        int sickRemaining   = 0;  // medical leave shown as "Sick" on supervisor UI
+        int medicalRemaining   = 0;
         int casualRemaining = 0;
 
         if (balanceOpt.isPresent()) {
@@ -358,7 +383,7 @@ public class LeaveServiceImpl implements LeaveService {
             int casualUsed   = lb.getCasualLeaveUsed()   != null ? lb.getCasualLeaveUsed()   : 0;
 
             annualRemaining = Math.max(0, annualQuota  - annualUsed);
-            sickRemaining   = Math.max(0, medicalQuota - medicalUsed);
+            medicalRemaining   = Math.max(0, medicalQuota - medicalUsed);
             casualRemaining = Math.max(0, casualQuota  - casualUsed);
         }
 
@@ -381,7 +406,7 @@ public class LeaveServiceImpl implements LeaveService {
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
                 .annualLeaveRemaining(annualRemaining)
-                .sickLeaveRemaining(sickRemaining)
+                .medicalLeaveRemaining(medicalRemaining)
                 .casualLeaveRemaining(casualRemaining)
                 .build();
     }

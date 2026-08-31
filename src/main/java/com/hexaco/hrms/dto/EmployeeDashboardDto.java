@@ -18,4 +18,8 @@ public class EmployeeDashboardDto {
     private int activeTrainingPrograms; // Count of active training programs
     private int pendingRequestsCount; // Count of active items
     private List<RecentRequestItemDto> recentRequests;
+    private String shiftName;
+    private String shiftStartTime;
+    private String shiftEndTime;
 }
+

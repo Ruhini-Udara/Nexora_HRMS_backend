@@ -26,6 +26,8 @@ public class EmployeeDashboardService {
     private final MaternityLeaveRepository maternityLeaveRepo;
     private final TransferRequestRepository transferReqRepo;
     private final WelfareRequestRepository welfareReqRepo;
+    private final ManualAttendanceRepository manualAttendanceRepo;
+    private final EmployeeRepository employeeRepo;
 
     private boolean isPending(String status) {
         if (status == null) return false;
@@ -41,9 +43,18 @@ public class EmployeeDashboardService {
         String attendanceStatus = "Not Checked In";
         String attendanceTime = null;
         Optional<AttendanceDailySummary> summaryOpt = attendanceRepo.findByEmployeeIdAndAttendanceDate(employeeId, today);
+        Optional<ManualAttendance> manualOpt = manualAttendanceRepo.findByEmployeeIdAndAttendanceDate(employeeId, today);
+
         if (summaryOpt.isPresent() && summaryOpt.get().getCheckInTime() != null) {
             attendanceStatus = "Checked In";
             LocalDateTime checkIn = summaryOpt.get().getCheckInTime();
+            String amPm = checkIn.getHour() >= 12 ? "PM" : "AM";
+            int hour = checkIn.getHour() % 12;
+            if (hour == 0) hour = 12;
+            attendanceTime = String.format("at %d:%02d %s", hour, checkIn.getMinute(), amPm);
+        } else if (manualOpt.isPresent() && "APPROVED".equalsIgnoreCase(manualOpt.get().getApprovalStatus()) && manualOpt.get().getInTime() != null) {
+            attendanceStatus = "Checked In";
+            java.time.LocalTime checkIn = manualOpt.get().getInTime();
             String amPm = checkIn.getHour() >= 12 ? "PM" : "AM";
             int hour = checkIn.getHour() % 12;
             if (hour == 0) hour = 12;
@@ -110,6 +121,22 @@ public class EmployeeDashboardService {
         allRequests.sort(Comparator.comparing(RecentRequestItemDto::getDateSubmitted).reversed());
         List<RecentRequestItemDto> recentRequests = allRequests.size() > 5 ? allRequests.subList(0, 5) : allRequests;
 
+        // Shift info from employee designation
+        String shiftName = null;
+        String shiftStartTime = null;
+        String shiftEndTime = null;
+        Optional<Employee> empOpt = employeeRepo.findById(employeeId);
+        if (empOpt.isPresent() && empOpt.get().getDesignation() != null && empOpt.get().getDesignation().getShift() != null) {
+            Shift shift = empOpt.get().getDesignation().getShift();
+            shiftName = shift.getName();
+            if (shift.getStartTime() != null) {
+                shiftStartTime = shift.getStartTime().toString();
+            }
+            if (shift.getEndTime() != null) {
+                shiftEndTime = shift.getEndTime().toString();
+            }
+        }
+
         return EmployeeDashboardDto.builder()
                 .attendanceStatus(attendanceStatus)
                 .attendanceTime(attendanceTime)
@@ -117,6 +144,9 @@ public class EmployeeDashboardService {
                 .activeTrainingPrograms(activeTrainingPrograms)
                 .pendingRequestsCount(pendingCount)
                 .recentRequests(recentRequests)
+                .shiftName(shiftName)
+                .shiftStartTime(shiftStartTime)
+                .shiftEndTime(shiftEndTime)
                 .build();
     }
 }

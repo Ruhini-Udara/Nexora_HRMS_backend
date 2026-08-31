@@ -9,6 +9,8 @@ import com.hexaco.hrms.repository.MaternityLeaveRepository;
 import com.hexaco.hrms.repository.NormalLeaveRepository;
 import com.hexaco.hrms.repository.OverseasLeaveRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.repository.LeaveBalanceRepository;
+import com.hexaco.hrms.models.LeaveBalance;
 import com.hexaco.hrms.repository.TrainingRequestRepository;
 import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.ApprovalService;
@@ -35,6 +37,8 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final TrainingRequestRepository trainingRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
+    private final LeaveBalanceRepository leaveBalanceRepository;
+    private final com.hexaco.hrms.service.LeaveBalanceService leaveBalanceService;
     
     // Status Constants to avoid hard-coding
     private static final String STATUS_PENDING_HR = "PENDING_HR_APPROVAL";
@@ -126,6 +130,13 @@ public class ApprovalServiceImpl implements ApprovalService {
 
             leave.setStatus(newStatus);
             normalLeaveRepository.save(leave);
+
+            // Deduct leave balance if approved
+            if (STATUS_APPROVED.equals(newStatus)) {
+                if (leave.getFromDate() != null) {
+                    leaveBalanceService.calculateLeave(leave.getEmployee().getId(), leave.getFromDate().getYear());
+                }
+            }
 
             // Trigger Notification
             if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {

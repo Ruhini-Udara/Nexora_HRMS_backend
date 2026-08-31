@@ -2,11 +2,11 @@ package com.hexaco.hrms.service;
 
 import com.hexaco.hrms.dto.AttendanceSubmitDto;
 import com.hexaco.hrms.dto.ManualAttendanceDto;
-import com.hexaco.hrms.models.AttendanceShift;
+import com.hexaco.hrms.models.Shift;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.models.ManualAttendance;
 import com.hexaco.hrms.models.UserAccount;
-import com.hexaco.hrms.repository.AttendanceShiftRepository;
+import com.hexaco.hrms.repository.ShiftRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.ManualAttendanceRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 public class ManualAttendanceService {
 
     private final ManualAttendanceRepository attendanceRepository;
-    private final AttendanceShiftRepository shiftRepository;
+    private final ShiftRepository shiftRepository;
     private final EmployeeRepository employeeRepository;
     private final UserAccountRepository userRepository;
 
     // ── Get all available shifts ─────────────────────────────────────────────
-    public List<AttendanceShift> getAllShifts() {
+    public List<Shift> getAllShifts() {
         return shiftRepository.findAll();
     }
 
@@ -95,7 +95,7 @@ public class ManualAttendanceService {
     // ── Batch Submit/Update Attendance (Upsert) ───────────────────────────────
     @Transactional
     public List<ManualAttendanceDto> batchSubmitAttendance(AttendanceSubmitDto submitDto) {
-        AttendanceShift shift = shiftRepository.findById(submitDto.getShiftId())
+        Shift shift = shiftRepository.findById(submitDto.getShiftId())
                 .orElseThrow(() -> new RuntimeException("Shift not found with ID: " + submitDto.getShiftId()));
 
         UserAccount submitter = userRepository.findById(submitDto.getSubmittedBy())
@@ -153,7 +153,7 @@ public class ManualAttendanceService {
     }
 
     // ── Calculate Work Hours & Overtime ───────────────────────────────────────
-    private void calculateHours(ManualAttendance attendance, AttendanceShift shift) {
+    private void calculateHours(ManualAttendance attendance, Shift shift) {
         Duration duration = Duration.between(attendance.getInTime(), attendance.getOutTime());
         if (duration.isNegative()) {
             // Handle night shifts crossing midnight (basic logic)
@@ -163,12 +163,84 @@ public class ManualAttendanceService {
         BigDecimal hours = new BigDecimal(duration.toMinutes()).divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
         attendance.setWorkHours(hours);
 
-        BigDecimal stdHours = BigDecimal.valueOf(shift.getStandardHours());
+        Duration shiftDuration = Duration.between(shift.getStartTime(), shift.getEndTime());
+        if (shiftDuration.isNegative()) {
+            shiftDuration = shiftDuration.plusDays(1);
+        }
+        BigDecimal stdHours = new BigDecimal(shiftDuration.toMinutes()).divide(new BigDecimal(60), 2, RoundingMode.HALF_UP);
+        
         if (hours.compareTo(stdHours) > 0) {
             attendance.setOvertimeHours(hours.subtract(stdHours));
         } else {
             attendance.setOvertimeHours(BigDecimal.ZERO);
         }
+    }
+
+    // ── Employee Submit Edit Request ──────────────────────────────────────────
+    @Transactional
+    public ManualAttendanceDto submitEmployeeRequest(Long employeeId, com.hexaco.hrms.dto.EmployeeAttendanceRequestDto dto) {
+        Employee emp = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found with ID: " + employeeId));
+
+        ManualAttendance attendance = attendanceRepository
+                .findByEmployeeIdAndAttendanceDate(employeeId, dto.getAttendanceDate())
+                .orElse(new ManualAttendance());
+
+        if (attendance.getId() == null) {
+            attendance.setEmployee(emp);
+            attendance.setAttendanceDate(dto.getAttendanceDate());
+            List<Shift> shifts = shiftRepository.findAll();
+            if (!shifts.isEmpty()) attendance.setShift(shifts.get(0));
+        }
+
+        attendance.setInTime(dto.getInTime());
+        attendance.setOutTime(dto.getOutTime());
+        attendance.setRemarks(dto.getReason());
+        attendance.setStatus("PRESENT"); // Default to Present, approvalStatus tracks PENDING state
+        attendance.setApprovalStatus("PENDING");
+        attendance.setIsCustomEntry(true);
+        
+        // Let's set submitted by to employee's user account if exists
+        List<UserAccount> users = userRepository.findByEmployeeId(employeeId);
+        if (!users.isEmpty()) {
+            attendance.setSubmittedBy(users.get(0));
+        }
+
+        if (dto.getInTime() != null && dto.getOutTime() != null && attendance.getShift() != null) {
+            calculateHours(attendance, attendance.getShift());
+        }
+
+        return mapToDto(attendanceRepository.save(attendance));
+    }
+
+    // ── Employee Cancel Request ───────────────────────────────────────────────
+    @Transactional
+    public void cancelEmployeeRequest(Long attendanceId) {
+        ManualAttendance attendance = attendanceRepository.findById(attendanceId)
+                .orElseThrow(() -> new RuntimeException("Attendance record not found"));
+        
+        if (!"PENDING".equalsIgnoreCase(attendance.getApprovalStatus())) {
+            throw new RuntimeException("Only pending requests can be cancelled");
+        }
+        
+        attendance.setApprovalStatus("CANCELLED");
+        attendanceRepository.save(attendance);
+    }
+
+    // ── Supervisor Approve Multiple Requests ──────────────────────────────────
+    @Transactional
+    public void approveMultipleRequests(List<Long> attendanceIds) {
+        // Ideally we pass supervisorId, but for now we just approve them.
+        List<ManualAttendance> records = attendanceRepository.findAllById(attendanceIds);
+        for (ManualAttendance attendance : records) {
+            if ("PENDING".equalsIgnoreCase(attendance.getApprovalStatus())) {
+                attendance.setApprovalStatus("APPROVED");
+                attendance.setStatus("PRESENT"); // Or Working depending on logic, but Present is standard
+                // In reality we should fetch current user and set approvedBy, approvedAt
+                attendance.setApprovedAt(java.time.LocalDateTime.now());
+            }
+        }
+        attendanceRepository.saveAll(records);
     }
 
     // ── Mapper ───────────────────────────────────────────────────────────────
@@ -180,8 +252,8 @@ public class ManualAttendanceService {
                 .employeeName(entity.getEmployee().getFullName())
                 .designation(entity.getEmployee().getDesignation() != null ? entity.getEmployee().getDesignation().getDesignationName() : "")
                 .department(entity.getEmployee().getDepartment())
-                .shiftId(entity.getShift().getId())
-                .shiftName(entity.getShift().getShiftName())
+                .shiftId(entity.getShift() != null ? entity.getShift().getId() : null)
+                .shiftName(entity.getShift() != null ? entity.getShift().getName() : null)
                 .attendanceDate(entity.getAttendanceDate())
                 .status(entity.getStatus())
                 .inTime(entity.getInTime())
