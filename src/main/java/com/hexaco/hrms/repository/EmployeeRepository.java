@@ -26,4 +26,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     @Query("SELECT e.department, COUNT(e) FROM Employee e GROUP BY e.department")
     List<Object[]> countEmployeesByDepartment();
+
+    @Query("SELECT DISTINCT e.branch FROM Employee e WHERE e.branch IS NOT NULL AND e.branch != ''")
+    List<String> findAllDistinctBranches();
 }

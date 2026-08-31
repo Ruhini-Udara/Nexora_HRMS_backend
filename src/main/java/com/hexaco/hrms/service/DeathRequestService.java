@@ -53,6 +53,7 @@ public class DeathRequestService {
                 .employee(employee)
                 .employeeName(dto.getEmployeeName())
                 .employeeIdString(dto.getEmployeeIdString())
+                .employeePhone(dto.getEmployeePhone())
                 .dateOfDeath(dto.getDateOfDeath())
                 .natureOfDeath(dto.getNatureOfDeath())
                 .requesterName(dto.getRequesterName())
@@ -110,6 +111,7 @@ public class DeathRequestService {
 
         request.setEmployeeName(dto.getEmployeeName());
         request.setEmployeeIdString(dto.getEmployeeIdString());
+        request.setEmployeePhone(dto.getEmployeePhone());
         request.setDateOfDeath(dto.getDateOfDeath());
         request.setNatureOfDeath(dto.getNatureOfDeath());
         request.setRequesterName(dto.getRequesterName());
@@ -181,6 +183,7 @@ public class DeathRequestService {
                 .employeeId(request.getEmployee().getId())
                 .employeeIdString(request.getEmployeeIdString())
                 .employeeName(request.getEmployeeName())
+                .employeePhone(request.getEmployeePhone() != null ? request.getEmployeePhone() : request.getEmployee().getPhoneNumber())
                 .epfNumber(request.getEmployee().getEpfNumber())
                 .dateOfDeath(request.getDateOfDeath())
                 .natureOfDeath(request.getNatureOfDeath())

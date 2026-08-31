@@ -20,6 +20,8 @@ public class DeathRequest {
     public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
     public String getEmployeeIdString() { return employeeIdString; }
     public void setEmployeeIdString(String employeeIdString) { this.employeeIdString = employeeIdString; }
+    public String getEmployeePhone() { return employeePhone; }
+    public void setEmployeePhone(String employeePhone) { this.employeePhone = employeePhone; }
     public LocalDate getDateOfDeath() { return dateOfDeath; }
     public void setDateOfDeath(LocalDate dateOfDeath) { this.dateOfDeath = dateOfDeath; }
     public String getStatus() { return status; }
@@ -78,6 +80,9 @@ public class DeathRequest {
 
     @Column(name = "employee_id_string")
     private String employeeIdString;
+    
+    @Column(name = "employee_phone")
+    private String employeePhone;
 
     @Column(name = "date_of_death")
     private LocalDate dateOfDeath;

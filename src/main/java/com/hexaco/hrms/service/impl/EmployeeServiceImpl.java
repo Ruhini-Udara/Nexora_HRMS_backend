@@ -2,9 +2,11 @@ package com.hexaco.hrms.service.impl;
 
 import com.hexaco.hrms.dto.EmployeeDTO;
 import com.hexaco.hrms.models.Designation;
+import java.util.List;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.models.Role;
 import com.hexaco.hrms.models.UserAccount;
+import com.hexaco.hrms.repository.BranchRepository;
 import com.hexaco.hrms.repository.DesignationRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.RoleRepository;
@@ -27,6 +29,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final DesignationRepository designationRepository;
     private final UserAccountRepository userAccountRepository;
     private final RoleRepository roleRepository;
+    private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -324,5 +327,12 @@ public class EmployeeServiceImpl implements EmployeeService {
             return false;
         }
         return employeeRepository.findByPhoneNumber(phoneNumber.trim()).isPresent();
+    }
+
+    @Override
+    public List<String> getDistinctBranches() {
+        return branchRepository.findAll().stream()
+                .map(com.hexaco.hrms.models.Branch::getName)
+                .collect(java.util.stream.Collectors.toList());
     }
 }

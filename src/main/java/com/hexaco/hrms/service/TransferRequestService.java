@@ -30,7 +30,7 @@ public class TransferRequestService {
 
         TransferRequest request = TransferRequest.builder()
                 .employee(employee)
-                .currentBranch(dto.getCurrentBranch())
+                .currentBranch(employee.getBranch() != null && !employee.getBranch().isEmpty() ? employee.getBranch() : dto.getCurrentBranch())
                 .targetBranch(dto.getTargetBranch())
                 .transferType(dto.getTransferType())
                 .reason(dto.getReason())
@@ -84,7 +84,8 @@ public class TransferRequestService {
         TransferRequest request = transferRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer request not found"));
         
-        request.setCurrentBranch(dto.getCurrentBranch());
+        Employee employee = request.getEmployee();
+        request.setCurrentBranch(employee.getBranch() != null && !employee.getBranch().isEmpty() ? employee.getBranch() : dto.getCurrentBranch());
         request.setTargetBranch(dto.getTargetBranch());
         request.setTransferType(dto.getTransferType());
         request.setReason(dto.getReason());
@@ -94,6 +95,25 @@ public class TransferRequestService {
         request.setProofDocumentPath(dto.getProofDocumentPath());
         
         return mapToDto(transferRequestRepository.save(request));
+    }
+
+    @Transactional
+    public TransferRequestDto executeTransfer(Long id) {
+        TransferRequest request = transferRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transfer request not found"));
+        
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
+            throw new RuntimeException("Only approved transfers can be executed");
+        }
+
+        Employee employee = request.getEmployee();
+        employee.setBranch(request.getTargetBranch());
+        employeeRepository.save(employee);
+
+        request.setStatus("EXECUTED");
+        TransferRequest saved = transferRequestRepository.save(request);
+
+        return mapToDto(saved);
     }
 
     private TransferRequestDto mapToDto(TransferRequest request) {
