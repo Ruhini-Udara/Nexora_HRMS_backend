@@ -43,13 +43,14 @@ public class LeaveCalculationController {
     }
 
     @PutMapping("/adjust")
-    public ResponseEntity<LeaveBalance> adjustLeave(
-            @RequestParam Long balanceId,
-            @RequestParam int annual,
-            @RequestParam int casual,
-            @RequestParam int medical,
-            @RequestParam Long editedById) {
-        LeaveBalance adjusted = leaveCalculationService.manuallyAdjustLeaveBalance(balanceId, annual, casual, medical, editedById);
+    public ResponseEntity<LeaveBalance> adjustLeave(@RequestBody LeaveAdjustmentRequest request) {
+        LeaveBalance adjusted = leaveCalculationService.manuallyAdjustLeaveBalance(request);
         return ResponseEntity.ok(adjusted);
+    }
+    
+    @PostMapping("/import")
+    public ResponseEntity<Map<String, String>> importHistoricalBalances(@RequestBody List<LeaveImportRequest> requests) {
+        leaveCalculationService.importHistoricalBalances(requests);
+        return ResponseEntity.ok(Map.of("message", "Historical balances imported successfully"));
     }
 }

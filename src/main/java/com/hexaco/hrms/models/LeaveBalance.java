@@ -21,6 +21,7 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee employee;
 
     @Column(name = "year", nullable = false)
@@ -53,6 +54,7 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "finalized_by")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee finalizedBy;
 
     @Column(name = "finalized_at")
@@ -64,6 +66,7 @@ public class LeaveBalance {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "last_edited_by")
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Employee lastEditedBy;
 
     @Column(name = "created_at", updatable = false)
@@ -71,6 +74,9 @@ public class LeaveBalance {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "calculation_source")
+    private String calculationSource; // AUTOMATIC, HISTORICAL_IMPORT, MANUAL_ADJUSTMENT
 
     @PrePersist
     protected void onCreate() {
