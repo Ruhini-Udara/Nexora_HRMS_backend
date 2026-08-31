@@ -2,6 +2,7 @@ package com.hexaco.hrms.service;
 
 import com.hexaco.hrms.dto.EmployeeDTO;
 import com.hexaco.hrms.models.Employee;
+import java.util.List;
 
 public interface EmployeeService {
     Employee registerEmployee(EmployeeDTO dto);
@@ -15,4 +16,5 @@ public interface EmployeeService {
     boolean existsByNicNumber(String nicNumber);
     boolean existsByEmail(String email);
     boolean existsByPhoneNumber(String phoneNumber);
+    List<String> getDistinctBranches();
 }

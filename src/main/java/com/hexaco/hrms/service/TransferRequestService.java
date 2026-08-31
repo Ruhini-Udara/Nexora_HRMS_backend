@@ -97,6 +97,25 @@ public class TransferRequestService {
         return mapToDto(transferRequestRepository.save(request));
     }
 
+    @Transactional
+    public TransferRequestDto executeTransfer(Long id) {
+        TransferRequest request = transferRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Transfer request not found"));
+        
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
+            throw new RuntimeException("Only approved transfers can be executed");
+        }
+
+        Employee employee = request.getEmployee();
+        employee.setBranch(request.getTargetBranch());
+        employeeRepository.save(employee);
+
+        request.setStatus("EXECUTED");
+        TransferRequest saved = transferRequestRepository.save(request);
+
+        return mapToDto(saved);
+    }
+
     private TransferRequestDto mapToDto(TransferRequest request) {
         return TransferRequestDto.builder()
                 .id(request.getId())

@@ -4,6 +4,7 @@ import com.hexaco.hrms.dto.EmployeeDTO;
 import com.hexaco.hrms.dto.EmployeeUpdateDTO;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.service.EmployeeService;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -112,5 +113,10 @@ public class EmployeeController {
     public ResponseEntity<Boolean> existsByPhoneNumber(@PathVariable String phoneNumber) {
         boolean exists = employeeService.existsByPhoneNumber(phoneNumber);
         return ResponseEntity.ok(exists);
+    }
+
+    @GetMapping("/branches")
+    public ResponseEntity<List<String>> getDistinctBranches() {
+        return ResponseEntity.ok(employeeService.getDistinctBranches());
     }
 }

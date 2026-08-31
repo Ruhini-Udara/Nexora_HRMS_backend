@@ -45,4 +45,9 @@ public class TransferRequestController {
     public ResponseEntity<TransferRequestDto> updateRequest(@PathVariable Long id, @RequestBody TransferRequestDto dto) {
         return ResponseEntity.ok(transferRequestService.updateRequest(id, dto));
     }
+
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<TransferRequestDto> executeTransfer(@PathVariable Long id) {
+        return ResponseEntity.ok(transferRequestService.executeTransfer(id));
+    }
 }

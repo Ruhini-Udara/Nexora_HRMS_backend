@@ -17,6 +17,8 @@ public class DeathRequestDto {
     public void setEmployeeIdString(String employeeIdString) { this.employeeIdString = employeeIdString; }
     public String getEmployeeName() { return employeeName; }
     public void setEmployeeName(String employeeName) { this.employeeName = employeeName; }
+    public String getEmployeePhone() { return employeePhone; }
+    public void setEmployeePhone(String employeePhone) { this.employeePhone = employeePhone; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public String getBoardMeetingDate() { return boardMeetingDate; }
@@ -75,6 +77,7 @@ public class DeathRequestDto {
     private Long employeeId;
     private String employeeIdString;
     private String employeeName;
+    private String employeePhone;
     private String epfNumber;
     private LocalDate dateOfDeath;
     private String natureOfDeath;
