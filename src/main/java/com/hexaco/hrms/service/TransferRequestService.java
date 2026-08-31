@@ -30,7 +30,7 @@ public class TransferRequestService {
 
         TransferRequest request = TransferRequest.builder()
                 .employee(employee)
-                .currentBranch(dto.getCurrentBranch())
+                .currentBranch(employee.getBranch() != null && !employee.getBranch().isEmpty() ? employee.getBranch() : dto.getCurrentBranch())
                 .targetBranch(dto.getTargetBranch())
                 .transferType(dto.getTransferType())
                 .reason(dto.getReason())
@@ -84,7 +84,8 @@ public class TransferRequestService {
         TransferRequest request = transferRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer request not found"));
         
-        request.setCurrentBranch(dto.getCurrentBranch());
+        Employee employee = request.getEmployee();
+        request.setCurrentBranch(employee.getBranch() != null && !employee.getBranch().isEmpty() ? employee.getBranch() : dto.getCurrentBranch());
         request.setTargetBranch(dto.getTargetBranch());
         request.setTransferType(dto.getTransferType());
         request.setReason(dto.getReason());
