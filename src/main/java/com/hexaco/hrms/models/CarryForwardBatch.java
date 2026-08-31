@@ -23,13 +23,28 @@ public class CarryForwardBatch {
 
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private String status = "DRAFT"; // DRAFT, VERIFIED, PENDING_APPROVAL, APPROVED, SYNCED
+    private String status = "DRAFT"; // DRAFT, BRANCH_VERIFIED, HR_APPROVED, FINANCE_SYNCED, AUDITING, AUDITED
 
     @Column(name = "submitted_by")
     private String submittedBy;
 
     @Column(name = "approved_by")
     private String approvedBy;
+
+    @Column(name = "finance_reference_id")
+    private String financeReferenceId;
+
+    @Column(name = "finance_status")
+    private String financeStatus; // PENDING, DISPATCHED, COMPLETED
+
+    @Column(name = "sent_to_finance_at")
+    private LocalDateTime sentToFinanceAt;
+
+    @Column(name = "audited_by")
+    private String auditedBy;
+
+    @Column(name = "audited_at")
+    private LocalDateTime auditedAt;
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<CarryForwardEntry> entries;

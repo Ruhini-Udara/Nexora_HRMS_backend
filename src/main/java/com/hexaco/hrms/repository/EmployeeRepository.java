@@ -20,6 +20,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     Optional<Employee> findByFingerprintUserId(Long fingerprintUserId);
     List<Employee> findByDepartmentIgnoreCase(String department);
     List<Employee> findByReportingOfficerId(Long reportingOfficerId);
+    List<Employee> findByBranch(String branch);
     long countByDepartment(String department);
     long countByCreatedAtAfter(LocalDateTime date);
 
