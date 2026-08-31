@@ -59,7 +59,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // Validate Email format
         String email = dto.getEmail().trim();
-        if (!email.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$")) {
+        if (!email.matches("^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,7}$")) {
             throw new RuntimeException("Invalid Email Address format.");
         }
 
