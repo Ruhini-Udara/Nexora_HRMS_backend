@@ -27,7 +27,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         String subject = "Leave Application Update: " + status;
         String content = String.format(
-                "Dear %s,\n\nYour %s request has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                "Dear %s,\n\nYour %s request has been %s.\nRemark: %s\n\nBest Regards,\nHRMATE",
                 recipientName, leaveType, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         // 1. ALWAYS Log to console for debugging
@@ -70,7 +70,7 @@ public class NotificationServiceImpl implements NotificationService {
             String remark) {
         String subject = "Training Application Update: " + status;
         String content = String.format(
-                "Dear %s,\n\nYour application for the training \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                "Dear %s,\n\nYour application for the training \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nHRMATE",
                 recipientName, trainingTitle, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         log.info("\n" +
@@ -106,7 +106,7 @@ public class NotificationServiceImpl implements NotificationService {
             String remark) {
         String subject = "Welfare Request Update: " + status;
         String content = String.format(
-                "Dear %s,\n\nYour welfare request for \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nNexora HRMS System",
+                "Dear %s,\n\nYour welfare request for \"%s\" has been %s.\nRemark: %s\n\nBest Regards,\nHRMATE",
                 recipientName, welfareType, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
 
         log.info("\n" +
@@ -149,7 +149,7 @@ public class NotificationServiceImpl implements NotificationService {
                         "Location: %s\n" +
                         "Instructor: %s\n\n" +
                         "Please mark your calendar. We look forward to your participation.\n\n" +
-                        "Best Regards,\nNexora HRMS System",
+                        "Best Regards,\nHRMATE",
                 recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD"));
 
         log.info("\n" +
@@ -192,7 +192,7 @@ public class NotificationServiceImpl implements NotificationService {
                         "Date: %s\n" +
                         "Time: %s\n" +
                         "Description: %s\n\n" +
-                        "Best Regards,\nNexora HRMS System",
+                        "Best Regards,\nHRMATE",
                 title, type, date, time, (description != null && !description.isEmpty() ? description : "N/A"));
 
         log.info("\n" +
