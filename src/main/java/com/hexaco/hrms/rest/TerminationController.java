@@ -36,21 +36,24 @@ public class TerminationController {
         return ResponseEntity.ok(terminationService.getTerminationById(id));
     }
 
+    @RequestMapping(value = "/{id}/status", method = {RequestMethod.PUT, RequestMethod.PATCH})
+    public ResponseEntity<TerminationDto> updateTerminationStatus(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> payload,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String remarks,
+            @RequestParam(required = false) String boardMeetingDate) {
+        
+        String finalStatus = (payload != null && payload.containsKey("status")) ? payload.get("status") : status;
+        String finalRemarks = (payload != null && payload.containsKey("remarks")) ? payload.get("remarks") : remarks;
+        String finalBoardDate = (payload != null && payload.containsKey("boardMeetingDate")) ? payload.get("boardMeetingDate") : boardMeetingDate;
+
+        return ResponseEntity.ok(terminationService.updateTerminationStatus(id, finalStatus, finalRemarks, finalBoardDate));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<TerminationDto> updateTermination(@PathVariable Long id, @RequestBody TerminationDto dto) {
         return ResponseEntity.ok(terminationService.updateTermination(id, dto));
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<TerminationDto> updateTerminationStatus(
-            @PathVariable Long id,
-            @RequestBody Map<String, String> payload) {
-        
-        String status = payload.get("status");
-        String remarks = payload.get("remarks");
-        String boardMeetingDate = payload.get("boardMeetingDate");
-
-        return ResponseEntity.ok(terminationService.updateTerminationStatus(id, status, remarks, boardMeetingDate));
     }
 
     @PostMapping("/{id}/execute")
