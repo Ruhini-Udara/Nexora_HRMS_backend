@@ -72,4 +72,10 @@ public class DeathRequestController {
             @RequestParam(required = false) String boardMeetingDate) {
         return ResponseEntity.ok(service.updateStatus(id, status, boardMeetingDate));
     }
+
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<Void> executeDeathRequest(@PathVariable Long id) {
+        service.executeDeathRequest(id);
+        return ResponseEntity.ok().build();
+    }
 }

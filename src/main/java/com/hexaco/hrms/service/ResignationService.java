@@ -11,4 +11,5 @@ public interface ResignationService {
     ResignationDto updateResignationStatus(Long id, String status, String remarks, String boardMeetingDate);
     ResignationDto getResignationById(Long id);
     ResignationDto updateResignation(Long id, ResignationDto dto);
+    void executeResignation(Long id);
 }

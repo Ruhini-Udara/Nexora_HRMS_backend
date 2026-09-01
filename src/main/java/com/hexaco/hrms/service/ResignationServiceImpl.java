@@ -6,6 +6,8 @@ import com.hexaco.hrms.models.Resignation;
 import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.repository.ResignationRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.models.UserAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class ResignationServiceImpl implements ResignationService {
     private final ResignationRepository repository;
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
+    private final UserAccountRepository userAccountRepository;
 
     @Override
     @Transactional
@@ -124,6 +127,27 @@ public class ResignationServiceImpl implements ResignationService {
         if (dto.getHandoverChecklistDoc() != null) resignation.setHandoverChecklistDoc(dto.getHandoverChecklistDoc());
         
         return mapToDto(repository.save(resignation));
+    }
+
+    @Override
+    @Transactional
+    public void executeResignation(Long id) {
+        Resignation resignation = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Resignation request not found"));
+
+        if (!"APPROVED".equals(resignation.getStatus())) {
+            throw new RuntimeException("Only APPROVED resignation requests can be executed.");
+        }
+
+        resignation.setStatus("EXECUTED");
+        repository.save(resignation);
+
+        Employee employee = resignation.getEmployee();
+        java.util.List<UserAccount> accounts = userAccountRepository.findByEmployeeId(employee.getId());
+        for (UserAccount account : accounts) {
+            account.setActive(false);
+            userAccountRepository.save(account);
+        }
     }
 
     private ResignationDto mapToDto(Resignation resignation) {

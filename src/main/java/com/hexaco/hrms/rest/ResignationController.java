@@ -52,4 +52,10 @@ public class ResignationController {
             @RequestBody ResignationDto dto) {
         return ResponseEntity.ok(resignationService.updateResignation(id, dto));
     }
+
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<Void> executeResignation(@PathVariable Long id) {
+        resignationService.executeResignation(id);
+        return ResponseEntity.ok().build();
+    }
 }

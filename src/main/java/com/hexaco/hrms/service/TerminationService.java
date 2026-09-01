@@ -10,4 +10,5 @@ public interface TerminationService {
     TerminationDto getTerminationById(Long id);
     TerminationDto updateTerminationStatus(Long id, String status, String remarks, String boardMeetingDate);
     TerminationDto updateTermination(Long id, TerminationDto dto);
+    void executeTermination(Long id);
 }

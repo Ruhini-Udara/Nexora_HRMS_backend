@@ -52,4 +52,10 @@ public class TerminationController {
 
         return ResponseEntity.ok(terminationService.updateTerminationStatus(id, status, remarks, boardMeetingDate));
     }
+
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<Void> executeTermination(@PathVariable Long id) {
+        terminationService.executeTermination(id);
+        return ResponseEntity.ok().build();
+    }
 }
