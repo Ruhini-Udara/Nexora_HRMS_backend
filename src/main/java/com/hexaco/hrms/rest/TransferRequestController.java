@@ -30,13 +30,19 @@ public class TransferRequestController {
         return ResponseEntity.ok(transferRequestService.getRequestsByEmployee(employeeId));
     }
 
-    @PutMapping("/{id}/status")
+    @RequestMapping(value = "/{id}/status", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<TransferRequestDto> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status,
+            @RequestBody(required = false) java.util.Map<String, String> payload,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String remarks,
             @RequestParam(required = false) String boardMeetingDate) {
-        return ResponseEntity.ok(transferRequestService.updateStatus(id, status, remarks, boardMeetingDate));
+        
+        String finalStatus = (payload != null && payload.containsKey("status")) ? payload.get("status") : status;
+        String finalRemarks = (payload != null && payload.containsKey("remarks")) ? payload.get("remarks") : remarks;
+        String finalBoardDate = (payload != null && payload.containsKey("boardMeetingDate")) ? payload.get("boardMeetingDate") : boardMeetingDate;
+
+        return ResponseEntity.ok(transferRequestService.updateStatus(id, finalStatus, finalRemarks, finalBoardDate));
     }
 
 

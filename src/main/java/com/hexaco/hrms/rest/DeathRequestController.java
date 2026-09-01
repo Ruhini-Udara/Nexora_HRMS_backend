@@ -65,12 +65,17 @@ public class DeathRequestController {
         return ResponseEntity.ok(result);
     }
 
-    @PutMapping("/{id}/status")
+    @RequestMapping(value = "/{id}/status", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<DeathRequestDto> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status,
+            @RequestBody(required = false) java.util.Map<String, String> payload,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String boardMeetingDate) {
-        return ResponseEntity.ok(service.updateStatus(id, status, boardMeetingDate));
+        
+        String finalStatus = (payload != null && payload.containsKey("status")) ? payload.get("status") : status;
+        String finalBoardDate = (payload != null && payload.containsKey("boardMeetingDate")) ? payload.get("boardMeetingDate") : boardMeetingDate;
+
+        return ResponseEntity.ok(service.updateStatus(id, finalStatus, finalBoardDate));
     }
 
     @PostMapping("/{id}/execute")
