@@ -102,7 +102,7 @@ public class TransferRequestService {
         TransferRequest request = transferRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer request not found"));
         
-        if (!"APPROVED".equalsIgnoreCase(request.getStatus())) {
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus()) && !"Board Approved".equalsIgnoreCase(request.getStatus())) {
             throw new RuntimeException("Only approved transfers can be executed");
         }
 

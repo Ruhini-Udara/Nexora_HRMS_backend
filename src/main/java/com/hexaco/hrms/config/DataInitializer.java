@@ -20,6 +20,9 @@ public class DataInitializer implements CommandLineRunner {
     private final EmployeeRepository employeeRepository;
     private final DesignationRepository designationRepository;
     private final ShiftRepository shiftRepository;
+    private final ResignationRepository resignationRepository;
+    private final TerminationRepository terminationRepository;
+    private final DeathRequestRepository deathRequestRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
@@ -196,13 +199,47 @@ public class DataInitializer implements CommandLineRunner {
                         .employee(employee)
                         .build()));
 
-        // Fix plaintext passwords for manually added users (like HR, Director, etc.)
+        // HR Accounts
+        userAccountRepository.findByEmail("rashmi@nexora.com").ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode("password123"));
+            user.setActive(true);
+            userAccountRepository.save(user);
+        });
+        userAccountRepository.findByEmail("hr@nexora.com").ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode("password123"));
+            user.setActive(true);
+            userAccountRepository.save(user);
+        });
+
+        // Fix plaintext passwords and initialize is_active for valid non-offboarded users
         List<UserAccount> allUsers = userAccountRepository.findAll();
         for (UserAccount u : allUsers) {
+            boolean modified = false;
             // BCrypt hashes start with $2a$, $2b$, or $2y$
             if (u.getPasswordHash() != null && !u.getPasswordHash().startsWith("$2a$")) {
                 System.out.println("Converting plaintext password to BCrypt for user: " + u.getEmail());
                 u.setPasswordHash(passwordEncoder.encode(u.getPasswordHash()));
+                modified = true;
+            }
+
+            boolean isOffboarded = false;
+            if (u.getEmployee() != null && u.getEmployee().getId() != null) {
+                Long empId = u.getEmployee().getId();
+                if (resignationRepository.findByEmployeeId(empId).stream().anyMatch(r -> "EXECUTED".equalsIgnoreCase(r.getStatus())) ||
+                    terminationRepository.findByEmployeeId(empId).stream().anyMatch(t -> "EXECUTED".equalsIgnoreCase(t.getStatus())) ||
+                    deathRequestRepository.findByEmployeeId(empId).stream().anyMatch(d -> "EXECUTED".equalsIgnoreCase(d.getStatus()))) {
+                    isOffboarded = true;
+                }
+            }
+
+            // If not offboarded, ensure account is active
+            if (!isOffboarded && !u.isActive()) {
+                System.out.println("Activating valid user account: " + u.getEmail());
+                u.setActive(true);
+                modified = true;
+            }
+
+            if (modified) {
                 userAccountRepository.save(u);
             }
         }

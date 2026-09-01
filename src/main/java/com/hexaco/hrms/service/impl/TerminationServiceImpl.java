@@ -5,6 +5,8 @@ import com.hexaco.hrms.models.Employee;
 import com.hexaco.hrms.models.Termination;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.TerminationRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.NotificationService;
 import com.hexaco.hrms.service.TerminationService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ public class TerminationServiceImpl implements TerminationService {
     private final TerminationRepository repository;
     private final EmployeeRepository employeeRepository;
     private final NotificationService notificationService;
+    private final UserAccountRepository userAccountRepository;
 
     @Override
     @Transactional
@@ -132,6 +135,27 @@ public class TerminationServiceImpl implements TerminationService {
         if (dto.getOtherDocumentDoc() != null) termination.setOtherDocumentDoc(dto.getOtherDocumentDoc());
 
         return mapToDto(repository.save(termination));
+    }
+
+    @Override
+    @Transactional
+    public void executeTermination(Long id) {
+        Termination termination = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Termination request not found"));
+
+        if (!"APPROVED".equalsIgnoreCase(termination.getStatus()) && !"Board Approved".equalsIgnoreCase(termination.getStatus())) {
+            throw new RuntimeException("Only APPROVED termination requests can be executed.");
+        }
+
+        termination.setStatus("EXECUTED");
+        repository.save(termination);
+
+        Employee employee = termination.getEmployee();
+        java.util.List<UserAccount> accounts = userAccountRepository.findByEmployeeId(employee.getId());
+        for (UserAccount account : accounts) {
+            account.setActive(false);
+            userAccountRepository.save(account);
+        }
     }
 
     private TerminationDto mapToDto(Termination termination) {

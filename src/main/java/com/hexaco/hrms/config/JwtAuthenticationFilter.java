@@ -18,7 +18,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-// Rationale: We extend OncePerRequestFilter to ensure that the JWT validation 
+// Rationale: We extend OncePerRequestFilter to ensure that the JWT validation
 // logic is executed exactly once for every incoming request.
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -34,13 +34,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtils.getEmailFromToken(jwt);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                if (userDetails != null && userDetails.isEnabled()) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                if (logger.isInfoEnabled()) {
-                    logger.info("Authenticated user: " + email + " with roles: " + userDetails.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Authenticated user: " + email + " with roles: " + userDetails.getAuthorities());
+                    }
                 }
             }
         } catch (Exception e) {

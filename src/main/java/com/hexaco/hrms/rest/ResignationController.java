@@ -37,13 +37,19 @@ public class ResignationController {
         return ResponseEntity.ok(resignationService.getResignationsByEmployeeId(employeeId));
     }
 
-    @PutMapping("/{id}/status")
+    @RequestMapping(value = "/{id}/status", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<ResignationDto> updateStatus(
             @PathVariable Long id,
-            @RequestParam String status,
+            @RequestBody(required = false) java.util.Map<String, String> payload,
+            @RequestParam(required = false) String status,
             @RequestParam(required = false) String remarks,
             @RequestParam(required = false) String boardMeetingDate) {
-        return ResponseEntity.ok(resignationService.updateResignationStatus(id, status, remarks, boardMeetingDate));
+        
+        String finalStatus = (payload != null && payload.containsKey("status")) ? payload.get("status") : status;
+        String finalRemarks = (payload != null && payload.containsKey("remarks")) ? payload.get("remarks") : remarks;
+        String finalBoardDate = (payload != null && payload.containsKey("boardMeetingDate")) ? payload.get("boardMeetingDate") : boardMeetingDate;
+
+        return ResponseEntity.ok(resignationService.updateResignationStatus(id, finalStatus, finalRemarks, finalBoardDate));
     }
 
     @PutMapping("/{id}")
@@ -51,5 +57,11 @@ public class ResignationController {
             @PathVariable Long id,
             @RequestBody ResignationDto dto) {
         return ResponseEntity.ok(resignationService.updateResignation(id, dto));
+    }
+
+    @PostMapping("/{id}/execute")
+    public ResponseEntity<Void> executeResignation(@PathVariable Long id) {
+        resignationService.executeResignation(id);
+        return ResponseEntity.ok().build();
     }
 }

@@ -7,6 +7,8 @@ import com.hexaco.hrms.models.Nominee;
 import com.hexaco.hrms.repository.DeathRequestRepository;
 import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.NomineeRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.models.UserAccount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class DeathRequestService {
     private final EmployeeRepository employeeRepository;
     private final NomineeRepository nomineeRepository;
     private final NotificationService notificationService;
+    private final UserAccountRepository userAccountRepository;
 
     public List<DeathRequestDto> getAllRequests() {
         return repository.findAll().stream().map(this::mapToDto).collect(Collectors.toList());
@@ -212,6 +215,26 @@ public class DeathRequestService {
                 .createdAt(request.getCreatedAt())
                 .updatedAt(request.getUpdatedAt())
                 .build();
+    }
+
+    @Transactional
+    public void executeDeathRequest(Long id) {
+        DeathRequest request = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Death request not found"));
+
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus()) && !"Board Approved".equalsIgnoreCase(request.getStatus())) {
+            throw new RuntimeException("Only APPROVED death requests can be executed.");
+        }
+
+        request.setStatus("EXECUTED");
+        repository.save(request);
+
+        Employee employee = request.getEmployee();
+        java.util.List<UserAccount> accounts = userAccountRepository.findByEmployeeId(employee.getId());
+        for (UserAccount account : accounts) {
+            account.setActive(false);
+            userAccountRepository.save(account);
+        }
     }
 
     private void sendDeathStatusNotification(DeathRequest request) {
