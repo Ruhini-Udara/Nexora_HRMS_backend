@@ -143,7 +143,7 @@ public class TerminationServiceImpl implements TerminationService {
         Termination termination = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Termination request not found"));
 
-        if (!"APPROVED".equals(termination.getStatus())) {
+        if (!"APPROVED".equalsIgnoreCase(termination.getStatus()) && !"Board Approved".equalsIgnoreCase(termination.getStatus())) {
             throw new RuntimeException("Only APPROVED termination requests can be executed.");
         }
 

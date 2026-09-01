@@ -135,7 +135,7 @@ public class ResignationServiceImpl implements ResignationService {
         Resignation resignation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resignation request not found"));
 
-        if (!"APPROVED".equals(resignation.getStatus())) {
+        if (!"APPROVED".equalsIgnoreCase(resignation.getStatus()) && !"Board Approved".equalsIgnoreCase(resignation.getStatus())) {
             throw new RuntimeException("Only APPROVED resignation requests can be executed.");
         }
 

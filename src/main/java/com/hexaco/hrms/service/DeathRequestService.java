@@ -222,7 +222,7 @@ public class DeathRequestService {
         DeathRequest request = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Death request not found"));
 
-        if (!"APPROVED".equals(request.getStatus())) {
+        if (!"APPROVED".equalsIgnoreCase(request.getStatus()) && !"Board Approved".equalsIgnoreCase(request.getStatus())) {
             throw new RuntimeException("Only APPROVED death requests can be executed.");
         }
 
