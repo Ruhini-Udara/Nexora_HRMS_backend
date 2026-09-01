@@ -199,6 +199,18 @@ public class DataInitializer implements CommandLineRunner {
                         .employee(employee)
                         .build()));
 
+        // HR Accounts
+        userAccountRepository.findByEmail("rashmi@nexora.com").ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode("password123"));
+            user.setActive(true);
+            userAccountRepository.save(user);
+        });
+        userAccountRepository.findByEmail("hr@nexora.com").ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode("password123"));
+            user.setActive(true);
+            userAccountRepository.save(user);
+        });
+
         // Fix plaintext passwords and initialize is_active for valid non-offboarded users
         List<UserAccount> allUsers = userAccountRepository.findAll();
         for (UserAccount u : allUsers) {
