@@ -116,6 +116,23 @@ public class EmployeeServiceImpl implements EmployeeService {
             }
         }
 
+        // Validate that birth year matches NIC number
+        if (dob != null && dto.getNicNumber() != null) {
+            String nicTrimmed = dto.getNicNumber().trim();
+            if (nicTrimmed.length() >= 4 && nicTrimmed.matches("^[0-9]{4}.*")) {
+                String nicYear = nicTrimmed.substring(0, 4);
+                if (nicTrimmed.matches("^[0-9]{9}[vVxX]$")) {
+                    String nic2Digit = nicTrimmed.substring(0, 2);
+                    String dob2Digit = String.valueOf(dob.getYear()).substring(2);
+                    if (!dob2Digit.equals(nic2Digit)) {
+                        throw new RuntimeException("The year of birthday must match the birth year in the NIC number.");
+                    }
+                } else if (dob.getYear() != Integer.parseInt(nicYear)) {
+                    throw new RuntimeException("The year of birthday should be same to nic number first four number.");
+                }
+            }
+        }
+
         Employee employee = Employee.builder()
                 .nicNumber(dto.getNicNumber())
                 .sex(dto.getSex())
