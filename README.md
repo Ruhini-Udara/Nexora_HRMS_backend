@@ -126,3 +126,37 @@ src/main/java/com/hexaco/hrms
 This structure ensures modularity, maintainability, and separation of concerns.
 
 ---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Java 21**
+- **Maven 3.x**
+- **PostgreSQL**
+
+### Installation & Running Locally
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd Nexora_HRMS_backend
+   ```
+
+2. **Configure the Database:**
+   - Copy `.env.example` to `.env` in the root of the backend directory.
+   - Update `.env` with your actual PostgreSQL database credentials.
+
+3. **Build the project:**
+   ```bash
+   mvn clean install
+   ```
+   *(Or use `./mvnw clean install` if using the Maven Wrapper)*
+
+4. **Run the application:**
+   ```bash
+   mvn spring-boot:run
+   ```
+   *(Or use `./mvnw spring-boot:run`)*
+
+   The backend API will start on `http://localhost:8080`.
