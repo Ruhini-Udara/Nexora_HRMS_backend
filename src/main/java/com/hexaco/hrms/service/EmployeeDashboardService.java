@@ -149,4 +149,41 @@ public class EmployeeDashboardService {
                 .shiftEndTime(shiftEndTime)
                 .build();
     }
+
+    public List<RecentRequestItemDto> getAllEmployeeRequests(Long employeeId) {
+        List<RecentRequestItemDto> allRequests = new ArrayList<>();
+
+        List<NormalLeave> normalLeaves = normalLeaveRepo.findByEmployeeId(employeeId);
+        for (NormalLeave r : normalLeaves) {
+            allRequests.add(new RecentRequestItemDto("Normal Leave", r.getCreatedAt(), r.getStatus()));
+        }
+
+        List<OverseasLeave> overseasLeaves = overseasLeaveRepo.findByEmployeeId(employeeId);
+        for (OverseasLeave r : overseasLeaves) {
+            allRequests.add(new RecentRequestItemDto("Overseas Leave", r.getCreatedAt(), r.getStatus()));
+        }
+
+        List<MaternityLeave> maternityLeaves = maternityLeaveRepo.findByEmployeeId(employeeId);
+        for (MaternityLeave r : maternityLeaves) {
+            allRequests.add(new RecentRequestItemDto("Maternity Leave", r.getCreatedAt(), r.getStatus()));
+        }
+
+        List<TransferRequest> transferRequests = transferReqRepo.findByEmployeeId(employeeId);
+        for (TransferRequest r : transferRequests) {
+            allRequests.add(new RecentRequestItemDto("Transfer Request", r.getCreatedAt(), r.getStatus()));
+        }
+
+        List<WelfareRequest> welfareRequests = welfareReqRepo.findByEmployeeId(employeeId);
+        for (WelfareRequest r : welfareRequests) {
+            allRequests.add(new RecentRequestItemDto("Welfare Request", r.getCreatedAt(), r.getStatus()));
+        }
+
+        List<TrainingRequest> trainings = trainingReqRepo.findByEmployeeId(employeeId);
+        for (TrainingRequest r : trainings) {
+            allRequests.add(new RecentRequestItemDto("Training Request", r.getCreatedAt(), r.getStatus()));
+        }
+
+        allRequests.sort(Comparator.comparing(RecentRequestItemDto::getDateSubmitted).reversed());
+        return allRequests;
+    }
 }
