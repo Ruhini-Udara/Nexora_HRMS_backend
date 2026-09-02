@@ -17,10 +17,10 @@ public class BranchSeeder {
         return args -> {
             if (branchRepository.count() == 0) {
                 List<String> branches = Arrays.asList(
-                        "Ragama", "trinco", "bambalapitiya", "negombo", "colombo", 
-                        "moratuwa", "matara", "kiribathgoda", "jaffna", "kandy", 
-                        "gampaha", "ward place", "mkni", "kelaniya", "peradeniya", 
-                        "ella", "matale", "kadawatha", "nugegoda", "kks", "dehiwala"
+                        "Ragama", "Trincomalee", "Bambalapitiya", "Negombo", "Colombo", 
+                        "Moratuwa", "Matara", "Kiribathgoda", "Jaffna", "Kandy", 
+                        "Gampaha", "Ward Place", "MKI", "Kelaniya", "Peradeniya", 
+                        "Ella", "Matale", "Kadawatha", "Nugegoda", "KKS", "Dehiwala"
                 );
 
                 for (String branchName : branches) {
