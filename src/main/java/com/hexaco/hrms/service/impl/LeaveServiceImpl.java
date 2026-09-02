@@ -78,17 +78,17 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public List<OverseasLeaveDto> getAllOverseasLeaves() {
-        return overseasLeaveRepository.findAll().stream().map(this::mapToOverseasDto).collect(Collectors.toList());
+        return overseasLeaveRepository.findAll().stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToOverseasDto).collect(Collectors.toList());
     }
 
     @Override
     public List<OverseasLeaveDto> getOverseasLeavesByStatus(String status) {
-        return overseasLeaveRepository.findByStatus(status).stream().map(this::mapToOverseasDto).collect(Collectors.toList());
+        return overseasLeaveRepository.findByStatus(status).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToOverseasDto).collect(Collectors.toList());
     }
 
     @Override
     public List<OverseasLeaveDto> getOverseasLeavesByEmployeeId(Long employeeId) {
-        return overseasLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToOverseasDto).collect(Collectors.toList());
+        return overseasLeaveRepository.findByEmployeeId(employeeId).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToOverseasDto).collect(Collectors.toList());
     }
 
     @Override
@@ -150,17 +150,17 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public List<MaternityLeaveDto> getAllMaternityLeaves() {
-        return maternityLeaveRepository.findAll().stream().map(this::mapToMaternityDto).collect(Collectors.toList());
+        return maternityLeaveRepository.findAll().stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToMaternityDto).collect(Collectors.toList());
     }
 
     @Override
     public List<MaternityLeaveDto> getMaternityLeavesByStatus(String status) {
-        return maternityLeaveRepository.findByStatus(status).stream().map(this::mapToMaternityDto).collect(Collectors.toList());
+        return maternityLeaveRepository.findByStatus(status).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToMaternityDto).collect(Collectors.toList());
     }
 
     @Override
     public List<MaternityLeaveDto> getMaternityLeavesByEmployeeId(Long employeeId) {
-        return maternityLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToMaternityDto).collect(Collectors.toList());
+        return maternityLeaveRepository.findByEmployeeId(employeeId).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToMaternityDto).collect(Collectors.toList());
     }
 
     @Override
@@ -225,17 +225,17 @@ public class LeaveServiceImpl implements LeaveService {
 
     @Override
     public List<NormalLeaveDto> getAllNormalLeaves() {
-        return normalLeaveRepository.findAll().stream().map(this::mapToNormalDto).collect(Collectors.toList());
+        return normalLeaveRepository.findAll().stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToNormalDto).collect(Collectors.toList());
     }
 
     @Override
     public List<NormalLeaveDto> getNormalLeavesByStatus(String status) {
-        return normalLeaveRepository.findByStatus(status).stream().map(this::mapToNormalDto).collect(Collectors.toList());
+        return normalLeaveRepository.findByStatus(status).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToNormalDto).collect(Collectors.toList());
     }
 
     @Override
     public List<NormalLeaveDto> getNormalLeavesByEmployeeId(Long employeeId) {
-        return normalLeaveRepository.findByEmployeeId(employeeId).stream().map(this::mapToNormalDto).collect(Collectors.toList());
+        return normalLeaveRepository.findByEmployeeId(employeeId).stream().sorted((a, b) -> b.getId().compareTo(a.getId())).map(this::mapToNormalDto).collect(Collectors.toList());
     }
 
     public LeaveImpactDto getOverseasLeaveImpact(Long leaveId) {
