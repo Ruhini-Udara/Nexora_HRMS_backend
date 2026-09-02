@@ -91,11 +91,32 @@ public class ResignationServiceImpl implements ResignationService {
         
         if ("Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || 
             "APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            String desigName = updated.getDesignation() != null && !updated.getDesignation().isEmpty()
+                    ? updated.getDesignation()
+                    : (updated.getEmployee() != null && updated.getEmployee().getDesignation() != null ? updated.getEmployee().getDesignation().getDesignationName() : "Employee");
+            String branchName = updated.getBranch() != null && !updated.getBranch().isEmpty()
+                    ? updated.getBranch()
+                    : (updated.getEmployee() != null ? (updated.getEmployee().getBranch() != null ? updated.getEmployee().getBranch() : updated.getEmployee().getDepartment()) : "");
+            String epf = updated.getEpfNumber() != null && !updated.getEpfNumber().isEmpty()
+                    ? updated.getEpfNumber()
+                    : (updated.getEmployee() != null ? updated.getEmployee().getEpfNumber() : "");
+            
+            String resignDateStr = updated.getResignationDate() != null ? updated.getResignationDate().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
+            String lastWorkDateStr = updated.getLastWorkingDate() != null ? updated.getLastWorkingDate().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
+
             notificationService.sendResignationStatusUpdate(
-                    updated.getEmployee().getFullName(),
-                    updated.getEmployee().getEmail(),
+                    updated.getEmployee() != null ? updated.getEmployee().getFullName() : (updated.getEmployeeName() != null ? updated.getEmployeeName() : "Employee"),
+                    updated.getEmployee() != null ? updated.getEmployee().getEmail() : "",
                     status,
-                    remarks
+                    remarks,
+                    updated.getId(),
+                    desigName,
+                    branchName,
+                    epf,
+                    resignDateStr,
+                    lastWorkDateStr,
+                    updated.getReason(),
+                    updated.getDirectorRemark()
             );
         }
         
