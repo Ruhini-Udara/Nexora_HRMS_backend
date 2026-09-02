@@ -39,6 +39,13 @@ public class CalendarController {
             // Parse date (MM/dd/yyyy) and time (HH:mm)
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
             LocalDate date = LocalDate.parse(request.getEventDate(), dateFormatter);
+
+            LocalDate minDate = LocalDate.now().minusYears(2);
+            LocalDate maxDate = LocalDate.now().plusYears(2);
+            if (date.isBefore(minDate) || date.isAfter(maxDate)) {
+                return ResponseEntity.badRequest().body("Event date must be within 2 years in the past and 2 years in the future.");
+            }
+
             LocalTime time = LocalTime.parse(request.getEventTime());
             LocalDateTime start = LocalDateTime.of(date, time);
             LocalDateTime end = start.plusHours(1); // Default to 1 hour event
@@ -101,6 +108,15 @@ public class CalendarController {
             DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
             LocalDate startDate = LocalDate.parse(request.getStartDate(), dateFormatter);
             LocalDate endDate = LocalDate.parse(request.getEndDate(), dateFormatter);
+
+            LocalDate minDate = LocalDate.now().minusYears(2);
+            LocalDate maxDate = LocalDate.now().plusYears(2);
+            if (startDate.isBefore(minDate) || startDate.isAfter(maxDate) || endDate.isBefore(minDate) || endDate.isAfter(maxDate)) {
+                return ResponseEntity.badRequest().body("Holiday dates must be within 2 years in the past and 2 years in the future.");
+            }
+            if (endDate.isBefore(startDate)) {
+                return ResponseEntity.badRequest().body("End date cannot be before start date.");
+            }
             
             // Full day event
             LocalDateTime start = LocalDateTime.of(startDate, LocalTime.MIDNIGHT);

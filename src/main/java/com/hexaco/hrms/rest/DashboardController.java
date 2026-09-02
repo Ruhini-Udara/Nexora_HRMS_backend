@@ -11,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.hexaco.hrms.dto.EmployeeDashboardDto;
 import com.hexaco.hrms.dto.DirectorDashboardDto;
+import com.hexaco.hrms.dto.RecentRequestItemDto;
 import com.hexaco.hrms.service.EmployeeDashboardService;
 import com.hexaco.hrms.service.DirectorDashboardService;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/dashboard")
@@ -27,6 +29,12 @@ public class DashboardController {
     @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR')")
     public ResponseEntity<EmployeeDashboardDto> getEmployeeDashboard(@PathVariable Long employeeId) {
         return ResponseEntity.ok(employeeDashboardService.getEmployeeDashboard(employeeId));
+    }
+
+    @GetMapping("/employee/{employeeId}/requests")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR')")
+    public ResponseEntity<List<RecentRequestItemDto>> getAllEmployeeRequests(@PathVariable Long employeeId) {
+        return ResponseEntity.ok(employeeDashboardService.getAllEmployeeRequests(employeeId));
     }
 
     @GetMapping("/analytics")

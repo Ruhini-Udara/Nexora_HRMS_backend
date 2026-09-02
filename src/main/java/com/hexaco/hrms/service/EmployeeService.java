@@ -16,5 +16,7 @@ public interface EmployeeService {
     boolean existsByNicNumber(String nicNumber);
     boolean existsByEmail(String email);
     boolean existsByPhoneNumber(String phoneNumber);
+    boolean existsByEpfNumber(String epfNumber);
+    boolean existsByEtfNumber(String etfNumber);
     List<String> getDistinctBranches();
 }
