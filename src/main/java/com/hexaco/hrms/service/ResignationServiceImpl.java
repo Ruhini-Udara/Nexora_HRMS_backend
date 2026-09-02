@@ -91,11 +91,24 @@ public class ResignationServiceImpl implements ResignationService {
         
         if ("Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || 
             "APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            String desigName = (updated.getEmployee() != null && updated.getEmployee().getDesignation() != null) 
+                    ? updated.getEmployee().getDesignation().getDesignationName() : "";
+            String branchName = updated.getEmployee() != null ? (updated.getEmployee().getBranch() != null ? updated.getEmployee().getBranch() : updated.getEmployee().getDepartment()) : "";
+            String epf = updated.getEmployee() != null ? updated.getEmployee().getEpfNumber() : "";
+            
             notificationService.sendResignationStatusUpdate(
-                    updated.getEmployee().getFullName(),
-                    updated.getEmployee().getEmail(),
+                    updated.getEmployee() != null ? updated.getEmployee().getFullName() : "Employee",
+                    updated.getEmployee() != null ? updated.getEmployee().getEmail() : "",
                     status,
-                    remarks
+                    remarks,
+                    updated.getId(),
+                    desigName,
+                    branchName,
+                    epf,
+                    updated.getResignationDate(),
+                    updated.getLastWorkingDate(),
+                    updated.getReason(),
+                    updated.getDirectorRemark()
             );
         }
         
