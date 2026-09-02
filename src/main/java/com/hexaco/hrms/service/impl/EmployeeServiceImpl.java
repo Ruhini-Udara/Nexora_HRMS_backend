@@ -79,9 +79,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         // Validate EPF format & uniqueness (if provided)
         if (dto.getEpfNumber() != null && !dto.getEpfNumber().trim().isEmpty()) {
             String epf = dto.getEpfNumber().trim();
-            if (!epf.matches("^[a-zA-Z0-9/-]+$")) {
-                throw new RuntimeException(
-                        "Invalid EPF format. Must contain only alphanumeric characters, dashes, or slashes.");
+            if (!epf.matches("^\\d{5}/[A-Za-z]/\\d{2}$")) {
+                throw new RuntimeException("Invalid EPF format. Format must be 12345/A/12 (5 digits / Letter / 2 digits).");
             }
             if (employeeRepository.findByEpfNumber(epf).isPresent()) {
                 throw new RuntimeException("An employee with this EPF number already exists.");
@@ -91,9 +90,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         // Validate ETF format & uniqueness (if provided)
         if (dto.getEtfNumber() != null && !dto.getEtfNumber().trim().isEmpty()) {
             String etf = dto.getEtfNumber().trim();
-            if (!etf.matches("^[a-zA-Z0-9/-]+$")) {
-                throw new RuntimeException(
-                        "Invalid ETF format. Must contain only alphanumeric characters, dashes, or slashes.");
+            if (!etf.matches("^\\d{5}/[A-Za-z]/\\d{2}$")) {
+                throw new RuntimeException("Invalid ETF format. Format must be 12345/A/12 (5 digits / Letter / 2 digits).");
             }
             if (employeeRepository.findByEtfNumber(etf).isPresent()) {
                 throw new RuntimeException("An employee with this ETF number already exists.");
@@ -344,6 +342,22 @@ public class EmployeeServiceImpl implements EmployeeService {
             return false;
         }
         return employeeRepository.findByPhoneNumber(phoneNumber.trim()).isPresent();
+    }
+
+    @Override
+    public boolean existsByEpfNumber(String epfNumber) {
+        if (epfNumber == null || epfNumber.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByEpfNumber(epfNumber.trim()).isPresent();
+    }
+
+    @Override
+    public boolean existsByEtfNumber(String etfNumber) {
+        if (etfNumber == null || etfNumber.trim().isEmpty()) {
+            return false;
+        }
+        return employeeRepository.findByEtfNumber(etfNumber.trim()).isPresent();
     }
 
     @Override
