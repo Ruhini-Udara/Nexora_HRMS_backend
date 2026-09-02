@@ -115,6 +115,18 @@ public class EmployeeController {
         return ResponseEntity.ok(exists);
     }
 
+    @GetMapping("/exists-epf")
+    public ResponseEntity<Boolean> existsByEpfNumber(@org.springframework.web.bind.annotation.RequestParam(required = false) String epfNumber) {
+        boolean exists = employeeService.existsByEpfNumber(epfNumber);
+        return ResponseEntity.ok(exists);
+    }
+
+    @GetMapping("/exists-etf")
+    public ResponseEntity<Boolean> existsByEtfNumber(@org.springframework.web.bind.annotation.RequestParam(required = false) String etfNumber) {
+        boolean exists = employeeService.existsByEtfNumber(etfNumber);
+        return ResponseEntity.ok(exists);
+    }
+
     @GetMapping("/branches")
     public ResponseEntity<List<String>> getDistinctBranches() {
         return ResponseEntity.ok(employeeService.getDistinctBranches());
