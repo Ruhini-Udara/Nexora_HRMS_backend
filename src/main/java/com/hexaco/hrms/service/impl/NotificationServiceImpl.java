@@ -138,19 +138,28 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date,
-            String time, String location, String instructor) {
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String startDate,
+            String endDate, String time, String location, String instructor) {
         String subject = "Training Finalized: " + trainingTitle;
+
+        String dateDetails;
+        if (endDate != null && !endDate.trim().isEmpty() && !endDate.equalsIgnoreCase("TBD")) {
+            dateDetails = "Start Date: " + (startDate != null ? startDate : "TBD") + "\n" +
+                          "End Date: " + endDate;
+        } else {
+            dateDetails = "Date: " + (startDate != null ? startDate : "TBD");
+        }
+
         String content = String.format(
                 "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
                         "Details:\n" +
-                        "Date: %s\n" +
+                        "%s\n" +
                         "Time: %s\n" +
                         "Location: %s\n" +
                         "Instructor: %s\n\n" +
                         "Please mark your calendar. We look forward to your participation.\n\n" +
                         "Best Regards,\nHRMATE",
-                recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD"));
+                recipientName, trainingTitle, dateDetails, time, location, (instructor != null ? instructor : "TBD"));
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -178,6 +187,12 @@ public class NotificationServiceImpl implements NotificationService {
         } else {
             log.info("ℹ️ [SIMULATION MODE] Finalized Training Email content: \n{}", content);
         }
+    }
+
+    @Override
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date,
+            String time, String location, String instructor) {
+        sendTrainingFinalizedNotification(recipientName, email, trainingTitle, date, date, time, location, instructor);
     }
 
     @Override
