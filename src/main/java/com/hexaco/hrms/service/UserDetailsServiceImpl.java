@@ -25,6 +25,17 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         UserAccount userAccount = userAccountRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
 
+        String role = (userAccount.getRole() != null && userAccount.getRole().getRoleName() != null) 
+                ? userAccount.getRole().getRoleName() : "ROLE_EMPLOYEE";
+        
+        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(role));
+        if (!role.startsWith("ROLE_")) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+        } else {
+            authorities.add(new SimpleGrantedAuthority(role.substring(5)));
+        }
+
         return new User(
                 userAccount.getEmail(),
                 userAccount.getPasswordHash(),
@@ -32,6 +43,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 true,
                 true,
                 true,
-                Collections.singletonList(new SimpleGrantedAuthority(userAccount.getRole().getRoleName())));
+                authorities);
     }
 }

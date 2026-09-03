@@ -363,27 +363,23 @@ public class CarryForwardServiceImpl implements CarryForwardService {
 
         batch = batchRepository.save(batch);
 
-        // Fetch leave balances for employees
-        List<LeaveBalance> balances = leaveBalanceRepository.findAll();
-        Set<Long> processedEmpIds = new HashSet<>();
+        // Fetch employees and their leave balances
+        List<Employee> allEmployees = employeeRepository.findAll();
         int totalCreatedEntries = 0;
 
-        for (LeaveBalance lb : balances) {
-            if (lb.getEmployee() == null) continue;
-            Long empId = lb.getEmployee().getId();
-            if (processedEmpIds.contains(empId)) continue;
-            processedEmpIds.add(empId);
+        for (Employee emp : allEmployees) {
+            Optional<LeaveBalance> lbOpt = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(emp.getId(), year);
 
-            int annualQuota = lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 14;
-            int annualUsed = lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0;
+            int annualQuota = lbOpt.map(lb -> (lb.getAnnualLeaveQuota() != null && lb.getAnnualLeaveQuota() > 0) ? lb.getAnnualLeaveQuota() : 14).orElse(14);
+            int annualUsed = lbOpt.map(lb -> lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0).orElse(0);
             int annualRem = Math.max(0, annualQuota - annualUsed);
 
-            int casualQuota = lb.getCasualLeaveQuota() != null ? lb.getCasualLeaveQuota() : 7;
-            int casualUsed = lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0;
+            int casualQuota = lbOpt.map(lb -> (lb.getCasualLeaveQuota() != null && lb.getCasualLeaveQuota() > 0) ? lb.getCasualLeaveQuota() : 7).orElse(7);
+            int casualUsed = lbOpt.map(lb -> lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0).orElse(0);
             int casualRem = Math.max(0, casualQuota - casualUsed);
 
-            int medicalQuota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 7;
-            int medicalUsed = lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0;
+            int medicalQuota = lbOpt.map(lb -> (lb.getMedicalLeaveQuota() != null && lb.getMedicalLeaveQuota() > 0) ? lb.getMedicalLeaveQuota() : 7).orElse(7);
+            int medicalUsed = lbOpt.map(lb -> lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0).orElse(0);
             int medicalRem = Math.max(0, medicalQuota - medicalUsed);
 
             int cfAnnual = includeAnnual ? Math.min(annualRem, maxAnnual) : 0;
@@ -405,7 +401,7 @@ public class CarryForwardServiceImpl implements CarryForwardService {
 
                 CarryForwardEntry entry = CarryForwardEntry.builder()
                         .batch(batch)
-                        .employee(lb.getEmployee())
+                        .employee(emp)
                         .carriedForwardDays(totalDays)
                         .dailyRate(rate)
                         .calculatedAmount(calcAmount)
