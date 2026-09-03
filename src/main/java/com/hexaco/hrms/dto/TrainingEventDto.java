@@ -25,6 +25,10 @@ public class TrainingEventDto {
     public void setDescription(String description) { this.description = description; }
     public LocalDate getProposedStartDate() { return proposedStartDate; }
     public void setProposedStartDate(LocalDate proposedStartDate) { this.proposedStartDate = proposedStartDate; }
+    public LocalDate getProposedEndDate() { return proposedEndDate; }
+    public void setProposedEndDate(LocalDate proposedEndDate) { this.proposedEndDate = proposedEndDate; }
+    public String getDateSubmitted() { return dateSubmitted; }
+    public void setDateSubmitted(String dateSubmitted) { this.dateSubmitted = dateSubmitted; }
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }
     public LocalDate getApplyBefore() { return applyBefore; }
@@ -48,6 +52,8 @@ public class TrainingEventDto {
     private Integer expectedParticipants;
     private String description;
     private LocalDate proposedStartDate;
+    private LocalDate proposedEndDate;
+    private String dateSubmitted;
     private String time;
     private LocalDate applyBefore;
     private String location;

@@ -65,6 +65,11 @@ public class TrainingService {
             }
         }
 
+        LocalDate endDate = dto.getProposedEndDate();
+        if (endDate == null) {
+            endDate = dto.getProposedStartDate();
+        }
+
         // Build TrainingEventDto from TrainingEvent
         TrainingEvent event = TrainingEvent.builder()
                 .title(dto.getTitle())
@@ -73,6 +78,8 @@ public class TrainingService {
                 .expectedParticipants(dto.getExpectedParticipants())
                 .description(dto.getDescription())
                 .proposedStartDate(dto.getProposedStartDate())
+                .proposedEndDate(endDate)
+                .dateSubmitted(dto.getDateSubmitted())
                 .time(dto.getTime())
                 .applyBefore(dto.getApplyBefore())
                 .location(dto.getLocation())
@@ -116,6 +123,11 @@ public class TrainingService {
 
         String oldStatus = event.getStatus();
 
+        LocalDate endDate = dto.getProposedEndDate();
+        if (endDate == null) {
+            endDate = dto.getProposedStartDate();
+        }
+
         // Update event details
         event.setTitle(dto.getTitle());
         event.setTrainingCode(dto.getTrainingCode());
@@ -123,6 +135,7 @@ public class TrainingService {
         event.setExpectedParticipants(dto.getExpectedParticipants());
         event.setDescription(dto.getDescription());
         event.setProposedStartDate(dto.getProposedStartDate());
+        event.setProposedEndDate(endDate);
         event.setTime(dto.getTime());
         event.setApplyBefore(dto.getApplyBefore());
         event.setLocation(dto.getLocation());
@@ -130,6 +143,14 @@ public class TrainingService {
         event.setInstructor(dto.getInstructor());
         if (dto.getStatus() != null) {
             event.setStatus(dto.getStatus());
+        }
+        if ("Pending Admin Approval".equalsIgnoreCase(dto.getStatus())) {
+            String subDate = (dto.getDateSubmitted() != null && !dto.getDateSubmitted().trim().isEmpty())
+                    ? dto.getDateSubmitted()
+                    : java.time.LocalDate.now().toString();
+            event.setDateSubmitted(subDate);
+        } else if (dto.getDateSubmitted() != null) {
+            event.setDateSubmitted(dto.getDateSubmitted());
         }
         event.setRejectionReason(dto.getReason());
 
@@ -157,12 +178,15 @@ public class TrainingService {
                 }
 
                 // Send email to all candidates (now all are 'Approved')
+                String startDateStr = finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString() : "TBD";
+                String endDateStr = finalizedEvent.getProposedEndDate() != null ? finalizedEvent.getProposedEndDate().toString() : startDateStr;
+
                 notificationService.sendTrainingFinalizedNotification(
                         req.getEmployee().getFullName(),
                         req.getEmployee().getEmail(),
                         finalizedEvent.getTitle(),
-                        finalizedEvent.getProposedStartDate() != null ? finalizedEvent.getProposedStartDate().toString()
-                                : "TBD",
+                        startDateStr,
+                        endDateStr,
                         formatTime(finalizedEvent.getTime()),
                         finalizedEvent.getLocation(),
                         finalizedEvent.getInstructor());
@@ -183,6 +207,7 @@ public class TrainingService {
         TrainingRequest request = TrainingRequest.builder()
                 .trainingEvent(event)
                 .employee(employee)
+                .age(dto.getAge())
                 .justification(dto.getJustification())
                 .attachmentPath(dto.getAttachmentPath())
                 .status(dto.getStatus() != null ? dto.getStatus() : "Pending")
@@ -355,6 +380,8 @@ public class TrainingService {
                 .expectedParticipants(event.getExpectedParticipants())
                 .description(event.getDescription())
                 .proposedStartDate(event.getProposedStartDate())
+                .proposedEndDate(event.getProposedEndDate())
+                .dateSubmitted(event.getDateSubmitted())
                 .time(event.getTime())
                 .applyBefore(event.getApplyBefore())
                 .location(event.getLocation())
@@ -390,9 +417,9 @@ public class TrainingService {
                 .eventStatus(request.getTrainingEvent().getApprovedBy() != null ? "Approved"
                         : request.getTrainingEvent().getStatus())
                 .eventRejectionReason(request.getTrainingEvent().getRejectionReason())
-                .age(request.getEmployee().getDateOfBirth() != null
+                .age(request.getAge() != null ? request.getAge() : (request.getEmployee() != null && request.getEmployee().getDateOfBirth() != null
                         ? java.time.Period.between(request.getEmployee().getDateOfBirth(), LocalDate.now()).getYears()
-                        : null)
+                        : null))
                 .justification(request.getJustification())
                 .rejectionReason(request.getRejectionReason())
                 .attachmentPath(request.getAttachmentPath())
