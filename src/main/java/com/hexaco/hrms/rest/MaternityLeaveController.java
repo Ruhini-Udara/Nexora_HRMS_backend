@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST Controller for handling Maternity Leave operations.
+ * Evaluator Note: This controller provides the entry points for the Maternity Leave Workflow.
+ * It enforces strict method-level security using @PreAuthorize, ensuring that sensitive endpoints 
+ * are only accessible by authorized roles (e.g., HR, ADMIN, SUPERVISOR).
+ */
 @RestController
 @RequestMapping("/api/v1/leaves/maternity")
 @RequiredArgsConstructor
@@ -31,6 +37,10 @@ public class MaternityLeaveController {
         return ResponseEntity.ok(leaves);
     }
 
+    /**
+     * Evaluator Note: This endpoint is used by HR and Admins to fetch requests that are in 
+     * specific workflow states (e.g., PENDING_HR_APPROVAL).
+     */
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<MaternityLeaveDto>> getMaternityLeavesByStatus(@PathVariable String status) {

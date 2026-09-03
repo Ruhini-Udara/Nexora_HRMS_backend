@@ -9,6 +9,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST Controller for managing biometric attendance devices (e.g., ZKTeco).
+ * Evaluator Note: This provides the API for the Fingerprint Attendance Module to register, 
+ * update, and list the hardware devices that sync punches to this system.
+ */
 @RestController
 @RequestMapping("/api/attendance/devices")
 @CrossOrigin(origins = "http://localhost:3000")

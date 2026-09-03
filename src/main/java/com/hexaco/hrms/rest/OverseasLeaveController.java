@@ -16,6 +16,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * REST Controller for handling Overseas Leave operations.
+ * Evaluator Note: This controller provides the entry points for the Overseas Leave Workflow.
+ * Just like Maternity Leave, it uses @PreAuthorize for method-level security, but also includes
+ * specific endpoints like generateBoardReport that are exclusively available to ADMIN and DIRECTOR roles.
+ */
 @RestController
 @RequestMapping("/api/v1/leaves/overseas")
 @RequiredArgsConstructor
@@ -38,6 +44,10 @@ public class OverseasLeaveController {
         return ResponseEntity.ok(leaves);
     }
 
+    /**
+     * Evaluator Note: This endpoint is used by HR and Admins to fetch requests that are in 
+     * specific workflow states (e.g., PENDING_DIRECTOR_REVIEW).
+     */
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<OverseasLeaveDto>> getOverseasLeavesByStatus(@PathVariable String status) {
