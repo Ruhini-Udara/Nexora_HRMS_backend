@@ -80,6 +80,9 @@ public class SecurityConfig {
             .requestMatchers("/api/attendance/punches/**").permitAll()
             .requestMatchers("/api/attendance/sync-runs/**").permitAll()
             .requestMatchers("/api/v1/leave-balance/sync-historical").permitAll()
+            .requestMatchers("/api/leave-calculation/**", "/api/v1/leave-calculation/**").permitAll()
+            .requestMatchers("/api/v1/carry-forward/**", "/api/carry-forward/**").permitAll()
+            .requestMatchers("/api/v1/supervisor/**", "/api/supervisor/**").permitAll()
 
             .anyRequest().authenticated()
         );
