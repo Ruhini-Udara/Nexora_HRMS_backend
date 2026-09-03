@@ -1,6 +1,7 @@
 package com.hexaco.hrms.service;
 
 import com.hexaco.hrms.dto.EmployeeDashboardDto;
+import com.hexaco.hrms.dto.EmployeeLeaveOverviewDto;
 import com.hexaco.hrms.dto.RecentRequestItemDto;
 import com.hexaco.hrms.models.*;
 import com.hexaco.hrms.repository.*;
@@ -20,6 +21,8 @@ public class EmployeeDashboardService {
 
     private final AttendanceDailySummaryRepository attendanceRepo;
     private final LeaveBalanceRepository leaveBalanceRepo;
+    private final LeaveRequestRepository leaveRequestRepo;
+    private final LeaveBalanceService leaveBalanceService;
     private final TrainingRequestRepository trainingReqRepo;
     private final NormalLeaveRepository normalLeaveRepo;
     private final OverseasLeaveRepository overseasLeaveRepo;
@@ -185,5 +188,86 @@ public class EmployeeDashboardService {
 
         allRequests.sort(Comparator.comparing(RecentRequestItemDto::getDateSubmitted).reversed());
         return allRequests;
+    }
+
+    public EmployeeLeaveOverviewDto getEmployeeLeaveOverview(Long employeeId) {
+        LocalDate today = LocalDate.now();
+        int year = today.getYear();
+
+        // 1. Read authoritative leave balances for current year
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepo.findByEmployeeIdAndLeaveYear(employeeId, year);
+        LeaveBalance lb;
+        if (balanceOpt.isPresent()) {
+            lb = balanceOpt.get();
+        } else {
+            // Calculate and persist once as fallback if no balance record exists yet
+            lb = leaveBalanceService.calculateLeave(employeeId, year);
+        }
+
+        int annualQuota = lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0;
+        int annualUsed = lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0;
+        int annualRemaining = Math.max(0, annualQuota - annualUsed);
+
+        int medicalQuota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+        int medicalUsed = lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0;
+        int medicalRemaining = Math.max(0, medicalQuota - medicalUsed);
+
+        int casualQuota = lb.getCasualLeaveQuota() != null ? lb.getCasualLeaveQuota() : 0;
+        int casualUsed = lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0;
+        int casualRemaining = Math.max(0, casualQuota - casualUsed);
+
+        EmployeeLeaveOverviewDto.LeaveDetailsMapDto leaveDetails = EmployeeLeaveOverviewDto.LeaveDetailsMapDto.builder()
+                .annual(EmployeeLeaveOverviewDto.LeaveTypeBalanceDto.builder()
+                        .entitled(annualQuota)
+                        .used(annualUsed)
+                        .remaining(annualRemaining)
+                        .build())
+                .medical(EmployeeLeaveOverviewDto.LeaveTypeBalanceDto.builder()
+                        .entitled(medicalQuota)
+                        .used(medicalUsed)
+                        .remaining(medicalRemaining)
+                        .build())
+                .casual(EmployeeLeaveOverviewDto.LeaveTypeBalanceDto.builder()
+                        .entitled(casualQuota)
+                        .used(casualUsed)
+                        .remaining(casualRemaining)
+                        .build())
+                .build();
+
+        // 2. Next Planned Vacation (earliest upcoming approved leave where endDate >= today)
+        List<LeaveRequest> upcomingLeaves = leaveRequestRepo.findUpcomingApprovedLeaves(employeeId, today);
+        EmployeeLeaveOverviewDto.NextPlannedVacationDto nextPlannedVacation = null;
+
+        if (!upcomingLeaves.isEmpty()) {
+            LeaveRequest nextLeave = upcomingLeaves.get(0);
+            long daysUntil = 0;
+            if (nextLeave.getFromDate() != null) {
+                if (nextLeave.getFromDate().isAfter(today)) {
+                    daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, nextLeave.getFromDate());
+                } else {
+                    // Ongoing approved leave
+                    daysUntil = 0;
+                }
+            }
+
+            String leaveTypeName = "Leave";
+            if (nextLeave.getLeaveType() != null && nextLeave.getLeaveType().getLeaveTypeName() != null) {
+                leaveTypeName = nextLeave.getLeaveType().getLeaveTypeName();
+            }
+
+            nextPlannedVacation = EmployeeLeaveOverviewDto.NextPlannedVacationDto.builder()
+                    .leaveType(leaveTypeName)
+                    .startDate(nextLeave.getFromDate())
+                    .endDate(nextLeave.getEndDate())
+                    .leaveDays(nextLeave.getTotalDays())
+                    .daysUntil(daysUntil)
+                    .status(nextLeave.getStatus())
+                    .build();
+        }
+
+        return EmployeeLeaveOverviewDto.builder()
+                .leaveDetails(leaveDetails)
+                .nextPlannedVacation(nextPlannedVacation)
+                .build();
     }
 }

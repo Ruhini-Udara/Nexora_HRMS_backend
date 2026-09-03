@@ -41,6 +41,12 @@ public class TrainingRequest {
     @Column(name = "attachment_path")
     private String attachmentPath;
 
+    @Column(name = "age")
+    private Integer age;
+
+    public Integer getAge() { return age; }
+    public void setAge(Integer age) { this.age = age; }
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

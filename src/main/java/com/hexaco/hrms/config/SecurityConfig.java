@@ -80,6 +80,9 @@ public class SecurityConfig {
             .requestMatchers("/api/attendance/punches/**").permitAll()
             .requestMatchers("/api/attendance/sync-runs/**").permitAll()
             .requestMatchers("/api/v1/leave-balance/sync-historical").permitAll()
+            .requestMatchers("/api/leave-calculation/**", "/api/v1/leave-calculation/**").permitAll()
+            .requestMatchers("/api/v1/carry-forward/**", "/api/carry-forward/**").permitAll()
+            .requestMatchers("/api/v1/supervisor/**", "/api/supervisor/**").permitAll()
 
             .anyRequest().authenticated()
         );
@@ -94,8 +97,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Explicit origin required when allowCredentials=true; wildcard is not allowed by browsers
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
+        // Allow all origin patterns to prevent 403 Forbidden from Spring Security CORS filter
+        configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept",
                 "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));

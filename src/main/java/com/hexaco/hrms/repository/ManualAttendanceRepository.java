@@ -14,6 +14,9 @@ public interface ManualAttendanceRepository extends JpaRepository<ManualAttendan
     // All records for a specific date (used by supervisor to load/submit attendance sheet)
     List<ManualAttendance> findByAttendanceDate(LocalDate date);
 
+    // All records within a date range
+    List<ManualAttendance> findByAttendanceDateBetween(LocalDate startDate, LocalDate endDate);
+
     // All records for a specific employee (attendance history)
     List<ManualAttendance> findByEmployeeId(Long employeeId);
 

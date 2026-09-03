@@ -1,12 +1,23 @@
 package com.hexaco.hrms.service.impl;
 
 import com.hexaco.hrms.service.NotificationService;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.draw.LineSeparator;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.awt.Color;
+import java.io.ByteArrayOutputStream;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @Slf4j
@@ -138,19 +149,28 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date,
-            String time, String location, String instructor) {
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String startDate,
+            String endDate, String time, String location, String instructor) {
         String subject = "Training Finalized: " + trainingTitle;
+
+        String dateDetails;
+        if (endDate != null && !endDate.trim().isEmpty() && !endDate.equalsIgnoreCase("TBD")) {
+            dateDetails = "Start Date: " + (startDate != null ? startDate : "TBD") + "\n" +
+                          "End Date: " + endDate;
+        } else {
+            dateDetails = "Date: " + (startDate != null ? startDate : "TBD");
+        }
+
         String content = String.format(
                 "Dear %s,\n\nThe training session for \"%s\" has been finalized.\n\n" +
                         "Details:\n" +
-                        "Date: %s\n" +
+                        "%s\n" +
                         "Time: %s\n" +
                         "Location: %s\n" +
                         "Instructor: %s\n\n" +
                         "Please mark your calendar. We look forward to your participation.\n\n" +
                         "Best Regards,\nHRMATE",
-                recipientName, trainingTitle, date, time, location, (instructor != null ? instructor : "TBD"));
+                recipientName, trainingTitle, dateDetails, time, location, (instructor != null ? instructor : "TBD"));
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -178,6 +198,12 @@ public class NotificationServiceImpl implements NotificationService {
         } else {
             log.info("ℹ️ [SIMULATION MODE] Finalized Training Email content: \n{}", content);
         }
+    }
+
+    @Override
+    public void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date,
+            String time, String location, String instructor) {
+        sendTrainingFinalizedNotification(recipientName, email, trainingTitle, date, date, time, location, instructor);
     }
 
     @Override
@@ -258,10 +284,64 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendResignationStatusUpdate(String recipientName, String email, String status, String remark) {
-        String subject = "Resignation Request Update: " + status;
-        String content = String.format(
-                "Dear %s,\n\nYour resignation request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
-                recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+        sendResignationStatusUpdate(recipientName, email, status, remark, null, null, null, null, null, null, null, null);
+    }
+
+    @Override
+    public void sendResignationStatusUpdate(
+            String recipientName,
+            String email,
+            String status,
+            String remark,
+            Long resignationId,
+            String designation,
+            String branch,
+            String epfNumber,
+            String resignationDate,
+            String lastWorkingDate,
+            String reason,
+            String directorRemark
+    ) {
+        boolean isApproved = "Board Approved".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
+        String subject = isApproved ? "Formal Acceptance of Resignation - HR MATE" : "Resignation Request Update: " + status;
+
+        String content;
+        if (isApproved) {
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Your resignation request (Ref: RES-%s) has been officially approved by the Board of Directors.\n\n" +
+                    "Please find attached your formal Resignation Acceptance Letter.\n" +
+                    "Confirmed Last Day of Service: %s\n" +
+                    "%s\n\n" +
+                    "We sincerely thank you for your valuable service and wish you all the best in your future endeavours.\n\n" +
+                    "Best Regards,\n" +
+                    "Director — Human Resources\nHR MATE",
+                    recipientName,
+                    (resignationId != null ? resignationId : ""),
+                    (lastWorkingDate != null && !lastWorkingDate.isEmpty() ? lastWorkingDate : (resignationDate != null ? resignationDate : "As Scheduled")),
+                    (directorRemark != null && !directorRemark.trim().isEmpty() ? "Director Note: " + directorRemark : "")
+            );
+        } else {
+            content = String.format(
+                    "Dear %s,\n\nYour resignation request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
+                    recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
+            );
+        }
+
+        byte[] pdfBytes = null;
+        if (isApproved) {
+            pdfBytes = generateResignationAcceptanceLetterPdf(
+                    resignationId,
+                    recipientName,
+                    designation,
+                    branch,
+                    epfNumber,
+                    resignationDate,
+                    lastWorkingDate,
+                    reason,
+                    directorRemark
+            );
+        }
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
@@ -269,24 +349,180 @@ public class NotificationServiceImpl implements NotificationService {
                 "╠══════════════════════════════════════════════════════════╣\n" +
                 "║ To: {} <{}> \n" +
                 "║ Subject: {}\n" +
+                "║ Attachment: {}\n" +
                 "║ Mode: {}\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
-                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+                recipientName, email, subject,
+                (pdfBytes != null ? "Resignation_Acceptance_Letter_RES-" + resignationId + ".pdf (" + pdfBytes.length + " bytes)" : "None"),
+                (simulationMode ? "SIMULATION" : "REAL EMAIL"));
 
         if (!simulationMode) {
             try {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(email);
-                message.setSubject(subject);
-                message.setText(content);
-                mailSender.send(message);
-                log.info("✅ Real Resignation Email successfully sent to {}", email);
+                if (pdfBytes != null && pdfBytes.length > 0) {
+                    MimeMessage mimeMessage = mailSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                    helper.setFrom(fromEmail);
+                    helper.setTo(email);
+                    helper.setSubject(subject);
+                    helper.setText(content);
+                    helper.addAttachment("Resignation_Acceptance_Letter_RES-" + (resignationId != null ? resignationId : "Doc") + ".pdf",
+                            new ByteArrayResource(pdfBytes));
+                    mailSender.send(mimeMessage);
+                    log.info("✅ Real Resignation Email with Acceptance Letter Attachment successfully sent to {}", email);
+                } else {
+                    SimpleMailMessage message = new SimpleMailMessage();
+                    message.setFrom(fromEmail);
+                    message.setTo(email);
+                    message.setSubject(subject);
+                    message.setText(content);
+                    mailSender.send(message);
+                    log.info("✅ Real Resignation Email successfully sent to {}", email);
+                }
             } catch (Exception e) {
                 log.error("❌ Failed to send real resignation email to {}: {}", email, e.getMessage());
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Resignation Email content: \n{}", content);
+            if (pdfBytes != null) {
+                log.info("ℹ️ [SIMULATION MODE] Generated Resignation Acceptance Letter PDF attached ({} bytes).", pdfBytes.length);
+            }
+        }
+    }
+
+    private byte[] generateResignationAcceptanceLetterPdf(
+            Long resignationId,
+            String employeeName,
+            String designation,
+            String branch,
+            String epfNumber,
+            String resignationDate,
+            String lastWorkingDate,
+            String reason,
+            String directorRemark
+    ) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4, 54, 54, 54, 54);
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.DARK_GRAY);
+            Font subHeaderFont = FontFactory.getFont(FontFactory.HELVETICA, 9, Color.GRAY);
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, Color.BLACK);
+            Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.BLACK);
+            Font regularFont = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.BLACK);
+            Font italicFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10, Color.DARK_GRAY);
+
+            // Header / Letterhead
+            Paragraph company = new Paragraph("HR MATE", headerFont);
+            company.setAlignment(Element.ALIGN_CENTER);
+            document.add(company);
+
+            Paragraph subtitle = new Paragraph("Human Resources Management System\n", subHeaderFont);
+            subtitle.setAlignment(Element.ALIGN_CENTER);
+            document.add(subtitle);
+
+            // Separator line
+            Paragraph line = new Paragraph(new Chunk(new LineSeparator(1f, 100f, Color.LIGHT_GRAY, Element.ALIGN_CENTER, -2)));
+            document.add(line);
+            document.add(new Paragraph(" \n"));
+
+            // Date and Ref
+            String todayStr = LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
+            Paragraph dateRef = new Paragraph();
+            dateRef.setAlignment(Element.ALIGN_RIGHT);
+            dateRef.add(new Chunk(todayStr + "\n", regularFont));
+            dateRef.add(new Chunk("Ref: RES-" + (resignationId != null ? resignationId : "") + "\n\n", boldFont));
+            document.add(dateRef);
+
+            // Recipient Address Block
+            Paragraph address = new Paragraph();
+            address.add(new Chunk((employeeName != null ? employeeName : "") + "\n", boldFont));
+            address.add(new Chunk((designation != null && !designation.isEmpty() ? designation : "Employee") + "\n", regularFont));
+            if (branch != null && !branch.isEmpty()) {
+                address.add(new Chunk(branch + "\n", regularFont));
+            }
+            if (epfNumber != null && !epfNumber.isEmpty()) {
+                address.add(new Chunk("EPF No: " + epfNumber + "\n", regularFont));
+            }
+            address.add(new Chunk("\n", regularFont));
+            document.add(address);
+
+            // Subject line
+            Paragraph subject = new Paragraph("Re: Acceptance of Resignation\n\n", titleFont);
+            document.add(subject);
+
+            // Salutation
+            String firstName = (employeeName != null && !employeeName.isEmpty()) ? employeeName.split(" ")[0] : "Employee";
+            Paragraph salutation = new Paragraph("Dear " + firstName + ",\n\n", regularFont);
+            document.add(salutation);
+
+            // Body Paragraph 1
+            Paragraph p1 = new Paragraph();
+            p1.setLeading(18f);
+            p1.add(new Chunk("We write with reference to your resignation letter dated ", regularFont));
+            p1.add(new Chunk(resignationDate != null ? resignationDate : "N/A", boldFont));
+            p1.add(new Chunk(". After due consideration by the Board of Directors, we hereby formally accept your resignation from the position of ", regularFont));
+            p1.add(new Chunk(designation != null && !designation.isEmpty() ? designation : "Employee", boldFont));
+            if (branch != null && !branch.isEmpty()) {
+                p1.add(new Chunk(", " + branch, regularFont));
+            }
+            p1.add(new Chunk(".\n\n", regularFont));
+            document.add(p1);
+
+            // Body Paragraph 2
+            Paragraph p2 = new Paragraph();
+            p2.setLeading(18f);
+            p2.add(new Chunk("Your reason for resignation has been noted as: ", regularFont));
+            p2.add(new Chunk((reason != null && !reason.isEmpty() ? reason : "Personal Reasons") + ".\n\n", boldFont));
+            document.add(p2);
+
+            // Body Paragraph 3
+            Paragraph p3 = new Paragraph();
+            p3.setLeading(18f);
+            p3.add(new Chunk("Your last day of service is confirmed as ", regularFont));
+            p3.add(new Chunk(lastWorkingDate != null ? lastWorkingDate : (resignationDate != null ? resignationDate : "N/A"), boldFont));
+            p3.add(new Chunk(". We kindly request that you ensure a proper handover of all responsibilities, assets, and documentation before your departure.\n\n", regularFont));
+            document.add(p3);
+
+            // Body Paragraph 4
+            Paragraph p4 = new Paragraph(
+                    "Please be advised that your payroll will be finalised and closed as of the above effective date. Your employee account and system access privileges will accordingly be deactivated on the same date.\n\n",
+                    regularFont
+            );
+            p4.setLeading(18f);
+            document.add(p4);
+
+            // Director remark if present
+            if (directorRemark != null && !directorRemark.trim().isEmpty()) {
+                Paragraph pRemark = new Paragraph();
+                pRemark.setLeading(18f);
+                pRemark.add(new Chunk("Note from the Director: ", boldFont));
+                pRemark.add(new Chunk(directorRemark + "\n\n", italicFont));
+                document.add(pRemark);
+            }
+
+            // Thank you
+            Paragraph pThanks = new Paragraph(
+                    "We take this opportunity to sincerely thank you for your valuable contributions to the organisation during your tenure. We extend our best wishes to you for your future endeavours.\n\n",
+                    regularFont
+            );
+            pThanks.setLeading(18f);
+            document.add(pThanks);
+
+            // Closing & Signature
+            Paragraph pClose = new Paragraph("Yours faithfully,\n\n\n\n", regularFont);
+            document.add(pClose);
+
+            Paragraph signLine = new Paragraph("_________________________\n", regularFont);
+            Paragraph signTitle = new Paragraph("Director — Human Resources", boldFont);
+            document.add(signLine);
+            document.add(signTitle);
+
+            document.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            log.error("❌ Error generating resignation PDF: {}", e.getMessage(), e);
+            return null;
         }
     }
 

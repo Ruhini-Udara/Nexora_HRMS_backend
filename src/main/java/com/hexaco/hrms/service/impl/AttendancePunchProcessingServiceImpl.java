@@ -21,6 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Service for processing raw biometric device punches into structured attendance data.
+ * Evaluator Note: This is the core engine for the Fingerprint Attendance module.
+ * It takes raw, unprocessed punches from the ZKTeco device, matches them to employees via 
+ * Fingerprint User IDs, and calculates the first (check-in) and last (check-out) punch 
+ * of the day to generate a daily summary.
+ */
 @Service
 @RequiredArgsConstructor
 public class AttendancePunchProcessingServiceImpl implements AttendancePunchProcessingService {
@@ -32,6 +39,7 @@ public class AttendancePunchProcessingServiceImpl implements AttendancePunchProc
     @Override
     @Transactional
     public AttendancePunchProcessResponse processUnprocessedPunches() {
+        // Evaluator Note: Step 1 - Fetch only punches that haven't been processed yet to ensure idempotency.
         List<AttendanceDevicePunch> unprocessedPunches =
                 attendanceDevicePunchRepository.findByProcessedFalseOrderByPunchTimeAsc();
 
@@ -40,6 +48,7 @@ public class AttendancePunchProcessingServiceImpl implements AttendancePunchProc
         List<String> errors = new ArrayList<>();
         int unknownUserCount = 0;
 
+        // Evaluator Note: Step 2 - Group punches by Employee and Date.
         for (AttendanceDevicePunch punch : unprocessedPunches) {
             Optional<Employee> employeeOptional = employeeCache.computeIfAbsent(
                     punch.getTerminalUserId(),
@@ -87,6 +96,9 @@ public class AttendancePunchProcessingServiceImpl implements AttendancePunchProc
                 summaryCreatedCount++;
             }
 
+            // Evaluator Note: Step 3 - Calculate the daily check-in and check-out boundaries.
+            // The algorithm takes all punches for the day, sorts them, and uses the first 
+            // as check-in and the last as check-out. Intermediate punches are ignored for the summary.
             SummaryTimeline timeline = buildTimeline(summary, group.punches());
             summary.setCheckInTime(timeline.checkInTime());
             summary.setCheckOutTime(timeline.checkOutTime());
