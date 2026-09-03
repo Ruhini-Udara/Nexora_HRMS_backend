@@ -85,6 +85,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     private com.hexaco.hrms.dto.CalendarEventDto mapToDto(Event event) {
         String dateStr = "";
+        String endDateStr = null;
         String timeStr = null;
 
         if (event.getStart() != null) {
@@ -100,10 +101,32 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             }
         }
 
+        if (event.getEnd() != null) {
+            if (event.getEnd().getDateTime() != null) {
+                java.time.Instant instant = java.time.Instant.ofEpochMilli(event.getEnd().getDateTime().getValue());
+                java.time.LocalDateTime localDateTime = java.time.LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault());
+                endDateStr = localDateTime.toLocalDate().toString();
+            } else if (event.getEnd().getDate() != null) {
+                // Google Calendar full-day events use exclusive end dates (e.g. start: 2026-09-05, end: 2026-09-06 for a 1-day event)
+                String rawEndDateStr = event.getEnd().getDate().toStringRfc3339().substring(0, 10);
+                try {
+                    java.time.LocalDate endLocal = java.time.LocalDate.parse(rawEndDateStr).minusDays(1);
+                    endDateStr = endLocal.toString();
+                } catch (Exception e) {
+                    endDateStr = rawEndDateStr;
+                }
+            }
+        }
+
+        if (endDateStr == null || (dateStr != null && !dateStr.isEmpty() && endDateStr.compareTo(dateStr) < 0)) {
+            endDateStr = dateStr;
+        }
+
         return com.hexaco.hrms.dto.CalendarEventDto.builder()
                 .id(event.getId())
                 .title(event.getSummary())
                 .date(dateStr)
+                .endDate(endDateStr)
                 .time(timeStr)
                 .build();
     }
