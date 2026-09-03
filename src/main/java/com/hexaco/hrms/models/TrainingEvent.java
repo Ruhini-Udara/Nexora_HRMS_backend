@@ -29,6 +29,10 @@ public class TrainingEvent {
     public void setDescription(String description) { this.description = description; }
     public LocalDate getProposedStartDate() { return proposedStartDate; }
     public void setProposedStartDate(LocalDate proposedStartDate) { this.proposedStartDate = proposedStartDate; }
+    public LocalDate getProposedEndDate() { return proposedEndDate; }
+    public void setProposedEndDate(LocalDate proposedEndDate) { this.proposedEndDate = proposedEndDate; }
+    public String getDateSubmitted() { return dateSubmitted; }
+    public void setDateSubmitted(String dateSubmitted) { this.dateSubmitted = dateSubmitted; }
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }
     public LocalDate getApplyBefore() { return applyBefore; }
@@ -67,6 +71,12 @@ public class TrainingEvent {
 
     @Column(name = "proposed_start_date")
     private LocalDate proposedStartDate;
+
+    @Column(name = "proposed_end_date")
+    private LocalDate proposedEndDate;
+
+    @Column(name = "date_submitted")
+    private String dateSubmitted;
 
     private String time;
 

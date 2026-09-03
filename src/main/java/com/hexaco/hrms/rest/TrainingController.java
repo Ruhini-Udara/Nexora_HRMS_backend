@@ -71,11 +71,15 @@ public class TrainingController {
         String status = (String) payload.get("status");
         String reason = (String) payload.get("reason");
         String approvedBy = (String) payload.get("approvedBy");
+        String dateSubmitted = (String) payload.get("dateSubmitted");
         
         TrainingEventDto event = trainingService.getTrainingEventById(id);
         event.setStatus(status);
         event.setReason(reason);
         event.setApprovedBy(approvedBy);
+        if (dateSubmitted != null) {
+            event.setDateSubmitted(dateSubmitted);
+        }
         
         return ResponseEntity.ok(trainingService.updateTrainingEvent(id, event));
     }
