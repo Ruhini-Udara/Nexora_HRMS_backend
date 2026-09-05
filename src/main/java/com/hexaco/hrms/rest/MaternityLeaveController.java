@@ -30,6 +30,13 @@ public class MaternityLeaveController {
         return new ResponseEntity<>(savedLeave, HttpStatus.CREATED);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR', 'DIRECTOR')")
+    public ResponseEntity<MaternityLeaveDto> updateMaternityLeave(@PathVariable Long id, @RequestBody MaternityLeaveDto dto) {
+        MaternityLeaveDto savedLeave = leaveService.updateMaternityLeave(id, dto);
+        return ResponseEntity.ok(savedLeave);
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<MaternityLeaveDto>> getAllMaternityLeaves() {
