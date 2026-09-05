@@ -13,6 +13,7 @@ public interface LeaveService {
     
     // Overseas Leave Methods
     OverseasLeaveDto submitOverseasLeave(OverseasLeaveDto requestedLeave);
+    OverseasLeaveDto updateOverseasLeave(Long id, OverseasLeaveDto dto);
     Optional<OverseasLeaveDto> getOverseasLeaveById(Long id);
     List<OverseasLeaveDto> getAllOverseasLeaves();
     List<OverseasLeaveDto> getOverseasLeavesByStatus(String status);
@@ -21,6 +22,7 @@ public interface LeaveService {
     
     // Maternity Leave Methods
     MaternityLeaveDto submitMaternityLeave(MaternityLeaveDto requestedLeave);
+    MaternityLeaveDto updateMaternityLeave(Long id, MaternityLeaveDto dto);
     Optional<MaternityLeaveDto> getMaternityLeaveById(Long id);
     List<MaternityLeaveDto> getAllMaternityLeaves();
     List<MaternityLeaveDto> getMaternityLeavesByStatus(String status);

@@ -30,6 +30,9 @@ public class MaternityLeaveDto {
     private String email;
     private String level;
     private String specialRemark;
+    private Boolean isEdited;
+    private String returnReason;
+    private String returnedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

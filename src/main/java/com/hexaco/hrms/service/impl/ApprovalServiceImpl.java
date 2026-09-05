@@ -36,6 +36,7 @@ public class ApprovalServiceImpl implements ApprovalService {
     private final NormalLeaveRepository normalLeaveRepository;
     private final TrainingRequestRepository trainingRequestRepository;
     private final UserAccountRepository userAccountRepository;
+    private final com.hexaco.hrms.repository.EmployeeRepository employeeRepository;
     private final com.hexaco.hrms.service.NotificationService notificationService;
     private final LeaveBalanceRepository leaveBalanceRepository;
     private final com.hexaco.hrms.service.LeaveBalanceService leaveBalanceService;
@@ -47,13 +48,14 @@ public class ApprovalServiceImpl implements ApprovalService {
     private static final String STATUS_ADMIN_APPROVED = "ADMIN_APPROVED";
     private static final String STATUS_APPROVED = "APPROVED";
     private static final String STATUS_REJECTED = "REJECTED";
+    private static final String STATUS_RETURNED = "RETURNED";
 
     @Override
     public Approval saveApproval(Approval approval) {
-        // Enforce remark for rejections
-        if ("REJECTED".equalsIgnoreCase(approval.getDecision()) && 
+        // Enforce remark for rejections and returns
+        if (("REJECTED".equalsIgnoreCase(approval.getDecision()) || "RETURNED".equalsIgnoreCase(approval.getDecision())) && 
             (approval.getRemark() == null || approval.getRemark().trim().isEmpty())) {
-            throw new IllegalArgumentException("Rejection remark is required.");
+            throw new IllegalArgumentException("Remark is required when rejecting or returning a request.");
         }
 
         // Automatically stamp the decision date before saving
@@ -76,12 +78,19 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
 
             String requesterRole = detectHighestRole(leave.getEmployee().getId());
-            newStatus = calculateNextOverseasStatus(leave.getStatus(), approval.getDecision(), requesterRole);
+            String oldStatus = leave.getStatus();
+            newStatus = calculateNextOverseasStatus(oldStatus, approval.getDecision(), requesterRole);
             leave.setStatus(newStatus);
+            if (isReturned(approval.getDecision())) {
+                leave.setReturnReason(approval.getRemark());
+                employeeRepository.findById(approval.getApprovedBy().getId())
+                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + detectHighestRole(emp.getId()) + ")"));
+                leave.setIsEdited(false);
+            }
             overseasLeaveRepository.save(leave);
 
             // Trigger Notification
-            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {
+            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus) || STATUS_RETURNED.equals(newStatus)) {
                 notificationService.sendLeaveStatusUpdate(
                     leave.getEmployee().getFullName(), leave.getEmail(), leave.getContactNumber(),
                     "Overseas Leave", newStatus, approval.getRemark()
@@ -100,6 +109,12 @@ public class ApprovalServiceImpl implements ApprovalService {
             String oldStatus = leave.getStatus();
             newStatus = calculateNextMaternityStatus(oldStatus, approval.getDecision(), requesterRole);
             leave.setStatus(newStatus);
+            if (isReturned(approval.getDecision())) {
+                leave.setReturnReason(approval.getRemark());
+                employeeRepository.findById(approval.getApprovedBy().getId())
+                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + detectHighestRole(emp.getId()) + ")"));
+                leave.setIsEdited(false);
+            }
             maternityLeaveRepository.save(leave);
 
             // Trigger Finance Integration on Final Approval
@@ -162,6 +177,7 @@ public class ApprovalServiceImpl implements ApprovalService {
      */
     public String calculateNextOverseasStatus(String currentStatus, String decision, String requesterRole) {
         if (isRejected(decision)) return STATUS_REJECTED;
+        if (isReturned(decision)) return STATUS_RETURNED;
         if (!isApproved(decision)) return currentStatus;
 
         if (currentStatus == null) return STATUS_PENDING_HR;
@@ -193,6 +209,7 @@ public class ApprovalServiceImpl implements ApprovalService {
      */
     public String calculateNextMaternityStatus(String currentStatus, String decision, String requesterRole) {
         if (isRejected(decision)) return STATUS_REJECTED;
+        if (isReturned(decision)) return STATUS_RETURNED;
         if (!isApproved(decision)) return currentStatus;
 
         if (currentStatus == null) return STATUS_PENDING_HR;
@@ -224,6 +241,10 @@ public class ApprovalServiceImpl implements ApprovalService {
 
     private boolean isRejected(String decision) {
         return "REJECTED".equalsIgnoreCase(decision) || "REJECT".equalsIgnoreCase(decision);
+    }
+
+    private boolean isReturned(String decision) {
+        return "RETURNED".equalsIgnoreCase(decision) || "RETURN".equalsIgnoreCase(decision);
     }
 
     private String detectHighestRole(Long employeeId) {

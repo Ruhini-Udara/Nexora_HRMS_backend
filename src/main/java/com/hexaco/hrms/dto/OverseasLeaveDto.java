@@ -29,6 +29,9 @@ public class OverseasLeaveDto {
     private String contactNumber;
     private String email;
     private String specialRemark;
+    private Boolean isEdited;
+    private String returnReason;
+    private String returnedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

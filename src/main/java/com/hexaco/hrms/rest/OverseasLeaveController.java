@@ -37,6 +37,13 @@ public class OverseasLeaveController {
         return new ResponseEntity<>(savedLeave, HttpStatus.CREATED);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR', 'DIRECTOR')")
+    public ResponseEntity<OverseasLeaveDto> updateOverseasLeave(@PathVariable Long id, @RequestBody OverseasLeaveDto dto) {
+        OverseasLeaveDto updatedLeave = leaveService.updateOverseasLeave(id, dto);
+        return ResponseEntity.ok(updatedLeave);
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor')")
     public ResponseEntity<List<OverseasLeaveDto>> getAllOverseasLeaves() {

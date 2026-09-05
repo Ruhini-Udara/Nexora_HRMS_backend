@@ -72,6 +72,40 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    public OverseasLeaveDto updateOverseasLeave(Long id, OverseasLeaveDto dto) {
+        OverseasLeave existingLeave = overseasLeaveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Overseas Leave not found"));
+
+        // Only allow update if returned
+        if (!"RETURNED".equals(existingLeave.getStatus())) {
+            throw new RuntimeException("Can only edit leave requests that have been returned");
+        }
+
+        existingLeave.setPassportNumber(dto.getPassportNumber());
+        existingLeave.setPassportExpDate(dto.getPassportExpDate());
+        existingLeave.setBranch(dto.getBranch());
+        existingLeave.setContactNumber(dto.getContactNumber());
+        existingLeave.setEmail(dto.getEmail());
+        existingLeave.setSpecialRemark(dto.getSpecialRemark());
+        existingLeave.setFromDate(dto.getFromDate());
+        existingLeave.setEndDate(dto.getEndDate());
+        existingLeave.setTotalDays(dto.getTotalDays());
+        existingLeave.setReason(dto.getReason());
+
+        // Set flags
+        existingLeave.setIsEdited(true);
+
+        // Reset status based on role
+        if (isHrEmployee(existingLeave.getEmployee().getId())) {
+            existingLeave.setStatus(STATUS_PENDING_ADMIN);
+        } else {
+            existingLeave.setStatus(STATUS_PENDING_HR);
+        }
+
+        return mapToOverseasDto(overseasLeaveRepository.save(existingLeave));
+    }
+
+    @Override
     public Optional<OverseasLeaveDto> getOverseasLeaveById(Long id) {
         return overseasLeaveRepository.findById(id).map(this::mapToOverseasDto);
     }
@@ -141,6 +175,38 @@ public class LeaveServiceImpl implements LeaveService {
         }
 
         return mapToMaternityDto(maternityLeaveRepository.save(requestedLeave));
+    }
+
+    @Override
+    public MaternityLeaveDto updateMaternityLeave(Long id, MaternityLeaveDto dto) {
+        MaternityLeave existingLeave = maternityLeaveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Maternity Leave not found"));
+
+        if (!"RETURNED".equals(existingLeave.getStatus())) {
+            throw new RuntimeException("Can only edit leave requests that have been returned");
+        }
+
+        existingLeave.setChildNumber(dto.getChildNumber());
+        existingLeave.setEmployeeType(dto.getEmployeeType());
+        existingLeave.setBranch(dto.getBranch());
+        existingLeave.setContactNumber(dto.getContactNumber());
+        existingLeave.setEmail(dto.getEmail());
+        existingLeave.setLevel(dto.getLevel());
+        existingLeave.setSpecialRemark(dto.getSpecialRemark());
+        existingLeave.setFromDate(dto.getFromDate());
+        existingLeave.setEndDate(dto.getEndDate());
+        existingLeave.setTotalDays(dto.getTotalDays());
+        existingLeave.setReason(dto.getReason());
+
+        existingLeave.setIsEdited(true);
+
+        if (isHrEmployee(existingLeave.getEmployee().getId())) {
+            existingLeave.setStatus(STATUS_PENDING_ADMIN);
+        } else {
+            existingLeave.setStatus(STATUS_PENDING_HR);
+        }
+
+        return mapToMaternityDto(maternityLeaveRepository.save(existingLeave));
     }
 
     @Override
@@ -331,6 +397,9 @@ public class LeaveServiceImpl implements LeaveService {
                 .contactNumber(leave.getContactNumber())
                 .email(leave.getEmail())
                 .specialRemark(leave.getSpecialRemark())
+                .isEdited(leave.getIsEdited() != null ? leave.getIsEdited() : false)
+                .returnReason(leave.getReturnReason())
+                .returnedBy(leave.getReturnedBy())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
                 .build();
@@ -358,6 +427,9 @@ public class LeaveServiceImpl implements LeaveService {
                 .email(leave.getEmail())
                 .level(leave.getLevel())
                 .specialRemark(leave.getSpecialRemark())
+                .isEdited(leave.getIsEdited() != null ? leave.getIsEdited() : false)
+                .returnReason(leave.getReturnReason())
+                .returnedBy(leave.getReturnedBy())
                 .createdAt(leave.getCreatedAt())
                 .updatedAt(leave.getUpdatedAt())
                 .build();

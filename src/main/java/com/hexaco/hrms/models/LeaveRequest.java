@@ -44,6 +44,15 @@ public abstract class LeaveRequest {
     @Column(nullable = false)
     private String status; // DRAFT, SUBMITTED, APPROVED, REJECTED
 
+    @Column(name = "is_edited", columnDefinition = "boolean default false")
+    private Boolean isEdited = false;
+
+    @Column(name = "return_reason", columnDefinition = "TEXT")
+    private String returnReason;
+
+    @Column(name = "returned_by")
+    private String returnedBy;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
