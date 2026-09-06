@@ -250,32 +250,76 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendTransferStatusUpdate(String recipientName, String email, String status, String remark) {
-        String subject = "Transfer Request Update: " + status;
-        String content = String.format(
-                "Dear %s,\n\nYour transfer request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
-                recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+        String subject;
+        String content;
+
+        if ("RETURNED".equalsIgnoreCase(status)) {
+            subject = "Transfer Request Returned for Amendment";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Your transfer request has been returned by HR for amendments due to the following reason:\n" +
+                    "Reason: %s\n\n" +
+                    "Please check and amend the required changes in the system, then resubmit your request for approval.\n\n" +
+                    "Best Regards,\nHR Mate",
+                    recipientName,
+                    (remark != null && !remark.isEmpty() ? remark : "N/A"));
+        } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            subject = "Transfer Request Rejected";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "We regret to inform you that your transfer request has been rejected by the Director / Board.\n\n" +
+                    "Status: REJECTED\n" +
+                    "Reason / Remark: %s\n\n" +
+                    "If you have any questions or require further clarification, please contact HR Operations.\n\n" +
+                    "Best Regards,\nHR Mate",
+                    recipientName,
+                    (remark != null && !remark.isEmpty() ? remark : "None specified"));
+        } else if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
+            subject = "Transfer Request Approved";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Congratulations! Your transfer request has been approved.\n\n" +
+                    "Status: APPROVED\n" +
+                    "Remark: %s\n\n" +
+                    "Best Regards,\nHR Mate",
+                    recipientName,
+                    (remark != null && !remark.isEmpty() ? remark : "N/A"));
+        } else {
+            subject = "Transfer Request Update: " + status;
+            content = String.format(
+                    "Dear %s,\n\nYour transfer request status has been updated to %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
+                    recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+        }
+
+        String trimmedEmail = (email != null) ? email.trim() : null;
+        if (trimmedEmail == null || trimmedEmail.isEmpty()) {
+            log.warn("⚠️ Cannot send transfer status email: Employee email is null or empty for {}", recipientName);
+            return;
+        }
+
+        String sender = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : "hrmsnexora@gmail.com";
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
-                "║ 📧 TRANSFER NOTIFICATION LOG                                                ║\n" +
+                "║ 📧 TRANSFER NOTIFICATION LOG                             ║\n" +
                 "╠══════════════════════════════════════════════════════════╣\n" +
                 "║ To: {} <{}> \n" +
                 "║ Subject: {}\n" +
                 "║ Mode: {}\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
-                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+                recipientName, trimmedEmail, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
 
         if (!simulationMode) {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(email);
+                message.setFrom(sender);
+                message.setTo(trimmedEmail);
                 message.setSubject(subject);
                 message.setText(content);
                 mailSender.send(message);
-                log.info("✅ Real Transfer Email successfully sent to {}", email);
+                log.info("✅ Real Transfer Email successfully sent to {}", trimmedEmail);
             } catch (Exception e) {
-                log.error("❌ Failed to send real transfer email to {}: {}", email, e.getMessage());
+                log.error("❌ Failed to send real transfer email to {}: {}", trimmedEmail, e.getMessage(), e);
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Transfer Email content: \n{}", content);
@@ -302,11 +346,19 @@ public class NotificationServiceImpl implements NotificationService {
             String reason,
             String directorRemark
     ) {
-        boolean isApproved = "Board Approved".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
-        String subject = isApproved ? "Formal Acceptance of Resignation - HR MATE" : "Resignation Request Update: " + status;
+        String trimmedEmail = (email != null) ? email.trim() : null;
+        if (trimmedEmail == null || trimmedEmail.isEmpty()) {
+            log.warn("⚠️ Cannot send resignation status email: Employee email is null or empty for {}", recipientName);
+            return;
+        }
 
+        String sender = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : "hrmsnexora@gmail.com";
+        boolean isApproved = "Board Approved".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status);
+        String subject;
         String content;
+
         if (isApproved) {
+            subject = "Formal Acceptance of Resignation - HR MATE";
             content = String.format(
                     "Dear %s,\n\n" +
                     "Your resignation request (Ref: RES-%s) has been officially approved by the Board of Directors.\n\n" +
@@ -321,7 +373,32 @@ public class NotificationServiceImpl implements NotificationService {
                     (lastWorkingDate != null && !lastWorkingDate.isEmpty() ? lastWorkingDate : (resignationDate != null ? resignationDate : "As Scheduled")),
                     (directorRemark != null && !directorRemark.trim().isEmpty() ? "Director Note: " + directorRemark : "")
             );
+        } else if ("RETURNED".equalsIgnoreCase(status)) {
+            subject = "Resignation Request Returned for Amendment";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Your resignation request has been returned by HR for amendments due to the following reason:\n" +
+                    "Reason: %s\n\n" +
+                    "Please check and amend the required changes in the system, then resubmit your request for approval.\n\n" +
+                    "Best Regards,\nHR Mate",
+                    recipientName,
+                    (remark != null && !remark.isEmpty() ? remark : "N/A")
+            );
+        } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            subject = "Resignation Request Rejected";
+            String rejectReasonText = (remark != null && !remark.isEmpty()) ? remark : ((directorRemark != null && !directorRemark.isEmpty()) ? directorRemark : "None specified");
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "We regret to inform you that your resignation request has been rejected by the Director / Board.\n\n" +
+                    "Status: REJECTED\n" +
+                    "Reason / Remark: %s\n\n" +
+                    "If you have any questions or require further clarification, please contact HR Operations.\n\n" +
+                    "Best Regards,\nHR Mate",
+                    recipientName,
+                    rejectReasonText
+            );
         } else {
+            subject = "Resignation Request Update: " + status;
             content = String.format(
                     "Dear %s,\n\nYour resignation request has been %s.\nRemark: %s\n\nBest Regards,\nHR Mate",
                     recipientName, status, (remark != null && !remark.isEmpty() ? remark : "N/A")
@@ -345,14 +422,14 @@ public class NotificationServiceImpl implements NotificationService {
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
-                "║ 📧 RESIGNATION NOTIFICATION LOG                                             ║\n" +
+                "║ 📧 RESIGNATION NOTIFICATION LOG                             ║\n" +
                 "╠══════════════════════════════════════════════════════════╣\n" +
                 "║ To: {} <{}> \n" +
                 "║ Subject: {}\n" +
                 "║ Attachment: {}\n" +
                 "║ Mode: {}\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
-                recipientName, email, subject,
+                recipientName, trimmedEmail, subject,
                 (pdfBytes != null ? "Resignation_Acceptance_Letter_RES-" + resignationId + ".pdf (" + pdfBytes.length + " bytes)" : "None"),
                 (simulationMode ? "SIMULATION" : "REAL EMAIL"));
 
@@ -361,25 +438,25 @@ public class NotificationServiceImpl implements NotificationService {
                 if (pdfBytes != null && pdfBytes.length > 0) {
                     MimeMessage mimeMessage = mailSender.createMimeMessage();
                     MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setFrom(fromEmail);
-                    helper.setTo(email);
+                    helper.setFrom(sender);
+                    helper.setTo(trimmedEmail);
                     helper.setSubject(subject);
                     helper.setText(content);
                     helper.addAttachment("Resignation_Acceptance_Letter_RES-" + (resignationId != null ? resignationId : "Doc") + ".pdf",
                             new ByteArrayResource(pdfBytes));
                     mailSender.send(mimeMessage);
-                    log.info("✅ Real Resignation Email with Acceptance Letter Attachment successfully sent to {}", email);
+                    log.info("✅ Real Resignation Email with Acceptance Letter Attachment successfully sent to {}", trimmedEmail);
                 } else {
                     SimpleMailMessage message = new SimpleMailMessage();
-                    message.setFrom(fromEmail);
-                    message.setTo(email);
+                    message.setFrom(sender);
+                    message.setTo(trimmedEmail);
                     message.setSubject(subject);
                     message.setText(content);
                     mailSender.send(message);
-                    log.info("✅ Real Resignation Email successfully sent to {}", email);
+                    log.info("✅ Real Resignation Email successfully sent to {}", trimmedEmail);
                 }
             } catch (Exception e) {
-                log.error("❌ Failed to send real resignation email to {}: {}", email, e.getMessage());
+                log.error("❌ Failed to send real resignation email to {}: {}", trimmedEmail, e.getMessage(), e);
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Resignation Email content: \n{}", content);

@@ -9,6 +9,7 @@ import com.hexaco.hrms.repository.EmployeeRepository;
 import com.hexaco.hrms.repository.UserAccountRepository;
 import com.hexaco.hrms.models.UserAccount;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ResignationServiceImpl implements ResignationService {
 
@@ -76,11 +78,12 @@ public class ResignationServiceImpl implements ResignationService {
         
         resignation.setStatus(status);
         if (remarks != null) {
-            // Depending on status, we might update hrRemark or directorRemark
-            if (status.contains("REJECTED") || status.equals("VERIFIED_BY_HR")) {
+            if ("RETURNED".equalsIgnoreCase(status) || "VERIFIED_BY_HR".equalsIgnoreCase(status)) {
                 resignation.setHrRemark(remarks);
-            } else {
+            } else if ("Board Rejected".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status)) {
                 resignation.setDirectorRemark(remarks);
+            } else {
+                resignation.setHrRemark(remarks);
             }
         }
         if (boardMeetingDate != null) {
@@ -90,7 +93,8 @@ public class ResignationServiceImpl implements ResignationService {
         Resignation updated = repository.save(resignation);
         
         if ("Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || 
-            "APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+            "APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || 
+            "RETURNED".equalsIgnoreCase(status)) {
             String desigName = updated.getDesignation() != null && !updated.getDesignation().isEmpty()
                     ? updated.getDesignation()
                     : (updated.getEmployee() != null && updated.getEmployee().getDesignation() != null ? updated.getEmployee().getDesignation().getDesignationName() : "Employee");
@@ -104,9 +108,25 @@ public class ResignationServiceImpl implements ResignationService {
             String resignDateStr = updated.getResignationDate() != null ? updated.getResignationDate().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
             String lastWorkDateStr = updated.getLastWorkingDate() != null ? updated.getLastWorkingDate().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")) : "";
 
+            String recipientEmail = "";
+            if (updated.getEmployee() != null && updated.getEmployee().getEmail() != null && !updated.getEmployee().getEmail().trim().isEmpty()) {
+                recipientEmail = updated.getEmployee().getEmail().trim();
+            }
+            if ((recipientEmail.isEmpty() || !recipientEmail.contains("@")) && updated.getEmployee() != null) {
+                List<UserAccount> accounts = userAccountRepository.findByEmployeeId(updated.getEmployee().getId());
+                if (!accounts.isEmpty() && accounts.get(0).getEmail() != null) {
+                    recipientEmail = accounts.get(0).getEmail().trim();
+                }
+            }
+
+            String recipientName = updated.getEmployee() != null ? updated.getEmployee().getFullName() : (updated.getEmployeeName() != null ? updated.getEmployeeName() : "Employee");
+
+            log.info("📧 Triggering resignation status notification for request #{} to recipient '{}' <{}> with status '{}'",
+                    updated.getId(), recipientName, recipientEmail, status);
+
             notificationService.sendResignationStatusUpdate(
-                    updated.getEmployee() != null ? updated.getEmployee().getFullName() : (updated.getEmployeeName() != null ? updated.getEmployeeName() : "Employee"),
-                    updated.getEmployee() != null ? updated.getEmployee().getEmail() : "",
+                    recipientName,
+                    recipientEmail,
                     status,
                     remarks,
                     updated.getId(),

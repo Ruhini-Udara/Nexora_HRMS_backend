@@ -67,7 +67,7 @@ public class TransferRequestService {
         
         TransferRequest saved = transferRequestRepository.save(request);
         
-        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status)) {
+        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || "RETURNED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
             notificationService.sendTransferStatusUpdate(
                     saved.getEmployee().getFullName(),
                     saved.getEmployee().getEmail(),
