@@ -18,6 +18,9 @@ public interface OverseasLeaveRepository extends JpaRepository<OverseasLeave, Lo
     @Query("SELECT COUNT(l) FROM OverseasLeave l WHERE l.status = 'PENDING_HR_APPROVAL' OR l.status = 'PENDING_ADMIN_APPROVAL' OR l.status = 'SUBMITTED'")
     long countPending();
 
+    @Query("SELECT COUNT(DISTINCT l.employee.id) FROM OverseasLeave l WHERE l.fromDate <= :date AND l.endDate >= :date AND (l.status = 'APPROVED' OR l.status = 'ADMIN_APPROVED')")
+    long countOnLeaveToday(@Param("date") java.time.LocalDate date);
+
     @Query("SELECT l FROM OverseasLeave l WHERE l.passportExpDate BETWEEN :startDate AND :endDate AND (l.status = 'APPROVED' OR l.status = 'ADMIN_APPROVED')")
     List<OverseasLeave> findUpcomingPassportExpiries(@Param("startDate") java.time.LocalDate startDate, @Param("endDate") java.time.LocalDate endDate);
     

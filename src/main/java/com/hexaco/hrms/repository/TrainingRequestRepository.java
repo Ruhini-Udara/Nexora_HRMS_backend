@@ -2,6 +2,7 @@ package com.hexaco.hrms.repository;
 
 import com.hexaco.hrms.models.TrainingRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public interface TrainingRequestRepository extends JpaRepository<TrainingRequest
     List<TrainingRequest> findByTrainingEventId(Long eventId);
     // Check if any request exists for a training event
     boolean existsByTrainingEventId(Long eventId);
+
+    @Query("SELECT COUNT(t) FROM TrainingRequest t WHERE LOWER(t.status) = 'pending'")
+    long countPending();
 }

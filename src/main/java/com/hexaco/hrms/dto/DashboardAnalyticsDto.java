@@ -16,10 +16,12 @@ import java.util.Map;
 public class DashboardAnalyticsDto {
     private int presentToday;
     private int lateToday;
+    private long onLeaveToday;
     
     private long pendingOverseas;
     private long pendingMaternity;
     private long delayedApprovals;
+    private long totalPendingRequests;
     
     private long totalStaff;
     private long newHiresThisWeek;
@@ -32,6 +34,11 @@ public class DashboardAnalyticsDto {
     
     private Map<String, Long> departmentEmployeeCount;
     private Map<String, Long> departmentLeaveImpact;
+    private Map<String, Long> designationEmployeeCount;
+    private Map<String, Long> employmentStatusCount;
+    private Map<String, Long> branchEmployeeCount;
+    private Map<String, Long> leaveTypesUsed;
+    private Map<String, Long> attendanceStatusToday;
     
     @Data
     @AllArgsConstructor

@@ -19,6 +19,18 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Long
     @Query("SELECT lr.employee.id FROM LeaveRequest lr WHERE lr.fromDate <= :date AND lr.endDate >= :date AND lr.status = 'APPROVED'")
     List<Long> findApprovedLeaveEmployeeIdsByDate(@Param("date") LocalDate date);
 
+    @Query("SELECT COUNT(DISTINCT lr.employee.id) FROM LeaveRequest lr WHERE lr.fromDate <= :date AND lr.endDate >= :date AND lr.status = 'APPROVED'")
+    long countOnLeaveToday(@Param("date") LocalDate date);
+
+    @Query("SELECT COUNT(lr) FROM LeaveRequest lr WHERE lr.status = 'PENDING'")
+    long countPending();
+
     @Query("SELECT lr FROM LeaveRequest lr WHERE lr.employee.id = :employeeId AND UPPER(lr.status) = 'APPROVED' AND lr.endDate >= :today ORDER BY lr.fromDate ASC")
     List<LeaveRequest> findUpcomingApprovedLeaves(@Param("employeeId") Long employeeId, @Param("today") LocalDate today);
+
+    @Query("SELECT lr.leaveType.leaveTypeName, COUNT(lr) FROM LeaveRequest lr WHERE lr.status = 'APPROVED' AND " +
+           "(MONTH(lr.fromDate) = :month AND YEAR(lr.fromDate) = :year OR " +
+           "MONTH(lr.endDate) = :month AND YEAR(lr.endDate) = :year) " +
+           "GROUP BY lr.leaveType.leaveTypeName")
+    List<Object[]> countApprovedLeavesByTypeForMonth(@Param("month") int month, @Param("year") int year);
 }

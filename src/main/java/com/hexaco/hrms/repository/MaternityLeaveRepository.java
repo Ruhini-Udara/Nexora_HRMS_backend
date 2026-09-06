@@ -17,6 +17,9 @@ public interface MaternityLeaveRepository extends JpaRepository<MaternityLeave, 
     @Query("SELECT COUNT(l) FROM MaternityLeave l WHERE l.status = 'PENDING_HR_APPROVAL' OR l.status = 'PENDING_ADMIN_APPROVAL' OR l.status = 'SUBMITTED'")
     long countPending();
 
+    @Query("SELECT COUNT(DISTINCT l.employee.id) FROM MaternityLeave l WHERE l.fromDate <= :date AND l.endDate >= :date AND (l.status = 'APPROVED' OR l.status = 'ADMIN_APPROVED')")
+    long countOnLeaveToday(@Param("date") java.time.LocalDate date);
+
     @Query("SELECT l FROM MaternityLeave l WHERE l.endDate BETWEEN :startDate AND :endDate AND (l.status = 'APPROVED' OR l.status = 'ADMIN_APPROVED')")
     List<MaternityLeave> findUpcomingMaternityReturns(@Param("startDate") java.time.LocalDate startDate, @Param("endDate") java.time.LocalDate endDate);
     
