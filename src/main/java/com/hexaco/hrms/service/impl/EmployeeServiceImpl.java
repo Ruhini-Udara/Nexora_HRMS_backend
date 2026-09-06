@@ -240,6 +240,32 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public List<Employee> getUpcomingBirthdays() {
+        LocalDate today = LocalDate.now();
+        LocalDate nextWeek = today.plusDays(7);
+        
+        return employeeRepository.findAll().stream()
+            .filter(e -> e.getDateOfBirth() != null)
+            .filter(e -> {
+                LocalDate dob = e.getDateOfBirth();
+                LocalDate nextBirthday = dob.withYear(today.getYear());
+                if (nextBirthday.isBefore(today) || (nextBirthday.isBefore(today) && dob.getMonthValue() == 2 && dob.getDayOfMonth() == 29 && !today.isLeapYear())) {
+                    nextBirthday = nextBirthday.plusYears(1);
+                }
+                return !nextBirthday.isBefore(today) && !nextBirthday.isAfter(nextWeek);
+            })
+            .sorted(java.util.Comparator.comparing(e -> {
+                LocalDate dob = e.getDateOfBirth();
+                LocalDate nextBirthday = dob.withYear(today.getYear());
+                if (nextBirthday.isBefore(today) || (nextBirthday.isBefore(today) && dob.getMonthValue() == 2 && dob.getDayOfMonth() == 29 && !today.isLeapYear())) {
+                    nextBirthday = nextBirthday.plusYears(1);
+                }
+                return nextBirthday;
+            }))
+            .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public void deleteEmployeeByCode(String code) {
         Employee employee = employeeRepository.findByEmployeeCode(code)
