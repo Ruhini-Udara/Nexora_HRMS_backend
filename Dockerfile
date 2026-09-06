@@ -6,8 +6,9 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-# Package the application (skip tests since GitHub Actions handles them)
-RUN mvn clean package -DskipTests
+# Package the application (skip compiling tests and limit memory to prevent EC2 OOM crashes)
+ENV MAVEN_OPTS="-Xmx512m"
+RUN mvn clean package -Dmaven.test.skip=true
 
 # Stage 2: Create the lightweight runtime image
 FROM eclipse-temurin:21-jre-alpine
