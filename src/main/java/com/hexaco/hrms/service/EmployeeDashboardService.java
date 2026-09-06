@@ -32,7 +32,7 @@ public class EmployeeDashboardService {
     private boolean isPending(String status) {
         if (status == null) return false;
         String s = status.toUpperCase();
-        return s.contains("PENDING") || s.equals("SUBMITTED");
+        return s.contains("PENDING") || s.equals("SUBMITTED") || s.equals("RESUBMITTED");
     }
 
     public EmployeeDashboardDto getEmployeeDashboard(Long employeeId) {
