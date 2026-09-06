@@ -1,7 +1,15 @@
 package com.hexaco.hrms.config;
 
 import com.hexaco.hrms.models.*;
-import com.hexaco.hrms.repository.*;
+import com.hexaco.hrms.models.Employee;
+import com.hexaco.hrms.repository.EmployeeRepository;
+import com.hexaco.hrms.repository.RoleRepository;
+import com.hexaco.hrms.repository.UserAccountRepository;
+import com.hexaco.hrms.repository.DesignationRepository;
+import com.hexaco.hrms.repository.ShiftRepository;
+import com.hexaco.hrms.repository.ResignationRepository;
+import com.hexaco.hrms.repository.TerminationRepository;
+import com.hexaco.hrms.repository.DeathRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
@@ -153,7 +161,7 @@ public class DataInitializer implements CommandLineRunner {
                         .employeeCode("EMP000")
                         .nicNumber("000000000V")
                         .sex("Male")
-                        .fullName("System Admin User")
+                        .fullName("HR Admin")
                         .surname("Admin")
                         .email(adminEmail)
                         .dateOfBirth(LocalDate.of(1990, 1, 1))
@@ -211,7 +219,8 @@ public class DataInitializer implements CommandLineRunner {
             userAccountRepository.save(user);
         });
 
-        // Fix plaintext passwords and initialize is_active for valid non-offboarded users
+        // Fix plaintext passwords and initialize is_active for valid non-offboarded
+        // users
         List<UserAccount> allUsers = userAccountRepository.findAll();
         for (UserAccount u : allUsers) {
             boolean modified = false;
@@ -225,9 +234,13 @@ public class DataInitializer implements CommandLineRunner {
             boolean isOffboarded = false;
             if (u.getEmployee() != null && u.getEmployee().getId() != null) {
                 Long empId = u.getEmployee().getId();
-                if (resignationRepository.findByEmployeeId(empId).stream().anyMatch(r -> "EXECUTED".equalsIgnoreCase(r.getStatus())) ||
-                    terminationRepository.findByEmployeeId(empId).stream().anyMatch(t -> "EXECUTED".equalsIgnoreCase(t.getStatus())) ||
-                    deathRequestRepository.findByEmployeeId(empId).stream().anyMatch(d -> "EXECUTED".equalsIgnoreCase(d.getStatus()))) {
+                if (resignationRepository.findByEmployeeId(empId).stream()
+                        .anyMatch(r -> "EXECUTED".equalsIgnoreCase(r.getStatus())) ||
+                        terminationRepository.findByEmployeeId(empId).stream()
+                                .anyMatch(t -> "EXECUTED".equalsIgnoreCase(t.getStatus()))
+                        ||
+                        deathRequestRepository.findByEmployeeId(empId).stream()
+                                .anyMatch(d -> "EXECUTED".equalsIgnoreCase(d.getStatus()))) {
                     isOffboarded = true;
                 }
             }
