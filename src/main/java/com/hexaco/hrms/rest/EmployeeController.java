@@ -43,6 +43,12 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.getAllEmployees());
     }
 
+    @GetMapping("/upcoming-birthdays")
+    @PreAuthorize("hasAnyRole('HR', 'ADMIN')")
+    public ResponseEntity<java.util.List<Employee>> getUpcomingBirthdays() {
+        return ResponseEntity.ok(employeeService.getUpcomingBirthdays());
+    }
+
     @DeleteMapping("/{code}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteEmployee(@PathVariable String code) {
