@@ -29,6 +29,7 @@ public interface LeaveService {
     List<MaternityLeaveDto> getMaternityLeavesByEmployeeId(Long employeeId);
     // Normal Leave Methods
     NormalLeaveDto submitNormalLeave(NormalLeaveDto requestedLeave);
+    NormalLeaveDto updateNormalLeave(Long id, NormalLeaveDto dto);
     Optional<NormalLeaveDto> getNormalLeaveById(Long id);
     List<NormalLeaveDto> getAllNormalLeaves();
     List<NormalLeaveDto> getNormalLeavesByStatus(String status);

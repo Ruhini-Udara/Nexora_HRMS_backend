@@ -275,6 +275,65 @@ public class LeaveServiceImpl implements LeaveService {
     }
 
     @Override
+    public NormalLeaveDto updateNormalLeave(Long id, NormalLeaveDto dto) {
+        NormalLeave existingLeave = normalLeaveRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Normal Leave not found"));
+
+        // Only allow update if returned
+        if (!"RETURNED".equals(existingLeave.getStatus())) {
+            throw new RuntimeException("Can only edit leave requests that have been returned");
+        }
+
+        if (dto.getLeaveTypeId() != null) {
+            LeaveType leaveType = leaveTypeRepository.findById(dto.getLeaveTypeId())
+                    .orElseThrow(() -> new RuntimeException("LeaveType not found"));
+            existingLeave.setLeaveType(leaveType);
+        }
+
+        existingLeave.setFromDate(dto.getFromDate());
+        existingLeave.setEndDate(dto.getEndDate());
+        existingLeave.setTotalDays(dto.getTotalDays());
+        existingLeave.setReason(dto.getReason());
+        if (dto.getBranch() != null) existingLeave.setBranch(dto.getBranch());
+        if (dto.getContactNumber() != null) existingLeave.setContactNumber(dto.getContactNumber());
+
+        // Validate Leave Balance Quota
+        int currentYear = LocalDate.now().getYear();
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository.findByEmployeeIdAndLeaveYear(existingLeave.getEmployee().getId(), currentYear);
+        if (balanceOpt.isPresent() && existingLeave.getLeaveType() != null) {
+            LeaveBalance lb = balanceOpt.get();
+            String typeName = existingLeave.getLeaveType().getLeaveTypeName().toLowerCase();
+            int quota = 0;
+            int used = 0;
+            if (typeName.contains("annual")) {
+                quota = lb.getAnnualLeaveQuota() != null ? lb.getAnnualLeaveQuota() : 0;
+                used = lb.getAnnualLeaveUsed() != null ? lb.getAnnualLeaveUsed() : 0;
+            } else if (typeName.contains("casual")) {
+                quota = lb.getCasualLeaveQuota() != null ? lb.getCasualLeaveQuota() : 0;
+                used = lb.getCasualLeaveUsed() != null ? lb.getCasualLeaveUsed() : 0;
+            } else if (typeName.contains("medical") || typeName.contains("sick")) {
+                quota = lb.getMedicalLeaveQuota() != null ? lb.getMedicalLeaveQuota() : 0;
+                used = lb.getMedicalLeaveUsed() != null ? lb.getMedicalLeaveUsed() : 0;
+            }
+            
+            if (dto.getTotalDays() != null && used + dto.getTotalDays() > quota) {
+                throw new RuntimeException("Leave request exceeds available " + existingLeave.getLeaveType().getLeaveTypeName() + " balance. Requested: " + dto.getTotalDays() + ", Available: " + Math.max(0, quota - used));
+            }
+        }
+
+        existingLeave.setIsEdited(true);
+
+        // Smart Routing Logic
+        if (dto.getTotalDays() != null && dto.getTotalDays() >= 3) {
+            existingLeave.setStatus(STATUS_PENDING_HR);
+        } else {
+            existingLeave.setStatus("PENDING_SUPERVISOR_APPROVAL");
+        }
+
+        return mapToNormalDto(normalLeaveRepository.save(existingLeave));
+    }
+
+    @Override
     public Optional<NormalLeaveDto> getNormalLeaveById(Long id) {
         return normalLeaveRepository.findById(id).map(this::mapToNormalDto);
     }
@@ -470,6 +529,9 @@ public class LeaveServiceImpl implements LeaveService {
                 .annualLeaveRemaining(annualRemaining)
                 .medicalLeaveRemaining(medicalRemaining)
                 .casualLeaveRemaining(casualRemaining)
+                .isEdited(leave.getIsEdited() != null ? leave.getIsEdited() : false)
+                .returnReason(leave.getReturnReason())
+                .returnedBy(leave.getReturnedBy())
                 .build();
     }
 

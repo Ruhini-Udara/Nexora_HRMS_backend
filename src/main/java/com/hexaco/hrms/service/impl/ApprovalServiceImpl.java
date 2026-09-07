@@ -84,7 +84,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             if (isReturned(approval.getDecision())) {
                 leave.setReturnReason(approval.getRemark());
                 employeeRepository.findById(approval.getApprovedBy().getId())
-                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + detectHighestRole(emp.getId()) + ")"));
+                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + formatRoleDisplayName(detectHighestRole(emp.getId())) + ")"));
                 leave.setIsEdited(false);
             }
             overseasLeaveRepository.save(leave);
@@ -112,7 +112,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             if (isReturned(approval.getDecision())) {
                 leave.setReturnReason(approval.getRemark());
                 employeeRepository.findById(approval.getApprovedBy().getId())
-                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + detectHighestRole(emp.getId()) + ")"));
+                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + formatRoleDisplayName(detectHighestRole(emp.getId())) + ")"));
                 leave.setIsEdited(false);
             }
             maternityLeaveRepository.save(leave);
@@ -142,11 +142,19 @@ public class ApprovalServiceImpl implements ApprovalService {
                 newStatus = STATUS_APPROVED;
             } else if (isRejected(approval.getDecision())) {
                 newStatus = STATUS_REJECTED;
+            } else if (isReturned(approval.getDecision())) {
+                newStatus = STATUS_RETURNED;
             } else {
                 newStatus = leave.getStatus();
             }
 
             leave.setStatus(newStatus);
+            if (isReturned(approval.getDecision())) {
+                leave.setReturnReason(approval.getRemark());
+                employeeRepository.findById(approval.getApprovedBy().getId())
+                    .ifPresent(emp -> leave.setReturnedBy(emp.getFullName() + " (" + formatRoleDisplayName(detectHighestRole(emp.getId())) + ")"));
+                leave.setIsEdited(false);
+            }
             normalLeaveRepository.save(leave);
 
             // Deduct leave balance if approved
@@ -157,7 +165,7 @@ public class ApprovalServiceImpl implements ApprovalService {
             }
 
             // Trigger Notification
-            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus)) {
+            if (STATUS_APPROVED.equals(newStatus) || STATUS_REJECTED.equals(newStatus) || STATUS_RETURNED.equals(newStatus)) {
                 notificationService.sendLeaveStatusUpdate(
                     leave.getEmployee().getFullName(), leave.getEmployee().getEmail(), leave.getContactNumber(),
                     "Normal Leave", newStatus, approval.getRemark()
@@ -252,13 +260,39 @@ public class ApprovalServiceImpl implements ApprovalService {
         List<UserAccount> accounts = userAccountRepository.findByEmployeeId(employeeId);
         for (UserAccount acc : accounts) {
             if (acc.getRole() != null) {
-                String rName = acc.getRole().getRoleName();
+                String rName = acc.getRole().getRoleName().toUpperCase();
                 if (rName.contains("DIRECTOR")) return "ROLE_DIRECTOR";
                 if (rName.contains("ADMIN")) highestRole = "ROLE_ADMIN";
                 if (rName.contains("HR") && !"ROLE_ADMIN".equals(highestRole)) highestRole = "ROLE_HR";
+                if (rName.contains("SUPERVISOR") && "ROLE_EMPLOYEE".equals(highestRole)) highestRole = "ROLE_SUPERVISOR";
+            }
+        }
+
+        // Also check direct employee role if user account didn't specify higher role
+        if ("ROLE_EMPLOYEE".equals(highestRole)) {
+            var empOpt = employeeRepository.findById(employeeId);
+            if (empOpt.isPresent()) {
+                var emp = empOpt.get();
+                if (emp.getRole() != null && emp.getRole().getRoleName() != null) {
+                    String rName = emp.getRole().getRoleName().toUpperCase();
+                    if (rName.contains("DIRECTOR")) highestRole = "ROLE_DIRECTOR";
+                    else if (rName.contains("ADMIN")) highestRole = "ROLE_ADMIN";
+                    else if (rName.contains("HR")) highestRole = "ROLE_HR";
+                    else if (rName.contains("SUPERVISOR")) highestRole = "ROLE_SUPERVISOR";
+                }
             }
         }
         return highestRole;
+    }
+
+    private String formatRoleDisplayName(String role) {
+        if (role == null) return "Employee";
+        String u = role.toUpperCase();
+        if (u.contains("DIRECTOR")) return "Director";
+        if (u.contains("ADMIN")) return "HR Admin";
+        if (u.contains("HR")) return "HR";
+        if (u.contains("SUPERVISOR")) return "Supervisor";
+        return "Supervisor";
     }
 
     private void triggerFinanceIntegrationPlaceholder(MaternityLeave leave) {
