@@ -207,8 +207,13 @@ public class DataInitializer implements CommandLineRunner {
                         .employee(employee)
                         .build()));
 
-        // HR Accounts
+        // HR & Employee Accounts for Rashmi
         userAccountRepository.findByEmail("rashmi@nexora.com").ifPresent(user -> {
+            user.setPasswordHash(passwordEncoder.encode("password123"));
+            user.setActive(true);
+            userAccountRepository.save(user);
+        });
+        userAccountRepository.findByEmail("rashmibimashaa@gmail.com").ifPresent(user -> {
             user.setPasswordHash(passwordEncoder.encode("password123"));
             user.setActive(true);
             userAccountRepository.save(user);
