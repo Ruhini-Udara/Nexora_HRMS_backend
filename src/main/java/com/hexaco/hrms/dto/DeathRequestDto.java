@@ -25,6 +25,8 @@ public class DeathRequestDto {
     public void setBoardMeetingDate(String boardMeetingDate) { this.boardMeetingDate = boardMeetingDate; }
     public String getHrRemark() { return hrRemark; }
     public void setHrRemark(String hrRemark) { this.hrRemark = hrRemark; }
+    public String getDirectorRemark() { return directorRemark; }
+    public void setDirectorRemark(String directorRemark) { this.directorRemark = directorRemark; }
     public LocalDate getDateOfDeath() { return dateOfDeath; }
     public void setDateOfDeath(LocalDate dateOfDeath) { this.dateOfDeath = dateOfDeath; }
     public String getNatureOfDeath() { return natureOfDeath; }
@@ -39,6 +41,8 @@ public class DeathRequestDto {
     public void setRequesterEmpId(String requesterEmpId) { this.requesterEmpId = requesterEmpId; }
     public String getRequesterNic() { return requesterNic; }
     public void setRequesterNic(String requesterNic) { this.requesterNic = requesterNic; }
+    public String getRequesterEmail() { return requesterEmail; }
+    public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
     public String getContactNumber() { return contactNumber; }
@@ -86,6 +90,7 @@ public class DeathRequestDto {
     private String requesterDesignation;
     private String requesterEmpId;
     private String requesterNic;
+    private String requesterEmail;
     private String address;
     private String contactNumber;
     private String specialRemark;
@@ -102,6 +107,7 @@ public class DeathRequestDto {
     private String nomineeIdDoc;
     private String requestLetterDoc;
     private String hrRemark;
+    private String directorRemark;
     private String boardMeetingDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

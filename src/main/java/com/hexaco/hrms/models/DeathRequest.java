@@ -30,6 +30,8 @@ public class DeathRequest {
     public void setBoardMeetingDate(String boardMeetingDate) { this.boardMeetingDate = boardMeetingDate; }
     public String getHrRemark() { return hrRemark; }
     public void setHrRemark(String hrRemark) { this.hrRemark = hrRemark; }
+    public String getDirectorRemark() { return directorRemark; }
+    public void setDirectorRemark(String directorRemark) { this.directorRemark = directorRemark; }
     public String getNatureOfDeath() { return natureOfDeath; }
     public void setNatureOfDeath(String natureOfDeath) { this.natureOfDeath = natureOfDeath; }
     public String getRequesterName() { return requesterName; }
@@ -42,6 +44,8 @@ public class DeathRequest {
     public void setRequesterEmpId(String requesterEmpId) { this.requesterEmpId = requesterEmpId; }
     public String getRequesterNic() { return requesterNic; }
     public void setRequesterNic(String requesterNic) { this.requesterNic = requesterNic; }
+    public String getRequesterEmail() { return requesterEmail; }
+    public void setRequesterEmail(String requesterEmail) { this.requesterEmail = requesterEmail; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
     public String getContactNumber() { return contactNumber; }
@@ -105,6 +109,9 @@ public class DeathRequest {
     @Column(name = "requester_nic")
     private String requesterNic;
 
+    @Column(name = "requester_email")
+    private String requesterEmail;
+
     @Column(name = "address", columnDefinition = "TEXT")
     private String address;
 
@@ -140,6 +147,9 @@ public class DeathRequest {
 
     @Column(name = "hr_remark", columnDefinition = "TEXT")
     private String hrRemark;
+
+    @Column(name = "director_remark", columnDefinition = "TEXT")
+    private String directorRemark;
 
     @Column(name = "board_meeting_date")
     private String boardMeetingDate;

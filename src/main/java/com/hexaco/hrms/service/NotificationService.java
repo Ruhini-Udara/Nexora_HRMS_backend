@@ -11,5 +11,6 @@ public interface NotificationService {
     void sendResignationStatusUpdate(String recipientName, String email, String status, String remark);
     void sendResignationStatusUpdate(String recipientName, String email, String status, String remark, Long resignationId, String designation, String branch, String epfNumber, String resignationDate, String lastWorkingDate, String reason, String directorRemark);
     void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark);
+    void sendTerminationRejectionToHr(String hrRecipientName, String hrEmail, String employeeName, String epfNumber, String branch, String reason);
     void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark);
 }

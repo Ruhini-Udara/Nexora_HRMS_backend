@@ -31,7 +31,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ResignationRepository resignationRepository;
     private final TerminationRepository terminationRepository;
     private final DeathRequestRepository deathRequestRepository;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
 
     @Override
     @Transactional
