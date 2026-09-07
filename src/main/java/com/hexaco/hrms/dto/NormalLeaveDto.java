@@ -32,4 +32,9 @@ public class NormalLeaveDto {
     private Integer annualLeaveRemaining;
     private Integer medicalLeaveRemaining;   // mapped from medicalLeaveQuota - medicalLeaveUsed
     private Integer casualLeaveRemaining;
+
+    // Resubmission & Return metadata
+    private Boolean isEdited;
+    private String returnReason;
+    private String returnedBy;
 }

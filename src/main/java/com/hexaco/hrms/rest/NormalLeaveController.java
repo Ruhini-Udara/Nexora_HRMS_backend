@@ -24,6 +24,13 @@ public class NormalLeaveController {
         return new ResponseEntity<>(savedLeave, HttpStatus.CREATED);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'HR', 'DIRECTOR')")
+    public ResponseEntity<NormalLeaveDto> updateNormalLeave(@PathVariable Long id, @RequestBody NormalLeaveDto dto) {
+        NormalLeaveDto updatedLeave = leaveService.updateNormalLeave(id, dto);
+        return ResponseEntity.ok(updatedLeave);
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HR', 'DIRECTOR', 'SUPERVISOR', 'ROLE_ADMIN', 'ROLE_HR', 'ROLE_DIRECTOR', 'ROLE_SUPERVISOR', 'admin', 'hr', 'director', 'supervisor', 'Admin', 'Hr', 'Director', 'Supervisor')")
     public ResponseEntity<List<NormalLeaveDto>> getAllNormalLeaves() {
