@@ -10,12 +10,14 @@ import com.hexaco.hrms.models.UserAccount;
 import com.hexaco.hrms.service.NotificationService;
 import com.hexaco.hrms.service.TerminationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TerminationServiceImpl implements TerminationService {
@@ -91,7 +93,7 @@ public class TerminationServiceImpl implements TerminationService {
 
         termination.setStatus(status);
         if (remarks != null) {
-            if (status.contains("REJECTED") || status.equals("VERIFIED_BY_HR")) {
+            if ("VERIFIED_BY_HR".equalsIgnoreCase(status) || "PENDING_ADMIN".equalsIgnoreCase(status)) {
                 termination.setHrRemark(remarks);
             } else {
                 termination.setDirectorRemark(remarks);
@@ -103,18 +105,120 @@ public class TerminationServiceImpl implements TerminationService {
 
         Termination updated = repository.save(termination);
 
-        // Send email notification on final approval or rejection
-        if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) ||
-            "Board Approved".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
-            notificationService.sendTerminationStatusUpdate(
-                    updated.getEmployee().getFullName(),
-                    updated.getEmployee().getEmail(),
-                    status,
-                    remarks
-            );
+        // Send email notifications:
+        String empEmail = null;
+        String empName = updated.getEmployeeName();
+        if (updated.getEmployee() != null) {
+            if (empName == null || empName.trim().isEmpty()) {
+                empName = updated.getEmployee().getFullName();
+            }
+            if (updated.getEmployee().getEmail() != null && !updated.getEmployee().getEmail().trim().isEmpty()) {
+                empEmail = updated.getEmployee().getEmail().trim();
+            }
+        }
+        if (empEmail == null && updated.getEpfNumber() != null) {
+            empEmail = employeeRepository.findByEpfNumber(updated.getEpfNumber())
+                    .map(Employee::getEmail)
+                    .orElse(null);
+        }
+
+        // 1. When approved by board: notify the relevant employee
+        if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
+            if (empEmail != null && !empEmail.isEmpty()) {
+                log.info("Sending termination approval notification to employee: {} <{}>", empName, empEmail);
+                notificationService.sendTerminationStatusUpdate(
+                        empName,
+                        empEmail,
+                        status,
+                        remarks
+                );
+            } else {
+                log.warn("⚠️ No employee email found for termination #{} - cannot send approval email", updated.getId());
+            }
+        } 
+        // 2. When rejected by board: notify the relevant employee AND HR users
+        else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            // (a) Send rejection notice to employee
+            if (empEmail != null && !empEmail.isEmpty()) {
+                log.info("Sending termination rejection notification to employee: {} <{}>", empName, empEmail);
+                notificationService.sendTerminationStatusUpdate(
+                        empName,
+                        empEmail,
+                        status,
+                        remarks
+                );
+            } else {
+                log.warn("⚠️ No employee email found for termination #{} - cannot send employee rejection email", updated.getId());
+            }
+
+            // (b) Send rejection notice to HR users with stated reason
+            log.info("Termination request #{} was rejected by board. Notifying HR users with stated reason.", updated.getId());
+            notifyHrOfTerminationRejection(updated, remarks);
         }
 
         return mapToDto(updated);
+    }
+
+    private void notifyHrOfTerminationRejection(Termination termination, String remarks) {
+        String empName = termination.getEmployeeName() != null ? termination.getEmployeeName()
+                : (termination.getEmployee() != null ? termination.getEmployee().getFullName() : "Employee");
+        String epf = termination.getEpfNumber() != null ? termination.getEpfNumber()
+                : (termination.getEmployee() != null ? termination.getEmployee().getEpfNumber() : "N/A");
+        String branch = termination.getBranch() != null ? termination.getBranch()
+                : (termination.getEmployee() != null ? termination.getEmployee().getDepartment() : "N/A");
+
+        java.util.List<UserAccount> hrAccounts = new java.util.ArrayList<>();
+        try {
+            hrAccounts.addAll(userAccountRepository.findByRoleRoleName("ROLE_HR"));
+            hrAccounts.addAll(userAccountRepository.findByRoleRoleName("HR"));
+        } catch (Exception e) {
+            log.error("Failed to query HR users for termination rejection notification: {}", e.getMessage());
+        }
+
+        java.util.Set<String> notifiedEmails = new java.util.HashSet<>();
+
+        for (UserAccount hr : hrAccounts) {
+            if (!hr.isActive()) continue;
+            String targetEmail = null;
+            String recipientName = "HR Team";
+            if (hr.getEmployee() != null) {
+                if (hr.getEmployee().getFullName() != null && !hr.getEmployee().getFullName().trim().isEmpty()) {
+                    recipientName = hr.getEmployee().getFullName();
+                }
+                if (hr.getEmployee().getEmail() != null && !hr.getEmployee().getEmail().trim().isEmpty()) {
+                    targetEmail = hr.getEmployee().getEmail().trim();
+                }
+            }
+            if (targetEmail == null && hr.getEmail() != null && !hr.getEmail().trim().isEmpty()) {
+                targetEmail = hr.getEmail().trim();
+            }
+
+            if (targetEmail != null && !notifiedEmails.contains(targetEmail.toLowerCase())) {
+                notifiedEmails.add(targetEmail.toLowerCase());
+                log.info("Dispatching termination rejection notice to HR user: {} <{}>", recipientName, targetEmail);
+                notificationService.sendTerminationRejectionToHr(
+                        recipientName,
+                        targetEmail,
+                        empName,
+                        epf,
+                        branch,
+                        remarks
+                );
+            }
+        }
+
+        // If no HR users found or none notified, send to fallback HR email
+        if (notifiedEmails.isEmpty()) {
+            log.warn("No active HR accounts found. Sending rejection email to fallback hr@nexora.com");
+            notificationService.sendTerminationRejectionToHr(
+                    "HR Team",
+                    "hr@nexora.com",
+                    empName,
+                    epf,
+                    branch,
+                    remarks
+            );
+        }
     }
 
     @Override
@@ -123,12 +227,37 @@ public class TerminationServiceImpl implements TerminationService {
         Termination termination = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Termination request not found with id: " + id));
 
-        termination.setInitiationDate(dto.getInitiationDate());
-        termination.setEffectiveDate(dto.getEffectiveDate());
-        termination.setType(dto.getType());
-        termination.setReason(dto.getReason());
-        termination.setSpecialRemark(dto.getSpecialRemark());
-        termination.setStatus(dto.getStatus() != null ? dto.getStatus() : termination.getStatus());
+        if (dto.getEmployeeId() != null && (termination.getEmployee() == null || !dto.getEmployeeId().equals(termination.getEmployee().getId()))) {
+            Employee employee = employeeRepository.findById(dto.getEmployeeId())
+                    .orElseThrow(() -> new RuntimeException("Employee not found with id: " + dto.getEmployeeId()));
+            termination.setEmployee(employee);
+            termination.setEmployeeName(dto.getEmployeeName() != null ? dto.getEmployeeName() : employee.getFullName());
+            termination.setEpfNumber(dto.getEpfNumber() != null ? dto.getEpfNumber() : employee.getEpfNumber());
+            termination.setBranch(dto.getBranch() != null ? dto.getBranch() : employee.getDepartment());
+        } else if (dto.getEpfNumber() != null && (termination.getEmployee() == null || !dto.getEpfNumber().equals(termination.getEmployee().getEpfNumber()))) {
+            employeeRepository.findByEpfNumber(dto.getEpfNumber()).ifPresent(emp -> {
+                termination.setEmployee(emp);
+                if (dto.getEmployeeName() == null) termination.setEmployeeName(emp.getFullName());
+                if (dto.getBranch() == null) termination.setBranch(emp.getDepartment());
+            });
+            termination.setEpfNumber(dto.getEpfNumber());
+            if (dto.getEmployeeName() != null) termination.setEmployeeName(dto.getEmployeeName());
+            if (dto.getBranch() != null) termination.setBranch(dto.getBranch());
+        } else {
+            if (dto.getEmployeeName() != null) termination.setEmployeeName(dto.getEmployeeName());
+            if (dto.getEpfNumber() != null) termination.setEpfNumber(dto.getEpfNumber());
+            if (dto.getBranch() != null) termination.setBranch(dto.getBranch());
+        }
+
+        if (dto.getInitiationDate() != null) termination.setInitiationDate(dto.getInitiationDate());
+        if (dto.getEffectiveDate() != null) termination.setEffectiveDate(dto.getEffectiveDate());
+        if (dto.getType() != null) termination.setType(dto.getType());
+        if (dto.getReason() != null) termination.setReason(dto.getReason());
+        if (dto.getSpecialRemark() != null) termination.setSpecialRemark(dto.getSpecialRemark());
+        if (dto.getStatus() != null) termination.setStatus(dto.getStatus());
+        if (dto.getHrRemark() != null) termination.setHrRemark(dto.getHrRemark());
+        if (dto.getDirectorRemark() != null) termination.setDirectorRemark(dto.getDirectorRemark());
+        if (dto.getBoardMeetingDate() != null) termination.setBoardMeetingDate(dto.getBoardMeetingDate());
 
         if (dto.getRequestForTerminationDoc() != null) termination.setRequestForTerminationDoc(dto.getRequestForTerminationDoc());
         if (dto.getLoanClearanceLetterDoc() != null) termination.setLoanClearanceLetterDoc(dto.getLoanClearanceLetterDoc());

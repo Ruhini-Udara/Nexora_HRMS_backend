@@ -605,39 +605,84 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark) {
-        String subject = "Important Notice Regarding Your Employment";
-        
-        String customMessage = "Your termination status has been updated to: " + status + ".";
-        // Apply requested specific message for rejected/terminated states if applicable
-        if ("REJECTED".equalsIgnoreCase(status) || "TERMINATED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status)) {
-             customMessage = "We are sorry to inform you that you have been terminated by board after inquiry.";
+        String trimmedEmail = (email != null) ? email.trim() : null;
+        if (trimmedEmail == null || trimmedEmail.isEmpty()) {
+            log.warn("⚠️ Cannot send termination status email: Employee email is null or empty for {}", recipientName);
+            return;
         }
-        
-        String content = String.format(
-                "Dear %s,\n\n%s\nRemark: %s\n\nBest Regards,\nHR Mate",
-                recipientName, customMessage, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+
+        String sender = (fromEmail != null && !fromEmail.trim().isEmpty() && !fromEmail.contains("noreply")) ? fromEmail.trim() : "hrmsnexora@gmail.com";
+        boolean isApproved = "APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status) || "TERMINATED".equalsIgnoreCase(status);
+        boolean isRejected = "REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status);
+
+        String subject;
+        String content;
+
+        if (isApproved) {
+            subject = "Notice of Employment Termination - Board Decision";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "We are writing to officially inform you that following the formal board inquiry, your employment termination has been APPROVED by the Board of Directors.\n\n" +
+                    "Status: APPROVED\n" +
+                    "Board Remarks: %s\n\n" +
+                    "Please coordinate with the Human Resources Department regarding offboarding procedures, return of company assets, and final dues settlement.\n\n" +
+                    "Best Regards,\n" +
+                    "Board of Directors\n" +
+                    "HR Mate / Nexora HRMS",
+                    recipientName,
+                    (remark != null && !remark.trim().isEmpty() ? remark.trim() : "None")
+            );
+        } else if (isRejected) {
+            subject = "Notice Regarding Employment: Termination Request Rejected by Board";
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Please be informed that the termination request regarding your employment has been REJECTED by the Board of Directors.\n\n" +
+                    "You will continue in your current role and active employment.\n\n" +
+                    "Status: REJECTED\n" +
+                    "Reason / Board Remarks:\n%s\n\n" +
+                    "If you have any questions or require further clarification, please contact the HR Department.\n\n" +
+                    "Best Regards,\n" +
+                    "Board of Directors\n" +
+                    "HR Mate / Nexora HRMS",
+                    recipientName,
+                    (remark != null && !remark.trim().isEmpty() ? remark.trim() : "None provided")
+            );
+        } else {
+            subject = "Termination Request Status Update: " + status;
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Your termination request status has been updated to: %s.\n\n" +
+                    "Remark: %s\n\n" +
+                    "Best Regards,\n" +
+                    "HR Mate",
+                    recipientName,
+                    status,
+                    (remark != null && !remark.trim().isEmpty() ? remark.trim() : "N/A")
+            );
+        }
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +
-                "║ 📧 TERMINATION NOTIFICATION LOG                                             ║\n" +
+                "║ 📧 TERMINATION NOTIFICATION TO EMPLOYEE                                      ║\n" +
                 "╠══════════════════════════════════════════════════════════╣\n" +
                 "║ To: {} <{}> \n" +
+                "║ Status: {}\n" +
                 "║ Subject: {}\n" +
                 "║ Mode: {}\n" +
                 "╚══════════════════════════════════════════════════════════╝\n",
-                recipientName, email, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+                recipientName, trimmedEmail, status, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
 
         if (!simulationMode) {
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(email);
+                message.setFrom(sender);
+                message.setTo(trimmedEmail);
                 message.setSubject(subject);
                 message.setText(content);
                 mailSender.send(message);
-                log.info("✅ Real Termination Email successfully sent to {}", email);
+                log.info("✅ Real Termination Email successfully sent to employee ({}) with status '{}'", trimmedEmail, status);
             } catch (Exception e) {
-                log.error("❌ Failed to send real termination email to {}: {}", email, e.getMessage());
+                log.error("❌ Failed to send real termination email to employee ({}): {}", trimmedEmail, e.getMessage());
             }
         } else {
             log.info("ℹ️ [SIMULATION MODE] Termination Email content: \n{}", content);
@@ -645,19 +690,91 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark) {
-        String subject = "Death Application Update: " + status;
-        
-        String customMessage = String.format("The death application for %s has been %s.", deceasedEmployeeName, status);
-        if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
-            customMessage = String.format("The death application for %s has been successfully processed and approved.", deceasedEmployeeName);
-        } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
-            customMessage = String.format("We are sorry to inform you that the death application for %s has been rejected.", deceasedEmployeeName);
-        }
-        
+    public void sendTerminationRejectionToHr(String hrRecipientName, String hrEmail, String employeeName, String epfNumber, String branch, String reason) {
+        String recipient = (hrRecipientName != null && !hrRecipientName.trim().isEmpty()) ? hrRecipientName.trim() : "HR Department";
+        String empName = (employeeName != null && !employeeName.trim().isEmpty()) ? employeeName.trim() : "the employee";
+        String epf = (epfNumber != null && !epfNumber.trim().isEmpty()) ? epfNumber.trim() : "N/A";
+        String br = (branch != null && !branch.trim().isEmpty()) ? branch.trim() : "N/A";
+        String statedReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : "No reason provided";
+
+        String subject = "Termination Request Rejected by Board - " + empName;
+
         String content = String.format(
-                "Dear %s,\n\n%s\nRemark: %s\n\nBest Regards,\nHR Mate",
-                recipientName, customMessage, (remark != null && !remark.isEmpty() ? remark : "N/A"));
+                "Dear %s,\n\n" +
+                "Please be informed that the termination request for employee %s (EPF: %s, Branch: %s) was REJECTED by the Board of Directors.\n\n" +
+                "Stated Reason / Board Remarks:\n%s\n\n" +
+                "Please review the board's decision in HR Mate and take any necessary follow-up action.\n\n" +
+                "Best Regards,\n" +
+                "Board of Directors\n" +
+                "Nexora HRMS",
+                recipient, empName, epf, br, statedReason
+        );
+
+        log.info("\n" +
+                "╔══════════════════════════════════════════════════════════╗\n" +
+                "║ 📧 TERMINATION REJECTION NOTIFICATION TO HR                                 ║\n" +
+                "╠══════════════════════════════════════════════════════════╣\n" +
+                "║ To: {} <{}> \n" +
+                "║ Employee: {} (EPF: {})\n" +
+                "║ Subject: {}\n" +
+                "║ Mode: {}\n" +
+                "╚══════════════════════════════════════════════════════════╝\n",
+                recipient, hrEmail, empName, epf, subject, (simulationMode ? "SIMULATION" : "REAL EMAIL"));
+
+        if (!simulationMode) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(hrEmail);
+                message.setSubject(subject);
+                message.setText(content);
+                mailSender.send(message);
+                log.info("✅ Real Termination Rejection Email successfully sent to HR ({})", hrEmail);
+            } catch (Exception e) {
+                log.error("❌ Failed to send termination rejection email to HR ({}): {}", hrEmail, e.getMessage());
+            }
+        } else {
+            log.info("ℹ️ [SIMULATION MODE] Termination Rejection Email to HR content: \n{}", content);
+        }
+    }
+
+    @Override
+    public void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark) {
+        String empName = (deceasedEmployeeName != null && !deceasedEmployeeName.trim().isEmpty()) ? deceasedEmployeeName.trim() : "the employee";
+        String subject = "Death Application Update: " + status;
+        String content;
+
+        if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
+            subject = "Death Application Rejected - " + empName;
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "Please be informed that the death application submitted for %s has been rejected during verification by the HR department.\n\n" +
+                    "Reason for Rejection / HR Remark:\n%s\n\n" +
+                    "If you have any questions or require further assistance, please contact the HR Department.\n\n" +
+                    "Best Regards,\n" +
+                    "HR Department\n" +
+                    "Nexora HRMS",
+                    recipientName, empName, (remark != null && !remark.trim().isEmpty() ? remark.trim() : "No reason provided"));
+        } else if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
+            subject = "Death Application Approved - " + empName;
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "The death application submitted for %s has been successfully reviewed and approved.\n\n" +
+                    "Remark:\n%s\n\n" +
+                    "Best Regards,\n" +
+                    "HR Department\n" +
+                    "Nexora HRMS",
+                    recipientName, empName, (remark != null && !remark.trim().isEmpty() ? remark.trim() : "N/A"));
+        } else {
+            content = String.format(
+                    "Dear %s,\n\n" +
+                    "The death application for %s has been updated to: %s.\n\n" +
+                    "Remark:\n%s\n\n" +
+                    "Best Regards,\n" +
+                    "HR Department\n" +
+                    "Nexora HRMS",
+                    recipientName, empName, status, (remark != null && !remark.trim().isEmpty() ? remark.trim() : "N/A"));
+        }
 
         log.info("\n" +
                 "╔══════════════════════════════════════════════════════════╗\n" +

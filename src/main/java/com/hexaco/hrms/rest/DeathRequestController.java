@@ -70,12 +70,16 @@ public class DeathRequestController {
             @PathVariable Long id,
             @RequestBody(required = false) java.util.Map<String, String> payload,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String remarks,
             @RequestParam(required = false) String boardMeetingDate) {
         
         String finalStatus = (payload != null && payload.containsKey("status")) ? payload.get("status") : status;
+        String finalRemarks = (payload != null && (payload.containsKey("remarks") || payload.containsKey("reason")))
+                ? (payload.containsKey("remarks") ? payload.get("remarks") : payload.get("reason"))
+                : remarks;
         String finalBoardDate = (payload != null && payload.containsKey("boardMeetingDate")) ? payload.get("boardMeetingDate") : boardMeetingDate;
 
-        return ResponseEntity.ok(service.updateStatus(id, finalStatus, finalBoardDate));
+        return ResponseEntity.ok(service.updateStatus(id, finalStatus, finalRemarks, finalBoardDate));
     }
 
     @PostMapping("/{id}/execute")
