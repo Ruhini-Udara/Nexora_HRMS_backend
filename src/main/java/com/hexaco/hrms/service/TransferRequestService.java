@@ -61,6 +61,7 @@ public class TransferRequestService {
     public TransferRequestDto updateStatus(Long id, String status, String remarks, String boardMeetingDate) {
         TransferRequest request = transferRequestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transfer request not found"));
+        String prevStatus = request.getStatus();
         request.setStatus(status);
         if (remarks != null) request.setHrRemark(remarks);
         if (boardMeetingDate != null) request.setBoardMeetingDate(boardMeetingDate);
@@ -68,11 +69,14 @@ public class TransferRequestService {
         TransferRequest saved = transferRequestRepository.save(request);
         
         if ("APPROVED".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || "RETURNED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
+            boolean isHrRejection = "REJECTED".equalsIgnoreCase(status) &&
+                    ("SUBMITTED".equalsIgnoreCase(prevStatus) || "RESUBMITTED".equalsIgnoreCase(prevStatus));
             notificationService.sendTransferStatusUpdate(
                     saved.getEmployee().getFullName(),
                     saved.getEmployee().getEmail(),
                     status,
-                    remarks
+                    remarks,
+                    isHrRejection
             );
         }
         

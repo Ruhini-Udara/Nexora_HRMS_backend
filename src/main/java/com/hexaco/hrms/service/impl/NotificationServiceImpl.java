@@ -250,6 +250,11 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void sendTransferStatusUpdate(String recipientName, String email, String status, String remark) {
+        sendTransferStatusUpdate(recipientName, email, status, remark, false);
+    }
+
+    @Override
+    public void sendTransferStatusUpdate(String recipientName, String email, String status, String remark, boolean isHrRejection) {
         String subject;
         String content;
 
@@ -265,14 +270,16 @@ public class NotificationServiceImpl implements NotificationService {
                     (remark != null && !remark.isEmpty() ? remark : "N/A"));
         } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
             subject = "Transfer Request Rejected";
+            String rejectedBy = isHrRejection ? "the HR department" : "the Director / Board";
             content = String.format(
                     "Dear %s,\n\n" +
-                    "We regret to inform you that your transfer request has been rejected by the Director / Board.\n\n" +
+                    "We regret to inform you that your transfer request has been rejected by %s.\n\n" +
                     "Status: REJECTED\n" +
                     "Reason / Remark: %s\n\n" +
                     "If you have any questions or require further clarification, please contact HR Operations.\n\n" +
                     "Best Regards,\nHR Mate",
                     recipientName,
+                    rejectedBy,
                     (remark != null && !remark.isEmpty() ? remark : "None specified"));
         } else if ("APPROVED".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status)) {
             subject = "Transfer Request Approved";
@@ -346,6 +353,25 @@ public class NotificationServiceImpl implements NotificationService {
             String reason,
             String directorRemark
     ) {
+        sendResignationStatusUpdate(recipientName, email, status, remark, resignationId, designation, branch, epfNumber, resignationDate, lastWorkingDate, reason, directorRemark, false);
+    }
+
+    @Override
+    public void sendResignationStatusUpdate(
+            String recipientName,
+            String email,
+            String status,
+            String remark,
+            Long resignationId,
+            String designation,
+            String branch,
+            String epfNumber,
+            String resignationDate,
+            String lastWorkingDate,
+            String reason,
+            String directorRemark,
+            boolean isHrRejection
+    ) {
         String trimmedEmail = (email != null) ? email.trim() : null;
         if (trimmedEmail == null || trimmedEmail.isEmpty()) {
             log.warn("⚠️ Cannot send resignation status email: Employee email is null or empty for {}", recipientName);
@@ -386,15 +412,17 @@ public class NotificationServiceImpl implements NotificationService {
             );
         } else if ("REJECTED".equalsIgnoreCase(status) || "Board Rejected".equalsIgnoreCase(status)) {
             subject = "Resignation Request Rejected";
+            String rejectedBy = isHrRejection ? "the HR department" : "the Director / Board";
             String rejectReasonText = (remark != null && !remark.isEmpty()) ? remark : ((directorRemark != null && !directorRemark.isEmpty()) ? directorRemark : "None specified");
             content = String.format(
                     "Dear %s,\n\n" +
-                    "We regret to inform you that your resignation request has been rejected by the Director / Board.\n\n" +
+                    "We regret to inform you that your resignation request has been rejected by %s.\n\n" +
                     "Status: REJECTED\n" +
                     "Reason / Remark: %s\n\n" +
                     "If you have any questions or require further clarification, please contact HR Operations.\n\n" +
                     "Best Regards,\nHR Mate",
                     recipientName,
+                    rejectedBy,
                     rejectReasonText
             );
         } else {

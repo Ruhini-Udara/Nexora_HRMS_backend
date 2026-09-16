@@ -8,8 +8,14 @@ public interface NotificationService {
     void sendTrainingFinalizedNotification(String recipientName, String email, String trainingTitle, String date, String time, String location, String instructor);
     void sendCompanyEventNotification(String email, String title, String description, String date, String time, String type);
     void sendTransferStatusUpdate(String recipientName, String email, String status, String remark);
+    default void sendTransferStatusUpdate(String recipientName, String email, String status, String remark, boolean isHrRejection) {
+        sendTransferStatusUpdate(recipientName, email, status, remark);
+    }
     void sendResignationStatusUpdate(String recipientName, String email, String status, String remark);
     void sendResignationStatusUpdate(String recipientName, String email, String status, String remark, Long resignationId, String designation, String branch, String epfNumber, String resignationDate, String lastWorkingDate, String reason, String directorRemark);
+    default void sendResignationStatusUpdate(String recipientName, String email, String status, String remark, Long resignationId, String designation, String branch, String epfNumber, String resignationDate, String lastWorkingDate, String reason, String directorRemark, boolean isHrRejection) {
+        sendResignationStatusUpdate(recipientName, email, status, remark, resignationId, designation, branch, epfNumber, resignationDate, lastWorkingDate, reason, directorRemark);
+    }
     void sendTerminationStatusUpdate(String recipientName, String email, String status, String remark);
     void sendTerminationRejectionToHr(String hrRecipientName, String hrEmail, String employeeName, String epfNumber, String branch, String reason);
     void sendDeathApplicationStatusUpdate(String recipientName, String email, String deceasedEmployeeName, String status, String remark);
