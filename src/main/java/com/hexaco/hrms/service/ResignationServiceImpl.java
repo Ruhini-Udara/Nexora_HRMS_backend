@@ -76,9 +76,13 @@ public class ResignationServiceImpl implements ResignationService {
         Resignation resignation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Resignation request not found with id: " + id));
         
+        String prevStatus = resignation.getStatus();
+        boolean isHrRejection = "REJECTED".equalsIgnoreCase(status) && 
+                ("SUBMITTED".equalsIgnoreCase(prevStatus) || "RESUBMITTED".equalsIgnoreCase(prevStatus));
+        
         resignation.setStatus(status);
         if (remarks != null) {
-            if ("RETURNED".equalsIgnoreCase(status) || "VERIFIED_BY_HR".equalsIgnoreCase(status)) {
+            if ("RETURNED".equalsIgnoreCase(status) || "VERIFIED_BY_HR".equalsIgnoreCase(status) || isHrRejection) {
                 resignation.setHrRemark(remarks);
             } else if ("Board Rejected".equalsIgnoreCase(status) || "Board Approved".equalsIgnoreCase(status) || "REJECTED".equalsIgnoreCase(status) || "APPROVED".equalsIgnoreCase(status)) {
                 resignation.setDirectorRemark(remarks);
@@ -136,7 +140,8 @@ public class ResignationServiceImpl implements ResignationService {
                     resignDateStr,
                     lastWorkDateStr,
                     updated.getReason(),
-                    updated.getDirectorRemark()
+                    updated.getDirectorRemark(),
+                    isHrRejection
             );
         }
         
